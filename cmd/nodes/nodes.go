@@ -26,6 +26,6 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(List(), Get(), Remove())
+	cmd.AddCommand(List(), Get(), Remove(), Deregister())
 	return cmd
 }

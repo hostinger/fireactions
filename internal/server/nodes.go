@@ -231,6 +231,8 @@ func (s *Server) handleNodeDeregister(ctx *gin.Context) {
 		return
 	}
 
+	s.scheduler.DeleteNodeFromCache(n)
+
 	ctx.JSON(200, gin.H{"message": "Node deregistered successfully"})
 	s.log.Info().Msgf("node %s deregistered", n.Name)
 }
