@@ -1,0 +1,94 @@
+---
+name: build-kernel
+
+on:
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build-amd64:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+        - '5.10'
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: fireactions
+
+    - name: Clone Linux kernel
+      run: |
+        git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+
+    - name: Build Linux kernel
+      run: |
+        cd linux
+        cp ../contrib/kernels/kernel-x86_64-${{ matrix.version }}.config .config
+        make olddefconfig
+        make ARCH=x86_64 -j$(nproc) vmlinux
+        mv vmlinux ../vmlinux
+
+    - name: Upload Linux kernel to GCS
+      uses: google-github-actions/upload-cloud-storage@v1
+      with:
+        destination: fireactions/kernels/amd64/${{ matrix.version }}
+        process_gcloudignore: false
+        path: vmlinux
+
+  build-arm64:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+        - '5.10'
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: fireactions
+
+    - name: Clone Linux kernel
+      run: |
+        git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+
+    - name: Build Linux kernel
+      run: |
+        cd linux
+        cp ../contrib/kernels/kernel-arm64-${{ matrix.version }}.config .config
+        make olddefconfig
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image
+        mv arch/arm64/boot/Image ../vmlinux
+
+    - name: Upload Linux kernel to GCS
+      uses: google-github-actions/upload-cloud-storage@v1
+      with:
+        destination: fireactions/kernels/arm64/${{ matrix.version }}
+        process_gcloudignore: false
+        path: vmlinux

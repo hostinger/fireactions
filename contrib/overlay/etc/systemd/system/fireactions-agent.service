@@ -1,0 +1,16 @@
+[Unit]
+Description=Fireactions Agent
+Documentation=https://github.com/hostinger/fireactions
+After=network.target
+
+[Service]
+Type=simple
+User=fireactions-agent
+ExecStart=/usr/bin/fireactions-agent
+TimeoutStopSec=5min
+WorkingDirectory=/home/fireactions-agent
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,51 @@
+---
+before:
+  hooks:
+  - hack/release.sh
+
+builds:
+- id: fireactions
+  main: ./cmd/fireactions
+  env:
+  - CGO_ENABLED=0
+  ldflags:
+  - -X github.com/hostinger/fireactions/build.GitTag={{ .Version }}
+  - -X github.com/hostinger/fireactions/build.GitCommit={{ .Commit }}
+  - -X github.com/hostinger/fireactions/build.BuildDate={{ .Date }}
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
+  binary: fireactions
+
+archives:
+- id: fireactions
+  builds:
+  - fireactions
+  name_template: fireactions-v{{ .Version }}-{{ .Os }}-{{ .Arch }}
+  format: tar.gz
+  files:
+  - src: LICENSE
+    dst: LICENSE
+  - src: README.md
+    dst: README.md
+  - src: docs/configuration.md
+    dst: CONFIGURATION.md
+  - src: release/{{ .Arch }}
+    dst: .
+
+dockers:
+- id: server
+  dockerfile: Dockerfile
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}
+  - ghcr.io/hostinger/fireactions:latest
+  extra_files:
+    - "./"
+
+release:
+  mode: keep-existing
+
+changelog:
+  skip: true
