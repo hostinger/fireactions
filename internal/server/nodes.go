@@ -213,6 +213,7 @@ func (s *Server) handleNodeRegister(ctx *gin.Context) {
 		s.log.Info().Msgf("registered new node %s: cpu=%d, mem=%d", n.Name, req.CpuTotal, req.MemTotal)
 	}
 
+	s.scheduler.AddNodeToCache(n)
 	ctx.JSON(200, gin.H{"message": "Node registered successfully"})
 }
 
