@@ -11,7 +11,9 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	api "github.com/hostinger/fireactions/apiv1"
+	"github.com/hostinger/fireactions/internal/client/preflight"
 	"github.com/rs/zerolog"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -25,6 +27,7 @@ const (
 type Client struct {
 	ID                string
 	isDisconnected    bool
+	preflightChecks   map[string]preflight.Check
 	client            *api.Client
 	shutdownOnce      sync.Once
 	isShuttingDown    bool
@@ -41,14 +44,16 @@ type ClientOpt func(*Client)
 // New creates a new Client.
 func New(log *zerolog.Logger, cfg *Config, opts ...ClientOpt) *Client {
 	c := &Client{
+		preflightChecks:   make(map[string]preflight.Check),
 		shutdownOnce:      sync.Once{},
 		shutdownMu:        sync.Mutex{},
 		shutdownCh:        make(chan struct{}),
+		isShuttingDown:    false,
 		cfg:               cfg,
-		log:               log,
 		reconcileInterval: 1 * time.Second,
 		isDisconnected:    true,
 		client:            api.NewClient(api.WithEndpoint(cfg.ServerURL)),
+		log:               log,
 	}
 
 	logger := log.With().Str("component", "client").Logger()
@@ -58,7 +63,41 @@ func New(log *zerolog.Logger, cfg *Config, opts ...ClientOpt) *Client {
 		opt(c)
 	}
 
+	c.MustRegisterPreflightCheck(preflight.NewFirecrackerCheck())
+
 	return c
+}
+
+func (c *Client) RegisterPreflightCheck(check preflight.Check) error {
+	_, ok := c.preflightChecks[check.Name()]
+	if ok {
+		return fmt.Errorf("preflight check %s already registered", check.Name())
+	}
+
+	c.preflightChecks[check.Name()] = check
+	return nil
+}
+
+func (c *Client) MustRegisterPreflightCheck(check preflight.Check) {
+	err := c.RegisterPreflightCheck(check)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c *Client) RunPreflightChecks() error {
+	var errs *multierror.Error
+
+	for _, check := range c.preflightChecks {
+		if err := check.Check(); err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("preflight check %s failed: %w", check.Name(), err))
+			continue
+		}
+
+		c.log.Info().Msgf("preflight check %s passed", check.Name())
+	}
+
+	return errs.ErrorOrNil()
 }
 
 // Shutdown shuts down the client.
@@ -141,7 +180,10 @@ func (c *Client) Deregister(ctx context.Context) error {
 func (c *Client) Start() error {
 	c.log.Info().Msg("starting client")
 
-	var err error
+	err := c.RunPreflightChecks()
+	if err != nil {
+		return fmt.Errorf("error running preflight checks: %w", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()

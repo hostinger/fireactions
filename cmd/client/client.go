@@ -67,7 +67,7 @@ func runClientCmd(cmd *cobra.Command, args []string) error {
 	}()
 
 	if err := client.Start(); err != nil {
-		return fmt.Errorf("error running client: %w", err)
+		log.Fatal().Err(err).Msg("error starting client")
 	}
 
 	return nil
