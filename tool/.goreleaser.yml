@@ -1,0 +1,42 @@
+---
+before:
+  hooks:
+  - go mod tidy
+
+builds:
+- id: fireactions
+  main: ./cmd/fireactions
+  env:
+  - CGO_ENABLED=0
+  ldflags:
+  - -X github.com/hostinger/fireactions/internal/buildinfo.Revision={{ .ShortCommit }}
+  - -X github.com/hostinger/fireactions/internal/buildinfo.Date={{ .CommitDate }}
+  - -X github.com/hostinger/fireactions/internal/buildinfo.Version={{ .Version }}
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
+  binary: fireactions
+
+archives:
+- id: fireactions
+  builds:
+  - fireactions
+  name_template: fireactions-{{ .Version }}-{{ .Os }}-{{ .Arch }}
+  format: tar.gz
+
+dockers:
+- id: server
+  dockerfile: Dockerfile
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}
+  - ghcr.io/hostinger/fireactions:latest
+  extra_files:
+    - "./"
+
+release:
+  draft: true
+
+changelog:
+  sort: asc

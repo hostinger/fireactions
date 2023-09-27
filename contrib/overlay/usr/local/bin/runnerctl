@@ -1,0 +1,124 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+function show_usage()
+{
+  echo "runnerctl - Small utility tool to control the GitHub Actions runner"
+  echo ""
+  echo "Usage: runnerctl <command>"
+  echo ""
+  echo "Commands:"
+  echo "  set-configuring         Set the runner status to Configuring."
+  echo "  set-idle                Set the runner status to Idle."
+  echo "  set-error               Set the runner status to Error."
+  echo "  notify-job-started      Notify the server that the job has started."
+  echo "  notify-job-stopped      Notify the server that the job has stopped."
+  echo ""
+  echo "Options:"
+  echo "  --help                  Show this help message."
+  echo ""
+  echo "Example:"
+  echo "  runner set-idle"
+}
+
+if [[ ${1:-} == '' ]]; then
+  echo "No command specified. Exiting."
+  show_usage
+  exit 1
+fi
+
+MMDS_TOKEN_TTL=300
+MMDS_TOKEN=$(curl "http://169.254.169.254/latest/api/token" -s -X PUT -H "X-Metadata-Token-TTL-Seconds: $MMDS_TOKEN_TTL")
+if [ -z "$MMDS_TOKEN" ]; then
+  echo "Unable to retrieve X-Metadata-Token from MMDS. Exiting."
+  exit 1
+fi
+
+SERVER_URL=$(curl -s -H "Accept: application/json" http://169.254.169.254/latest/meta-data/server-url -H "X-Metadata-Token: $MMDS_TOKEN" | jq -r)
+if [ -z "$SERVER_URL" ]; then
+  echo "Unable to set SERVER_URL from MMDS. Exiting."
+  exit 1
+fi
+
+function update-status()
+{
+  status=$1
+  data=$(jq -n             \
+    --arg status "$status" \
+    '
+      .status = $status
+    ')
+  
+  echo "$data" | curl --data @- -H "Content-Type: application/json" -X PATCH -w "\n" -s "$SERVER_URL/api/v1/runners/$HOSTNAME/status" 1>/dev/null
+}
+
+function set_configuring()
+{
+  update-status "Configuring"
+}
+
+function set_idle()
+{
+  update-status "Idle"
+}
+
+function set_error()
+{
+  update-status "Error"
+}
+
+function notify_job_started()
+{
+  data=$(jq -n \
+  --arg job_id "${GITHUB_RUN_ID:-}"             \
+  --arg job_repository "${GITHUB_REPOSITORY:-}" \
+  --arg job_name "${GITHUB_JOB:-}"              \
+  '
+    .job_id         = $job_id
+  | .job_repository = $job_repository  
+  | .job_name       = $job_name
+  ')
+
+  echo "$data" | curl --data @- -H "Content-Type: application/json" -X POST -w "\n" -s "$SERVER_URL/api/v1/runners/$HOSTNAME/job-started" 1>/dev/null
+}
+
+function notify_job_stopped()
+{
+  data=$(jq -n \
+  --arg job_id "${GITHUB_RUN_ID:-}"             \
+  --arg job_repository "${GITHUB_REPOSITORY:-}" \
+  --arg job_name "${GITHUB_JOB:-}"              \
+  '
+    .job_id         = $job_id
+  | .job_repository = $job_repository  
+  | .job_name       = $job_name
+  ')
+
+  echo "$data" | curl --data @- -H "Content-Type: application/json" -X POST -w "\n" -s "$SERVER_URL/api/v1/runners/$HOSTNAME/job-stopped" 1>/dev/null
+}
+
+case "$1" in
+  notify-job-started)
+    notify_job_started
+    ;;
+  notify-job-stopped)
+    notify_job_stopped
+    ;;
+  set-configuring)
+    set_configuring
+    ;;
+  set-idle)
+    set_idle
+    ;;
+  set-error)
+    set_error
+    ;;
+  --help)
+    show_usage
+    ;;
+  *)
+    echo "Unrecognised command: $1"
+    show_usage
+    exit 1
+    ;;
+esac
