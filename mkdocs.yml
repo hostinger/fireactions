@@ -1,0 +1,30 @@
+site_name: Fireactions
+repo_name: "hostinger/fireactions"
+repo_url: https://github.com/hostinger/fireactions
+site_url: https://hostinger.github.io/fireactions/
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: logo.png
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.instant
+    - navigation.sections
+  palette:
+    primary: red
+  include_sidebar: true
+
+nav:
+  - Home:
+      - Overview: "index.md"
+      - Architecture: "architecture.md"
+  - Deployment:
+      - Installation Guide: "deploy/index.md"
+      - Upgrade: "deploy/upgrade.md"
+  - User guide:
+      - Server:
+          - Introduction: "user-guide/server/index.md"
+          - Usage: "user-guide/server/usage.md"
+      - Runner: "user-guide/runner.md"

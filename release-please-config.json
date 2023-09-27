@@ -1,0 +1,16 @@
+{
+  "group-pull-request-title-pattern": "chore: Release ${branch}",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "package-name": "fireactions",
+      "exclude-paths": [
+        "agent"
+      ]
+    },
+    "agent": {
+      "release-type": "go",
+      "package-name": "fireactions-agent"
+    }
+  }
+}

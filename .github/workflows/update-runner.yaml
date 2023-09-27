@@ -1,0 +1,58 @@
+---
+name: update-runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get runner version
+      id: version
+      run: |
+        echo RUNNER_CURRENT=$(cat contrib/runner_version) >> $GITHUB_ENV
+        echo RUNNER_LATEST=$(curl -s "https://api.github.com/repos/actions/runner/releases/latest" | jq '.tag_name[1:]' --raw-output) >> $GITHUB_ENV
+
+    - name: Bump runner version
+      if: ${{ env.RUNNER_CURRENT != env.RUNNER_LATEST }}
+      run: |
+        echo "${{ env.RUNNER_LATEST }}" > contrib/runner_version
+
+    - name: Create Pull Request
+      if: ${{ env.RUNNER_CURRENT != env.RUNNER_LATEST }}
+      id: pr
+      uses: peter-evans/create-pull-request@v5
+      with:
+        commit-message: 'chore: Bump Github actions self-hosted runner version'
+        title: 'chore: Bump Github actions self-hosted runner version'
+        body: |
+          New version of Github actions self-hosted was [released](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_LATEST }})
+
+          **Current** : [v${{ env.RUNNER_CURRENT }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_CURRENT }})
+          **Latest**  : [v${{ env.RUNNER_LATEST }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_LATEST }})
+        base: main
+        branch: fix/bump_runner_version
+        delete-branch: true
+
+    - name: Setup GH CLI
+      if: ${{ steps.pr.outputs.pull-request-number }}
+      uses: sersoft-gmbh/setup-gh-cli-action@v2
+      with:
+        version: stable
+
+    - name: Enable Pull Request Automerge
+      if: ${{ steps.pr.outputs.pull-request-number }}
+      run: gh pr merge --squash --auto "${{ steps.pr.outputs.pull-request-number }}"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
