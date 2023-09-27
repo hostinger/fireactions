@@ -352,6 +352,15 @@ func (s *Server) handleGetNodeAssignments(ctx *gin.Context) {
 		return r.Status == structs.RunnerStatusAssigned && r.GetNode() == n.Name
 	})
 
+	n.UpdatedAt = time.Now()
+	err = s.Store.UpdateNode(ctx, n)
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	s.scheduler.UpdateNodeInCache(n)
+
 	ctx.JSON(200, gin.H{"runners": convertRunnersToRunnersV1(runners...)})
 }
 

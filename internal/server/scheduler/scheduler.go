@@ -67,6 +67,7 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store) *Scheduler {
 	s.MustRegisterFilter(&CpuCapacityFilter{})
 	s.MustRegisterFilter(&RamCapacityFilter{})
 	s.MustRegisterFilter(&GroupFilter{})
+	s.MustRegisterFilter(&HeartbeatFilter{})
 	s.MustRegisterFilter(&StatusFilter{})
 
 	return s

@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"time"
 
 	"github.com/hostinger/fireactions/internal/structs"
 )
@@ -90,4 +91,19 @@ func (f *CpuCapacityFilter) Name() string {
 // Runner.
 func (f *CpuCapacityFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
 	return node.CPU.IsAvailable(int64(runner.VCPUs)), nil
+}
+
+// HeartbeatFilter is a filter that filters out nodes that haven't been updated
+// in the last 60 seconds.
+type HeartbeatFilter struct {
+}
+
+// Name returns the name of the filter.
+func (f *HeartbeatFilter) Name() string {
+	return "heartbeat"
+}
+
+// Filter filters out nodes that haven't been updated in the last 60 seconds.
+func (f *HeartbeatFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+	return node.UpdatedAt.After(time.Now().Add(-60 * time.Second)), nil
 }
