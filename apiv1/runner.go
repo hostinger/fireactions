@@ -18,7 +18,7 @@ type Runner struct {
 	Node         *string   `json:"node_name,omitempty"`
 	Name         string    `json:"name"`
 	Organisation string    `json:"organisation"`
-	Group        string    `json:"group"`
+	Group        *Group    `json:"group"`
 	Status       string    `json:"status"`
 	Labels       string    `json:"labels"`
 	Flavor       Flavor    `json:"flavor"`
@@ -51,7 +51,7 @@ func (r *Runner) Headers() []string {
 }
 
 func (r *Runner) Rows() [][]string {
-	return [][]string{{r.Name, r.GetNode(), r.Organisation, r.Group, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
+	return [][]string{{r.Name, r.GetNode(), r.Organisation, r.Group.Name, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
 }
 
 func (r Runners) Headers() []string {
@@ -61,7 +61,7 @@ func (r Runners) Headers() []string {
 func (r Runners) Rows() [][]string {
 	var rows [][]string
 	for _, runner := range r {
-		rows = append(rows, []string{runner.Name, runner.GetNode(), runner.Organisation, runner.Group, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
+		rows = append(rows, []string{runner.Name, runner.GetNode(), runner.Organisation, runner.Group.Name, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
 	}
 
 	return rows

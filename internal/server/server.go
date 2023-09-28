@@ -104,6 +104,8 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		v1.Handle(http.MethodGet, "/runners", s.handleGetRunners)
 		v1.Handle(http.MethodGet, "/flavors", s.handleGetFlavors)
 		v1.Handle(http.MethodGet, "/flavors/:name", s.handleGetFlavor)
+		v1.Handle(http.MethodGet, "/groups", s.handleGetGroups)
+		v1.Handle(http.MethodGet, "/groups/:name", s.handleGetGroup)
 	}
 
 	mux.Handle(http.MethodPost, "/webhook", s.handleGitHubWebhook)

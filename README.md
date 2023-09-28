@@ -31,7 +31,7 @@ The label format is based on the following template:
 
 `<PREFIX>-<GROUP>-<FLAVOR>`
 
-Flavors are defined in the `flavors` section of the [configuration](./docs/configuration.md) file. The default flavor can be specified in the `default-flavor` option.
+Flavors and groups are defined in the `flavors` and `groups` section of the [configuration](./docs/configuration.md) file. The default flavor and group can be specified in the `default-flavor`, `default-group` options.
 
 ## Roadmap
 

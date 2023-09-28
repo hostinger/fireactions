@@ -147,17 +147,21 @@ func TestGroupFilter(t *testing.T) {
 		{
 			name: "node belongs to the same group",
 			runner: &structs.Runner{
-				Group: "example",
+				Group: &structs.Group{Name: "example"},
 			},
-			node: &structs.Node{Group: "example"},
+			node: &structs.Node{
+				Group: &structs.Group{Name: "example"},
+			},
 			want: true,
 		},
 		{
 			name: "node doesn't belong to the same group",
 			runner: &structs.Runner{
-				Group: "example",
+				Group: &structs.Group{Name: "example"},
 			},
-			node: &structs.Node{Group: "example2"},
+			node: &structs.Node{
+				Group: &structs.Group{Name: "example2"},
+			},
 			want: false,
 		},
 	}
@@ -182,20 +186,16 @@ func TestStatusFilter(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "node is online",
-			runner: &structs.Runner{
-				Group: "example",
-			},
-			node: &structs.Node{Status: structs.NodeStatusOnline},
-			want: true,
+			name:   "node is online",
+			runner: &structs.Runner{},
+			node:   &structs.Node{Status: structs.NodeStatusOnline},
+			want:   true,
 		},
 		{
-			name: "node is offline",
-			runner: &structs.Runner{
-				Group: "example",
-			},
-			node: &structs.Node{Status: structs.NodeStatusOffline},
-			want: false,
+			name:   "node is offline",
+			runner: &structs.Runner{},
+			node:   &structs.Node{Status: structs.NodeStatusOffline},
+			want:   false,
 		},
 	}
 

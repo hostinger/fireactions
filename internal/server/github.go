@@ -66,17 +66,27 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 		return
 	}
 
-	label, err := ghlabel.New(strings.TrimPrefix(l, s.cfg.GitHub.JobLabelPrefix), ghlabel.WithDefaultFlavor(s.cfg.DefaultFlavor))
-	if err != nil {
-		s.log.Debug().Msgf("skipped job %s: unrecognized label: %s", jobID, err.Error())
-		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized label: %s", err.Error())})
-		return
+	l = strings.TrimPrefix(l, s.cfg.GitHub.JobLabelPrefix)
+	l = strings.TrimPrefix(l, "-")
+	label := ghlabel.New(l)
+	if label.Flavor == "" {
+		label.Flavor = s.cfg.DefaultFlavor
+	}
+	if label.Group == "" {
+		label.Group = s.cfg.DefaultGroup
 	}
 
 	flavor, err := s.fm.GetFlavor(label.Flavor)
 	if err != nil {
 		s.log.Debug().Msgf("skipped job %s: unrecognized flavor %s: %s", jobID, label.Flavor, err.Error())
 		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized flavor: %s", err.Error())})
+		return
+	}
+
+	group, err := s.GetGroupByName(label.Group)
+	if err != nil {
+		s.log.Debug().Msgf("skipped job %s: unrecognized group %s: %s", jobID, label.Group, err.Error())
+		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized group: %s", err.Error())})
 		return
 	}
 
@@ -105,7 +115,7 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 			Status:       structs.RunnerStatusPending,
 			Labels:       strings.Join(event.WorkflowJob.Labels, ","),
 			Flavor:       flavor,
-			Group:        label.Group,
+			Group:        group,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}

@@ -74,7 +74,7 @@ func (f *GroupFilter) Name() string {
 
 // Filter filters out nodes that don't belong to the same group as the Runner.
 func (f *GroupFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
-	return runner.Group == node.Group, nil
+	return runner.Group.Equals(node.Group), nil
 }
 
 // CpuCapacityFilter is a filter that filters out nodes that don't have enough

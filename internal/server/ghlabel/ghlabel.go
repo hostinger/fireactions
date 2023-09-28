@@ -2,7 +2,7 @@ package ghlabel
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 )
 
 // Label is a GitHub Actions job label.
@@ -11,37 +11,28 @@ type Label struct {
 	Flavor string
 }
 
-// LabelOpt is a function that modifies a Label.
-type LabelOpt func(*Label)
-
 // New returns a new Label from the specified string and LabelOpts.
-func New(s string, opts ...LabelOpt) (*Label, error) {
-	regexp := regexp.MustCompile(`^([a-zA-Z0-9]+)(?:-([a-zA-Z0-9-]+))?$`)
-	matches := regexp.FindStringSubmatch(s)
+func New(s string) *Label {
+	fields := strings.SplitN(s, "-", 2)
 
-	if len(matches) == 0 {
-		return nil, fmt.Errorf("regexp %s did not match", regexp)
+	l := &Label{}
+
+	if len(fields) >= 1 {
+		l.Group = fields[0]
 	}
 
-	l := &Label{
-		Group:  matches[1],
-		Flavor: matches[2],
+	if len(fields) >= 2 {
+		l.Flavor = fields[1]
 	}
 
-	for _, opt := range opts {
-		opt(l)
-	}
-
-	return l, nil
+	return l
 }
 
-// WithDefaultFlavor sets the default flavor for the Label.
-func WithDefaultFlavor(flavor string) LabelOpt {
-	f := func(l *Label) {
-		if l.Flavor == "" {
-			l.Flavor = flavor
-		}
+// String returns the string representation of the Label.
+func (l *Label) String() string {
+	if l.Flavor == "" {
+		return l.Group
 	}
 
-	return f
+	return fmt.Sprintf("%s-%s", l.Group, l.Flavor)
 }

@@ -86,7 +86,7 @@ func (c *Client) Do(ctx context.Context, endpoint string, method string, body in
 		}
 
 		return json.Unmarshal(b, v)
-	case 400, 500:
+	case 400, 500, 404:
 		errRsp := &ErrorResponse{Response: rsp}
 		err = json.Unmarshal(b, &errRsp)
 		if err != nil {
@@ -109,6 +109,10 @@ func (c *Client) Runners() *runnersClient {
 
 func (c *Client) Nodes() *nodesClient {
 	return &nodesClient{client: c}
+}
+
+func (c *Client) Groups() *groupsClient {
+	return &groupsClient{client: c}
 }
 
 func (c *Client) Flavors() *flavorsClient {

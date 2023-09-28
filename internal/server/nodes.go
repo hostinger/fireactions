@@ -174,6 +174,12 @@ func (s *Server) handleNodeRegister(ctx *gin.Context) {
 		return
 	}
 
+	group, err := s.GetGroupByName(req.Group)
+	if err != nil {
+		ctx.AbortWithStatusJSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
 	node, err := s.Store.GetNode(ctx, req.UUID)
 	if err != nil && !errors.As(err, &store.ErrNotFound{}) {
 		httperr.E(ctx, err)
@@ -186,7 +192,7 @@ func (s *Server) handleNodeRegister(ctx *gin.Context) {
 		ID:           req.UUID,
 		Name:         req.Name,
 		Organisation: req.Organisation,
-		Group:        req.Group,
+		Group:        group,
 		Status:       structs.NodeStatusUnknown,
 		CPU:          structs.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
 		RAM:          structs.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
@@ -272,7 +278,7 @@ func (s *Server) handleGetNodes(ctx *gin.Context) {
 			return false
 		}
 
-		if q.Group != "" && n.Group != q.Group {
+		if q.Group != "" && n.Group.Name != q.Group {
 			return false
 		}
 
@@ -370,7 +376,7 @@ func convertNodeToNodeV1(node *structs.Node) *api.Node {
 		ID:           node.ID,
 		Name:         node.Name,
 		Organisation: node.Organisation,
-		Group:        node.Group,
+		Group:        convertGroupToGroupV1(node.Group),
 		Status:       string(node.Status),
 		CpuTotal:     node.CPU.Capacity,
 		CpuFree:      node.CPU.Available(),

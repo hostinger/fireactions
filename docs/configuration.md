@@ -85,6 +85,16 @@ flavors:
     mem: 4096
     cpu: 4
 
+# The default group to use for jobs if no group is specified in GitHub job label.
+# The group must be defined in the 'groups' section.
+default-group: ltbnk
+
+# Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined.
+# Group name must be unique and should not contain any hyphens (-).
+groups:
+  - name: ltbnk
+  - name: usimm
+
 # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
 log-level: debug
 ```

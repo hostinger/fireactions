@@ -18,7 +18,7 @@ type Runner struct {
 	Node         *string
 	Name         string
 	Organisation string
-	Group        string
+	Group        *Group
 	Status       RunnerStatus
 	Labels       string
 	Flavor       *Flavor

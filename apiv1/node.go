@@ -18,7 +18,7 @@ type Node struct {
 	Organisation string    `json:"organisation"`
 	Name         string    `json:"name"`
 	Status       string    `json:"status"`
-	Group        string    `json:"group"`
+	Group        *Group    `json:"group"`
 	CpuTotal     int64     `json:"cpu_total"`
 	CpuFree      int64     `json:"cpu_free"`
 	MemTotal     int64     `json:"mem_total"`
@@ -75,7 +75,7 @@ func (n *Node) Headers() []string {
 }
 
 func (n *Node) Rows() [][]string {
-	return [][]string{{n.ID, n.Organisation, n.Name, n.Status, n.Group, n.GetCpuTotal(), n.GetCpuFree(), n.GetCpuUtilisation(), n.GetMemTotal(), n.GetMemFree(), n.GetMemUtilisation(), n.LastSeen.Format("2006-01-02 15:04:05")}}
+	return [][]string{{n.ID, n.Organisation, n.Name, n.Status, n.Group.Name, n.GetCpuTotal(), n.GetCpuFree(), n.GetCpuUtilisation(), n.GetMemTotal(), n.GetMemFree(), n.GetMemUtilisation(), n.LastSeen.Format("2006-01-02 15:04:05")}}
 }
 
 func (n Nodes) Headers() []string {
@@ -85,7 +85,7 @@ func (n Nodes) Headers() []string {
 func (n Nodes) Rows() [][]string {
 	var rows [][]string
 	for _, node := range n {
-		rows = append(rows, []string{node.ID, node.Organisation, node.Name, node.Status, node.Group, node.GetCpuTotal(), node.GetCpuFree(), node.GetCpuUtilisation(), node.GetMemTotal(), node.GetMemFree(), node.GetMemUtilisation(), node.LastSeen.Format("2006-01-02 15:04:05")})
+		rows = append(rows, []string{node.ID, node.Organisation, node.Name, node.Status, node.Group.Name, node.GetCpuTotal(), node.GetCpuFree(), node.GetCpuUtilisation(), node.GetMemTotal(), node.GetMemFree(), node.GetMemUtilisation(), node.LastSeen.Format("2006-01-02 15:04:05")})
 	}
 
 	return rows

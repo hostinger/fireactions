@@ -31,7 +31,7 @@ func (s *Server) handleGetRunners(ctx *gin.Context) {
 			return false
 		}
 
-		if q.Group != "" && runner.Group != q.Group {
+		if q.Group != "" && runner.Group.Name != q.Group {
 			return false
 		}
 
@@ -68,7 +68,7 @@ func convertRunnerToRunnerV1(runner *structs.Runner) *api.Runner {
 	r := &api.Runner{
 		ID:           runner.ID,
 		Organisation: runner.Organisation,
-		Group:        runner.Group,
+		Group:        convertGroupToGroupV1(runner.Group),
 		Node:         runner.Node,
 		Name:         runner.Name,
 		Status:       string(runner.Status),
