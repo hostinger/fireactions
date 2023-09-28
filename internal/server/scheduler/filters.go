@@ -43,7 +43,7 @@ func (f *RamCapacityFilter) Name() string {
 // Filter filters out nodes that don't have enough RAM capacity to run the
 // Runner.
 func (f *RamCapacityFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
-	return node.RAM.IsAvailable(int64(runner.MemoryGB) * 1024 * 1024 * 1024), nil
+	return node.RAM.IsAvailable(runner.Flavor.GetMemorySizeBytes()), nil
 }
 
 // OrganisationFilter is a filter that filters out nodes that don't belong to
@@ -90,7 +90,7 @@ func (f *CpuCapacityFilter) Name() string {
 // Filter filters out nodes that don't have enough CPU capacity to run the
 // Runner.
 func (f *CpuCapacityFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
-	return node.CPU.IsAvailable(int64(runner.VCPUs)), nil
+	return node.CPU.IsAvailable(runner.Flavor.VCPUs), nil
 }
 
 // HeartbeatFilter is a filter that filters out nodes that haven't been updated

@@ -1,80 +1,40 @@
 package ghlabel
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-)
+func TestNew(t *testing.T) {
+	t.Parallel()
 
-func TestNew_Valid(t *testing.T) {
-	s := "group1-2cpu-4gb-ubuntu20.04-5.4"
+	t.Run("should return error if regexp does not match", func(t *testing.T) {
+		_, err := New("foo2bar.foo2bar", WithDefaultFlavor("bar"))
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
 
-	l, err := New(s)
-	if err != nil {
-		t.Fatalf("error creating label: %s", err.Error())
-	}
+	t.Run("should return Label with default flavor", func(t *testing.T) {
+		l, err := New("group1", WithDefaultFlavor("1vcpu-2gb"))
+		if err != nil {
+			t.Fatalf("expected nil, got %s", err)
+		}
 
-	assert.Equal(t, "group1", l.Group)
-	assert.Equal(t, uint64(2), l.CPU)
-	assert.Equal(t, uint64(4), l.RAM)
-	assert.Equal(t, "ubuntu20.04", l.OS)
-	assert.Equal(t, "5.4", l.Kernel)
-}
+		if l.Flavor != "1vcpu-2gb" {
+			t.Errorf("expected flavor to be 1vcpu-2gb, got %s", l.Flavor)
+		}
+	})
 
-func TestNew_Valid_NoKernel(t *testing.T) {
-	s := "group1-2cpu-4gb-ubuntu20.04"
+	t.Run("should return Label with flavor", func(t *testing.T) {
+		l, err := New("group1-1vcpu-2gb")
+		if err != nil {
+			t.Fatalf("expected nil, got %s", err)
+		}
 
-	l, err := New(s)
-	if err != nil {
-		t.Fatalf("error creating label: %s", err.Error())
-	}
+		if l.Flavor != "1vcpu-2gb" {
+			t.Errorf("expected flavor to be 1vcpu-2gb, got %s", l.Flavor)
+		}
 
-	assert.Equal(t, "group1", l.Group)
-	assert.Equal(t, uint64(2), l.CPU)
-	assert.Equal(t, uint64(4), l.RAM)
-	assert.Equal(t, "ubuntu20.04", l.OS)
-	assert.Equal(t, "", l.Kernel)
-}
-
-func TestNew_Valid_NoKernelAndNoOS(t *testing.T) {
-	s := "group1-2cpu-4gb"
-
-	l, err := New(s)
-	if err != nil {
-		t.Fatalf("error creating label: %s", err.Error())
-	}
-
-	assert.Equal(t, "group1", l.Group)
-	assert.Equal(t, uint64(2), l.CPU)
-	assert.Equal(t, uint64(4), l.RAM)
-	assert.Equal(t, "", l.OS)
-	assert.Equal(t, "", l.Kernel)
-}
-
-func TestNew_Valid_WithLabelOpts(t *testing.T) {
-	s := "group1-2cpu-4gb"
-
-	l, err := New(s, WithDefaultKernel("5.5"), WithDefaultOS("ubuntu20.04"))
-	if err != nil {
-		t.Fatalf("error creating label: %s", err.Error())
-	}
-
-	assert.Equal(t, "group1", l.Group)
-	assert.Equal(t, uint64(2), l.CPU)
-	assert.Equal(t, uint64(4), l.RAM)
-	assert.Equal(t, "ubuntu20.04", l.OS)
-	assert.Equal(t, "5.5", l.Kernel)
-}
-
-func TestNew_Invalid(t *testing.T) {
-	labels := []string{
-		"group1-1.5cpu-4gb",
-		"group1-2cpu-4.5gb",
-	}
-
-	for _, label := range labels {
-		_, err := New(label)
-
-		assert.Error(t, err)
-	}
+		if l.Group != "group1" {
+			t.Errorf("expected group to be group1, got %s", l.Group)
+		}
+	})
 }

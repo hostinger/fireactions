@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/internal/server/flavormanager"
 	"github.com/hostinger/fireactions/internal/server/ghclient"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
@@ -25,6 +26,7 @@ type Server struct {
 	scheduler    *scheduler.Scheduler
 	server       *http.Server
 	ghClient     *ghclient.Client
+	fm           *flavormanager.FlavorManager
 	shutdownOnce sync.Once
 	shutdownMu   sync.Mutex
 	shutdownCh   chan struct{}
@@ -40,6 +42,7 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 	s := &Server{
 		TLSConfig:    &tls.Config{},
 		cfg:          cfg,
+		fm:           flavormanager.New(&log),
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		shutdownMu:   sync.Mutex{},
@@ -62,6 +65,16 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 
 	s.scheduler = scheduler.New(&s.log, cfg.Scheduler, store)
 	s.Store = store
+
+	err = s.fm.AddFlavors(cfg.Flavors...)
+	if err != nil {
+		return nil, fmt.Errorf("error adding flavors: %w", err)
+	}
+
+	err = s.fm.SetDefaultFlavor(cfg.DefaultFlavor)
+	if err != nil {
+		return nil, fmt.Errorf("error setting default flavor: %w", err)
+	}
 
 	for _, opt := range opts {
 		opt(s)
@@ -89,6 +102,8 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		v1.Handle(http.MethodPost, "/github/:organisation/registration-token", s.handleGitHubRegistrationToken)
 		v1.Handle(http.MethodGet, "/runners/:id", s.handleGetRunner)
 		v1.Handle(http.MethodGet, "/runners", s.handleGetRunners)
+		v1.Handle(http.MethodGet, "/flavors", s.handleGetFlavors)
+		v1.Handle(http.MethodGet, "/flavors/:name", s.handleGetFlavor)
 	}
 
 	mux.Handle(http.MethodPost, "/webhook", s.handleGitHubWebhook)

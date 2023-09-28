@@ -234,9 +234,7 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	cpu := int64(runner.VCPUs)
-	ram := int64(runner.MemoryGB * 1024 * 1024 * 1024)
-	err = s.store.ReserveNodeResources(context.Background(), bestNode.ID, cpu, ram)
+	err = s.store.ReserveNodeResources(context.Background(), bestNode.ID, runner.Flavor.VCPUs, runner.Flavor.GetMemorySizeBytes())
 	if err != nil {
 		s.log.Error().Err(err).Msg("error reserving node resources")
 		return

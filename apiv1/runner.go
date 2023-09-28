@@ -21,10 +21,7 @@ type Runner struct {
 	Group        string    `json:"group"`
 	Status       string    `json:"status"`
 	Labels       string    `json:"labels"`
-	Kernel       string    `json:"kernel"`
-	OS           string    `json:"os"`
-	MemoryGB     uint64    `json:"memory_gb"`
-	VCPUs        uint64    `json:"vcpus"`
+	Flavor       Flavor    `json:"flavor"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -41,14 +38,6 @@ func (r *Runner) GetUpdatedAt() string {
 	return r.UpdatedAt.Format("2006-01-02 15:04:05")
 }
 
-func (r *Runner) GetMemoryGB() string {
-	return fmt.Sprintf("%dGB", r.MemoryGB)
-}
-
-func (r *Runner) GetVCPUs() string {
-	return fmt.Sprintf("%d", r.VCPUs)
-}
-
 func (r *Runner) GetNode() string {
 	if r.Node == nil {
 		return "N/A (Not assigned)"
@@ -58,21 +47,21 @@ func (r *Runner) GetNode() string {
 }
 
 func (r *Runner) Headers() []string {
-	return []string{"Name", "Node", "Organisation", "Group", "Status", "Kernel", "OS", "vCPUs", "RAM", "Created At", "Updated At"}
+	return []string{"Name", "Node", "Organisation", "Group", "Status", "Flavor", "Created At", "Updated At"}
 }
 
 func (r *Runner) Rows() [][]string {
-	return [][]string{{r.Name, r.GetNode(), r.Organisation, r.Group, r.Status, r.Kernel, r.OS, r.GetVCPUs(), r.GetMemoryGB(), r.GetCreatedAt(), r.GetUpdatedAt()}}
+	return [][]string{{r.Name, r.GetNode(), r.Organisation, r.Group, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
 }
 
 func (r Runners) Headers() []string {
-	return []string{"Name", "Node", "Organisation", "Group", "Status", "Kernel", "OS", "vCPUs", "RAM", "Created At", "Updated At"}
+	return []string{"Name", "Node", "Organisation", "Group", "Status", "Flavor", "Created At", "Updated At"}
 }
 
 func (r Runners) Rows() [][]string {
 	var rows [][]string
 	for _, runner := range r {
-		rows = append(rows, []string{runner.Name, runner.GetNode(), runner.Organisation, runner.Group, runner.Status, runner.Kernel, runner.OS, runner.GetVCPUs(), runner.GetMemoryGB(), runner.GetCreatedAt(), runner.GetUpdatedAt()})
+		rows = append(rows, []string{runner.Name, runner.GetNode(), runner.Organisation, runner.Group, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
 	}
 
 	return rows

@@ -18,7 +18,7 @@ func TestFreeCpuScorer(t *testing.T) {
 			name: "score is correct with multiplier 1.0",
 			node: &structs.Node{CPU: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
 			runner: &structs.Runner{
-				VCPUs: 1,
+				Flavor: &structs.Flavor{VCPUs: 1},
 			},
 			want:       1000,
 			multiplier: 1.0,
@@ -27,7 +27,7 @@ func TestFreeCpuScorer(t *testing.T) {
 			name: "score is correct with multiplier 2.0",
 			node: &structs.Node{CPU: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
 			runner: &structs.Runner{
-				VCPUs: 1,
+				Flavor: &structs.Flavor{VCPUs: 1},
 			},
 			want:       2000,
 			multiplier: 2.0,
@@ -57,7 +57,7 @@ func TestFreeRamScorer(t *testing.T) {
 			name: "score is correct with multiplier 1.0",
 			node: &structs.Node{RAM: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
 			runner: &structs.Runner{
-				MemoryGB: 1,
+				Flavor: &structs.Flavor{MemorySizeMB: 1024},
 			},
 			want:       1000,
 			multiplier: 1.0,
@@ -66,7 +66,7 @@ func TestFreeRamScorer(t *testing.T) {
 			name: "score is correct with multiplier 2.0",
 			node: &structs.Node{RAM: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
 			runner: &structs.Runner{
-				MemoryGB: 1,
+				Flavor: &structs.Flavor{MemorySizeMB: 1024},
 			},
 			want:       2000,
 			multiplier: 2.0,

@@ -66,10 +66,17 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 		return
 	}
 
-	label, err := ghlabel.New(strings.TrimPrefix(l, s.cfg.GitHub.JobLabelPrefix), ghlabel.WithDefaultKernel("5.10"), ghlabel.WithDefaultOS("ubuntu22.04"))
+	label, err := ghlabel.New(strings.TrimPrefix(l, s.cfg.GitHub.JobLabelPrefix), ghlabel.WithDefaultFlavor(s.cfg.DefaultFlavor))
 	if err != nil {
 		s.log.Debug().Msgf("skipped job %s: unrecognized label: %s", jobID, err.Error())
 		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized label: %s", err.Error())})
+		return
+	}
+
+	flavor, err := s.fm.GetFlavor(label.Flavor)
+	if err != nil {
+		s.log.Debug().Msgf("skipped job %s: unrecognized flavor %s: %s", jobID, label.Flavor, err.Error())
+		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized flavor: %s", err.Error())})
 		return
 	}
 
@@ -97,10 +104,7 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 			Organisation: event.Organization.Login,
 			Status:       structs.RunnerStatusPending,
 			Labels:       strings.Join(event.WorkflowJob.Labels, ","),
-			Kernel:       label.Kernel,
-			OS:           label.OS,
-			MemoryGB:     label.RAM,
-			VCPUs:        label.CPU,
+			Flavor:       flavor,
 			Group:        label.Group,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),

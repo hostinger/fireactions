@@ -111,6 +111,10 @@ func (c *Client) Nodes() *nodesClient {
 	return &nodesClient{client: c}
 }
 
+func (c *Client) Flavors() *flavorsClient {
+	return &flavorsClient{client: c}
+}
+
 func (c *Client) GitHub() *githubClent {
 	return &githubClent{client: c}
 }

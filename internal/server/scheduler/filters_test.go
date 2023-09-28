@@ -20,7 +20,7 @@ func TestRamCapacityFilter(t *testing.T) {
 		{
 			name: "node has enough RAM capacity",
 			runner: &structs.Runner{
-				MemoryGB: 1,
+				Flavor: &structs.Flavor{MemorySizeMB: 1024},
 			},
 			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
 			want: true,
@@ -28,7 +28,7 @@ func TestRamCapacityFilter(t *testing.T) {
 		{
 			name: "node doesn't have enough RAM capacity",
 			runner: &structs.Runner{
-				MemoryGB: 2,
+				Flavor: &structs.Flavor{MemorySizeMB: 2048},
 			},
 			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
 			want: false,
@@ -36,7 +36,7 @@ func TestRamCapacityFilter(t *testing.T) {
 		{
 			name: "node has enough RAM capacity with overcommit",
 			runner: &structs.Runner{
-				MemoryGB: 2,
+				Flavor: &structs.Flavor{MemorySizeMB: 2048},
 			},
 			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 2.0}},
 			want: true,
@@ -65,7 +65,7 @@ func TestCpuCapacityFilter(t *testing.T) {
 		{
 			name: "node has enough CPU capacity",
 			runner: &structs.Runner{
-				VCPUs: 1,
+				Flavor: &structs.Flavor{VCPUs: 1},
 			},
 			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 1.0}},
 			want: true,
@@ -73,7 +73,7 @@ func TestCpuCapacityFilter(t *testing.T) {
 		{
 			name: "node doesn't have enough CPU capacity",
 			runner: &structs.Runner{
-				VCPUs: 2,
+				Flavor: &structs.Flavor{VCPUs: 2},
 			},
 			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 1.0}},
 			want: false,
@@ -81,7 +81,7 @@ func TestCpuCapacityFilter(t *testing.T) {
 		{
 			name: "node has enough CPU capacity with overcommit",
 			runner: &structs.Runner{
-				VCPUs: 2,
+				Flavor: &structs.Flavor{VCPUs: 2},
 			},
 			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 2.0}},
 			want: true,

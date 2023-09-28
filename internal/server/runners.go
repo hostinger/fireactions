@@ -72,11 +72,8 @@ func convertRunnerToRunnerV1(runner *structs.Runner) *api.Runner {
 		Node:         runner.Node,
 		Name:         runner.Name,
 		Status:       string(runner.Status),
+		Flavor:       convertFlavorToFlavorV1(runner.Flavor),
 		Labels:       runner.Labels,
-		Kernel:       runner.Kernel,
-		OS:           runner.OS,
-		MemoryGB:     runner.MemoryGB,
-		VCPUs:        runner.VCPUs,
 		CreatedAt:    runner.CreatedAt,
 		UpdatedAt:    runner.UpdatedAt,
 	}

@@ -21,10 +21,7 @@ type Runner struct {
 	Group        string
 	Status       RunnerStatus
 	Labels       string
-	Kernel       string
-	OS           string
-	MemoryGB     uint64
-	VCPUs        uint64
+	Flavor       *Flavor
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

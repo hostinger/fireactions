@@ -22,24 +22,16 @@ To start using self-hosted GitHub runners, add the label to your workflow jobs:
 <...>
 runs-on:
 - self-hosted
-- actions-group1-2cpu-4gb-ubuntu-22.04
+- actions-<GROUP>-<FLAVOR>
 ```
 
-Job labels identify the type of virtual machine to create for the Job. Label must begin with prefix `actions-` and must be followed by the provisioner name, number of vCPUs, amount of RAM and the operating system.
+Job labels identify the type of virtual machine to create for the Job. Label must begin with prefix `actions-` and must be followed by the group and flavor name. If the flavor name is not specified, the default configured flavor will be used.
 
 The label format is based on the following template:
 
-`<PREFIX>-<GROUP>-<VCPUs>cpu-<RAM>gb-<OS>-<KERNEL-VERSION>`
+`<PREFIX>-<GROUP>-<FLAVOR>`
 
-Examples:
-
-- `actions-group1-2vcpu-4gb-ubuntu22.04-5.10`
-- `actions-group1-4vcpu-8gb-ubuntu20.04-4.14`
-- `actions-group1-4vcpu-8gb`
-
-In the above examples, the virtual machine will have 2 vCPUs, 4GB of RAM and will run Ubuntu 22.04 or Ubuntu 20.04 with Linux kernel 5.10 or 4.14 respectively.
-
-In case of an invalid label, the virtual machine will not be created and the job will be skipped.
+Flavors are defined in the `flavors` section of the [configuration](./docs/configuration.md) file. The default flavor can be specified in the `default-flavor` option.
 
 ## Roadmap
 

@@ -25,16 +25,15 @@ import (
 
 // RunnerConfig is the configuration for a Runner.
 type RunnerConfig struct {
-	ID            uuid.UUID
-	Name          string
-	Organisation  string
-	Labels        string
-	Token         string
-	VCPUs         int64
-	KernelVersion string
-	MemSizeMib    int64
-	OS            string
-	ServerURL     string
+	ID           uuid.UUID
+	Name         string
+	Organisation string
+	Labels       string
+	Token        string
+	VCPUs        int64
+	MemorySizeMB int64
+	DiskSizeGB   int64
+	Image        string
 }
 
 // Runner is a representation of a Firecracker VM with GitHub Actions self-hosted runner.
@@ -73,9 +72,9 @@ func NewRunner(log *zerolog.Logger, config *RunnerConfig, opts ...RunnerOpt) (*R
 
 	fc := firecracker.Config{
 		VMID:            r.Config.ID.String(),
-		MachineCfg:      models.MachineConfiguration{MemSizeMib: &r.Config.MemSizeMib, VcpuCount: &r.Config.VCPUs},
+		MachineCfg:      models.MachineConfiguration{MemSizeMib: &r.Config.MemorySizeMB, VcpuCount: &r.Config.VCPUs},
 		SocketPath:      filepath.Join("/var/run", fmt.Sprintf("fireactions-%s.socket", r.Config.ID.String())),
-		KernelImagePath: filepath.Join("/var/lib/fireactions/kernels", r.Config.KernelVersion, "vmlinux.bin"),
+		KernelImagePath: "/var/lib/fireactions/vmlinux.bin",
 		KernelArgs:      "ro console=ttyS0 noapic reboot=k panic=1 pci=off nomodules random.trust_cpu=on",
 		MmdsVersion:     firecracker.MMDSv2,
 		MmdsAddress:     net.IPv4(169, 254, 169, 254),
@@ -124,7 +123,6 @@ func NewRunner(log *zerolog.Logger, config *RunnerConfig, opts ...RunnerOpt) (*R
 		"runner-url":    fmt.Sprintf("https://github.com/%s", r.Config.Organisation),
 		"runner-labels": r.Config.Labels,
 		"runner-token":  r.Config.Token,
-		"server-url":    r.Config.ServerURL,
 	}}}
 
 	return r, nil
@@ -176,7 +174,7 @@ func (r *Runner) Wait() error {
 }
 
 func (r *Runner) setup(ctx context.Context) error {
-	loop1, err := r.losetup.Attach(ctx, filepath.Join("/var/lib/fireactions/images", r.Config.OS, "rootfs.ext4"))
+	loop1, err := r.losetup.Attach(ctx, filepath.Join("/var/lib/fireactions/images", r.Config.Image, "rootfs.ext4"))
 	if err != nil {
 		return fmt.Errorf("error attaching loop device: %v", err)
 	}
@@ -209,7 +207,7 @@ func (r *Runner) setup(ctx context.Context) error {
 	}
 	defer f.Close()
 
-	err = f.Truncate(50 * 1024 * 1024 * 1024)
+	err = f.Truncate(r.Config.DiskSizeGB * 1024 * 1024 * 1024)
 	if err != nil {
 		return fmt.Errorf("error truncating image: %v", err)
 	}

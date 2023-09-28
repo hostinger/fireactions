@@ -327,16 +327,15 @@ func (c *Client) reconcileOnce() {
 		}
 
 		runner, err := NewRunner(c.log, &RunnerConfig{
-			ID:            uuid.MustParse(r.ID),
-			Name:          r.Name,
-			Organisation:  r.Organisation,
-			Labels:        r.Labels,
-			VCPUs:         int64(r.VCPUs),
-			KernelVersion: "5.10",
-			ServerURL:     c.cfg.ServerURL,
-			OS:            r.OS,
-			MemSizeMib:    int64(r.MemoryGB) * 1024,
-			Token:         runnerToken,
+			ID:           uuid.MustParse(r.ID),
+			Name:         r.Name,
+			Organisation: r.Organisation,
+			Labels:       r.Labels,
+			VCPUs:        r.Flavor.VCPUs,
+			MemorySizeMB: r.Flavor.MemorySizeMB,
+			DiskSizeGB:   r.Flavor.DiskSizeGB,
+			Image:        r.Flavor.ImageName,
+			Token:        runnerToken,
 		})
 		if err != nil {
 			c.log.Error().Err(err).Msgf("error creating runner %s", r.Name)

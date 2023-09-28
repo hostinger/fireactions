@@ -62,6 +62,29 @@ scheduler:
   free-cpu-scorer-multiplier: 1.0
   free-ram-scorer-multiplier: 1.0
 
+# The default flavor to use for jobs if no flavor is specified.
+default-flavor: 1vcpu-1gb
+
+# Flavors are used to define the resources available to a job. Atleast one flavor must be defined.
+# The name of the flavor must be unique.
+# The disk size is in GB, the memory size is in MB, and the CPU count is the number of vCPUs.
+flavors:
+  - name: 1vcpu-1gb
+    disk: 50
+    image: ubuntu-22.04
+    mem: 1024
+    cpu: 1
+  - name: 2vcpu-2gb
+    disk: 50
+    image: ubuntu-22.04
+    mem: 2048
+    cpu: 2
+  - name: 4vcpu-4gb
+    disk: 50
+    image: ubuntu-22.04
+    mem: 4096
+    cpu: 4
+
 # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
 log-level: debug
 ```

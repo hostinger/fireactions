@@ -157,9 +157,7 @@ func (s *Server) CompleteRunner(ctx context.Context, nodeID, runnerID string) er
 		return fmt.Errorf("error deleting runner %s: %w", runnerID, err)
 	}
 
-	cpu := int64(r.VCPUs)
-	ram := int64(r.MemoryGB * 1024 * 1024 * 1024)
-	err = s.Store.ReleaseNodeResources(ctx, n.ID, cpu, ram)
+	err = s.Store.ReleaseNodeResources(ctx, n.ID, r.Flavor.VCPUs, r.Flavor.GetMemorySizeBytes())
 	if err != nil {
 		return fmt.Errorf("error releasing node resources: %w", err)
 	}

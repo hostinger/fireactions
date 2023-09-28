@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/hostinger/fireactions/cmd/client"
+	"github.com/hostinger/fireactions/cmd/flavors"
 	"github.com/hostinger/fireactions/cmd/jobs"
 	"github.com/hostinger/fireactions/cmd/nodes"
 	"github.com/hostinger/fireactions/cmd/runners"
@@ -28,6 +29,6 @@ func New() *cobra.Command {
 		return nil
 	})
 
-	cmd.AddCommand(jobs.New(), runners.New(), nodes.New(), server.New(), client.New())
+	cmd.AddCommand(jobs.New(), runners.New(), nodes.New(), server.New(), client.New(), flavors.New())
 	return cmd
 }

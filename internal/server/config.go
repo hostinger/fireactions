@@ -6,15 +6,18 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
+	"github.com/hostinger/fireactions/internal/structs"
 )
 
 // Config is the configuration for the Server.
 type Config struct {
-	ListenAddr string            `mapstructure:"listen-addr"`
-	GitHub     *GitHubConfig     `mapstructure:"github"`
-	Scheduler  *scheduler.Config `mapstructure:"scheduler"`
-	LogLevel   string            `mapstructure:"log-level"`
-	DataDir    string            `mapstructure:"data-dir"`
+	ListenAddr    string            `mapstructure:"listen-addr"`
+	GitHub        *GitHubConfig     `mapstructure:"github"`
+	Scheduler     *scheduler.Config `mapstructure:"scheduler"`
+	LogLevel      string            `mapstructure:"log-level"`
+	DefaultFlavor string            `mapstructure:"default-flavor"`
+	Flavors       []*structs.Flavor `mapstructure:"flavors"`
+	DataDir       string            `mapstructure:"data-dir"`
 }
 
 // Validate validates the configuration.
@@ -49,6 +52,14 @@ func (c *Config) Validate() error {
 
 	if c.DataDir == "" {
 		err = multierror.Append(err, errors.New("Config.DataDir is required, but was not provided"))
+	}
+
+	if c.DefaultFlavor == "" {
+		err = multierror.Append(err, errors.New("Config.DefaultFlavor is required, but was not provided"))
+	}
+
+	if len(c.Flavors) == 0 {
+		err = multierror.Append(err, errors.New("Config.Flavors is required, but was not provided"))
 	}
 
 	return err
