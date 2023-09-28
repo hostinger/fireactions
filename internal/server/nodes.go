@@ -37,7 +37,11 @@ func (s *Server) DisconnectNode(ctx context.Context, id string) error {
 	}
 
 	runners = runners.Filter(func(r *structs.Runner) bool {
-		return r.GetNode() == n.Name && (r.Status == structs.RunnerStatusAssigned || r.Status == structs.RunnerStatusAccepted)
+		if r.Node == nil {
+			return false
+		}
+
+		return r.Node.Name == n.Name
 	})
 
 	for _, r := range runners {
@@ -79,7 +83,11 @@ func (s *Server) ConnectNode(ctx context.Context, id string) error {
 	}
 
 	runners = runners.Filter(func(r *structs.Runner) bool {
-		return r.GetNode() == n.Name && (r.Status == structs.RunnerStatusAssigned || r.Status == structs.RunnerStatusAccepted)
+		if r.Node == nil {
+			return false
+		}
+
+		return r.Node.Name == n.Name
 	})
 
 	for _, r := range runners {
@@ -356,7 +364,11 @@ func (s *Server) handleGetNodeAssignments(ctx *gin.Context) {
 	}
 
 	runners = runners.Filter(func(r *structs.Runner) bool {
-		return r.Status == structs.RunnerStatusAssigned && r.GetNode() == n.Name
+		if r.Node == nil || r.Status != structs.RunnerStatusAssigned {
+			return false
+		}
+
+		return r.Node.Name == n.Name
 	})
 
 	n.UpdatedAt = time.Now()

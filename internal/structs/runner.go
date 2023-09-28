@@ -15,7 +15,7 @@ type Runners []*Runner
 // Runner struct.
 type Runner struct {
 	ID           string
-	Node         *string
+	Node         *Node
 	Name         string
 	Organisation string
 	Group        *Group
@@ -42,20 +42,6 @@ const (
 // String returns a string representation of a Runner.
 func (r *Runner) String() string {
 	return fmt.Sprintf("%s (%s)", r.Name, r.ID)
-}
-
-// SetNode sets the Node of a Runner.
-func (r *Runner) SetNode(name string) {
-	r.Node = &name
-}
-
-// GetNode returns the Node of a Runner.
-func (r *Runner) GetNode() string {
-	if r.Node == nil {
-		return ""
-	}
-
-	return *r.Node
 }
 
 // Filter filters Runners using a RunnerFilterFunc.

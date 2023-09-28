@@ -15,7 +15,7 @@ type Runners []*Runner
 
 type Runner struct {
 	ID           string    `json:"id"`
-	Node         *string   `json:"node_name,omitempty"`
+	Node         *Node     `json:"node,omitempty"`
 	Name         string    `json:"name"`
 	Organisation string    `json:"organisation"`
 	Group        *Group    `json:"group"`
@@ -38,12 +38,12 @@ func (r *Runner) GetUpdatedAt() string {
 	return r.UpdatedAt.Format("2006-01-02 15:04:05")
 }
 
-func (r *Runner) GetNode() string {
+func (r *Runner) GetNodeName() string {
 	if r.Node == nil {
 		return "N/A (Not assigned)"
 	}
 
-	return *r.Node
+	return r.Node.Name
 }
 
 func (r *Runner) Headers() []string {
@@ -51,7 +51,7 @@ func (r *Runner) Headers() []string {
 }
 
 func (r *Runner) Rows() [][]string {
-	return [][]string{{r.Name, r.GetNode(), r.Organisation, r.Group.Name, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
+	return [][]string{{r.Name, r.GetNodeName(), r.Organisation, r.Group.Name, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
 }
 
 func (r Runners) Headers() []string {
@@ -61,7 +61,7 @@ func (r Runners) Headers() []string {
 func (r Runners) Rows() [][]string {
 	var rows [][]string
 	for _, runner := range r {
-		rows = append(rows, []string{runner.Name, runner.GetNode(), runner.Organisation, runner.Group.Name, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
+		rows = append(rows, []string{runner.Name, runner.GetNodeName(), runner.Organisation, runner.Group.Name, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
 	}
 
 	return rows

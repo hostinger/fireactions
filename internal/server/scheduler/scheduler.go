@@ -227,7 +227,7 @@ func (s *Scheduler) schedule() {
 	}
 
 	runner.Status = structs.RunnerStatusAssigned
-	runner.SetNode(bestNode.Name)
+	runner.Node = bestNode
 	err = s.store.UpdateRunner(context.Background(), runner)
 	if err != nil {
 		s.log.Error().Err(err).Msg("error updating runner")
