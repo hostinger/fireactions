@@ -53,7 +53,7 @@ func (s *Server) DisconnectNode(ctx context.Context, id string) error {
 		s.log.Debug().Msgf("removing runner %s due to node %s disconnect event", r.Name, n.Name)
 	}
 
-	s.scheduler.UpdateNodeInCache(n)
+	s.scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, n))
 	s.log.Info().Msgf("updated node %s status", n)
 
 	return nil
@@ -99,7 +99,7 @@ func (s *Server) ConnectNode(ctx context.Context, id string) error {
 		s.log.Debug().Msgf("removing runner %s due to node %s reconnect event", r.Name, n.Name)
 	}
 
-	s.scheduler.UpdateNodeInCache(n)
+	s.scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, n))
 	s.log.Info().Msgf("updated node %s status", n)
 
 	return nil
@@ -225,7 +225,7 @@ func (s *Server) handleNodeRegister(ctx *gin.Context) {
 		s.log.Info().Msgf("registered new node %s: cpu=%d, mem=%d", n.Name, req.CpuTotal, req.MemTotal)
 	}
 
-	s.scheduler.AddNodeToCache(n)
+	s.scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeCreated, n))
 	ctx.JSON(200, gin.H{"message": "Node registered successfully"})
 }
 
@@ -244,7 +244,7 @@ func (s *Server) handleNodeDeregister(ctx *gin.Context) {
 		return
 	}
 
-	s.scheduler.DeleteNodeFromCache(n)
+	s.scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeDeleted, n))
 
 	ctx.JSON(200, gin.H{"message": "Node deregistered successfully"})
 	s.log.Info().Msgf("node %s deregistered", n.Name)
@@ -378,7 +378,7 @@ func (s *Server) handleGetNodeAssignments(ctx *gin.Context) {
 		return
 	}
 
-	s.scheduler.UpdateNodeInCache(n)
+	s.scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, n))
 
 	ctx.JSON(200, gin.H{"runners": convertRunnersToRunnersV1(runners...)})
 }
