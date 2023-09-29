@@ -8,8 +8,8 @@ import (
 
 func TestGroup(t *testing.T) {
 	t.Run("String", func(t *testing.T) {
-		g := &Group{Name: "test"}
-		assert.Equal(t, "test", g.String())
+		g := &Group{Name: "test", Enabled: true}
+		assert.Equal(t, "test (Enabled: true)", g.String())
 	})
 
 	t.Run("Equals", func(t *testing.T) {

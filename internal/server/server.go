@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/internal/server/flavormanager"
 	"github.com/hostinger/fireactions/internal/server/ghclient"
+	"github.com/hostinger/fireactions/internal/server/groupmanager"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
 	"github.com/hostinger/fireactions/internal/server/store/bbolt"
@@ -28,6 +29,7 @@ type Server struct {
 	server       *http.Server
 	ghClient     *ghclient.Client
 	fm           *flavormanager.FlavorManager
+	gm           *groupmanager.GroupManager
 	shutdownOnce sync.Once
 	shutdownMu   sync.Mutex
 	shutdownCh   chan struct{}
@@ -44,6 +46,7 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		TLSConfig:    &tls.Config{},
 		cfg:          cfg,
 		fm:           flavormanager.New(&log),
+		gm:           groupmanager.New(&log),
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		shutdownMu:   sync.Mutex{},
@@ -81,6 +84,16 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		}
 	}
 
+	for _, group := range cfg.Groups {
+		err := s.gm.AddGroup(&structs.Group{
+			Name:    group.Name,
+			Enabled: *group.Enabled,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error adding group: %w", err)
+		}
+	}
+
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -113,6 +126,8 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		v1.Handle(http.MethodPost, "/flavors/:name/enable", s.handleEnableFlavor)
 		v1.Handle(http.MethodGet, "/groups", s.handleGetGroups)
 		v1.Handle(http.MethodGet, "/groups/:name", s.handleGetGroup)
+		v1.Handle(http.MethodPost, "/groups/:name/disable", s.handleDisableGroup)
+		v1.Handle(http.MethodPost, "/groups/:name/enable", s.handleEnableGroup)
 	}
 
 	mux.Handle(http.MethodPost, "/webhook", s.handleGitHubWebhook)

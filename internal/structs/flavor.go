@@ -6,12 +6,12 @@ import (
 
 // Flavor struct.
 type Flavor struct {
-	Name         string `mapstructure:"name"`
-	DiskSizeGB   int64  `mapstructure:"disk"`
-	MemorySizeMB int64  `mapstructure:"mem"`
-	VCPUs        int64  `mapstructure:"cpu"`
-	ImageName    string `mapstructure:"image"`
-	Enabled      bool   `mapstructure:"enabled"`
+	Name         string
+	DiskSizeGB   int64
+	MemorySizeMB int64
+	VCPUs        int64
+	ImageName    string
+	Enabled      bool
 }
 
 // String returns a string representation of a Flavor.

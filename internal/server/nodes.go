@@ -182,7 +182,7 @@ func (s *Server) handleNodeRegister(ctx *gin.Context) {
 		return
 	}
 
-	group, err := s.GetGroupByName(req.Group)
+	group, err := s.gm.GetGroup(req.Group)
 	if err != nil {
 		ctx.AbortWithStatusJSON(404, gin.H{"error": err.Error()})
 		return

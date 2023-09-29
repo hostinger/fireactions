@@ -9,7 +9,8 @@ import (
 type Groups []Group
 
 type Group struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
 }
 
 func (g *Group) String() string {
@@ -17,21 +18,21 @@ func (g *Group) String() string {
 }
 
 func (g *Group) Headers() []string {
-	return []string{"NAME"}
+	return []string{"Name", "Enabled"}
 }
 
 func (g *Group) Rows() [][]string {
-	return [][]string{{g.Name}}
+	return [][]string{{g.Name, fmt.Sprintf("%t", g.Enabled)}}
 }
 
 func (g Groups) Headers() []string {
-	return []string{"NAME"}
+	return []string{"Name", "Enabled"}
 }
 
 func (g Groups) Rows() [][]string {
 	rows := make([][]string, len(g))
 	for i, group := range g {
-		rows[i] = []string{group.Name}
+		rows[i] = []string{group.Name, fmt.Sprintf("%t", group.Enabled)}
 	}
 	return rows
 }
@@ -64,4 +65,14 @@ func (c *groupsClient) Get(ctx context.Context, name string) (*Group, error) {
 	}
 
 	return group, nil
+}
+
+// Disable disables a Group by name.
+func (c *groupsClient) Disable(ctx context.Context, name string) error {
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/disable", name), http.MethodPost, nil, nil)
+}
+
+// Enable enables a Group by name.
+func (c *groupsClient) Enable(ctx context.Context, name string) error {
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/enable", name), http.MethodPost, nil, nil)
 }

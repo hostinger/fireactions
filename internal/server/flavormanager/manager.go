@@ -9,11 +9,14 @@ import (
 )
 
 var (
+	// ErrFlavorNotFound is returned when a Flavor with the given name does not exist.
 	ErrFlavorNotFound = fmt.Errorf("flavor not found")
-	ErrFlavorExists   = fmt.Errorf("flavor already exists")
+
+	// ErrFlavorExists is returned when a Flavor with the same name already exists.
+	ErrFlavorExists = fmt.Errorf("flavor already exists")
 )
 
-// FlavorManager manages flavors.
+// FlavorManager is a thread-safe manager for Flavors.
 type FlavorManager struct {
 	flavors map[string]*structs.Flavor
 	mu      sync.RWMutex

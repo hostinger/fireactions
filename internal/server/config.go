@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
-	"github.com/hostinger/fireactions/internal/structs"
 )
 
 // Config is the configuration for the Server.
@@ -19,7 +18,7 @@ type Config struct {
 	DefaultFlavor string            `mapstructure:"default-flavor"`
 	Flavors       []*FlavorConfig   `mapstructure:"flavors"`
 	DefaultGroup  string            `mapstructure:"default-group"`
-	Groups        []*structs.Group  `mapstructure:"groups"`
+	Groups        []*GroupConfig    `mapstructure:"groups"`
 	DataDir       string            `mapstructure:"data-dir"`
 }
 
@@ -91,8 +90,9 @@ func (c *Config) Validate() error {
 
 	defaultGroupExists := false
 	for _, g := range c.Groups {
-		if strings.Contains(g.Name, "-") {
-			err = multierror.Append(err, fmt.Errorf("Group.Name (%s) must not contain any hyphens", g.Name))
+		err := g.Validate()
+		if err != nil {
+			err = multierror.Append(err, fmt.Errorf("Config.Groups is invalid: %w", err))
 		}
 
 		if g.Name == c.DefaultGroup {
@@ -156,10 +156,6 @@ func (c *FlavorConfig) Validate() error {
 		err = multierror.Append(err, errors.New("Flavor.Name is required, but was not provided"))
 	}
 
-	if strings.Contains(c.Name, "-") {
-		err = multierror.Append(err, fmt.Errorf("Flavor.Name (%s) must not contain any hyphens", c.Name))
-	}
-
 	if c.Disk == 0 {
 		err = multierror.Append(err, errors.New("Flavor.Disk is required, but was not provided"))
 	}
@@ -174,6 +170,32 @@ func (c *FlavorConfig) Validate() error {
 
 	if c.Image == "" {
 		err = multierror.Append(err, errors.New("Flavor.Image is required, but was not provided"))
+	}
+
+	if c.Enabled == nil {
+		b := true
+		c.Enabled = &b
+	}
+
+	return err
+}
+
+// GroupConfig is the configuration for a Group.
+type GroupConfig struct {
+	Name    string `mapstructure:"name"`
+	Enabled *bool  `mapstructure:"enabled"`
+}
+
+// Validate validates the configuration.
+func (c *GroupConfig) Validate() error {
+	var err error
+
+	if c.Name == "" {
+		err = multierror.Append(err, errors.New("Group.Name is required, but was not provided"))
+	}
+
+	if strings.Contains(c.Name, "-") {
+		err = multierror.Append(err, fmt.Errorf("Group.Name (%s) must not contain any hyphens", c.Name))
 	}
 
 	if c.Enabled == nil {

@@ -1,48 +1,70 @@
 package server
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	api "github.com/hostinger/fireactions/apiv1"
+	"github.com/hostinger/fireactions/internal/server/httperr"
 	"github.com/hostinger/fireactions/internal/structs"
 )
 
-func (s *Server) GetGroups() []*structs.Group {
-	return s.cfg.Groups
-}
-
-func (s *Server) GetGroupByName(name string) (*structs.Group, error) {
-	for _, g := range s.cfg.Groups {
-		if g.Name != name {
-			continue
-		}
-
-		return g, nil
+func (s *Server) handleGetGroups(ctx *gin.Context) {
+	groups, err := s.gm.ListGroups()
+	if err != nil {
+		httperr.E(ctx, err)
+		return
 	}
 
-	return nil, fmt.Errorf("group not found: %s", name)
-}
-
-func (s *Server) handleGetGroups(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{"groups": convertGroupsToGroupsV1(s.cfg.Groups...)})
+	ctx.JSON(200, gin.H{"groups": convertGroupsToGroupsV1(groups...)})
 }
 
 func (s *Server) handleGetGroup(ctx *gin.Context) {
 	name := ctx.Param("name")
 
-	group, err := s.GetGroupByName(name)
+	group, err := s.gm.GetGroup(name)
 	if err != nil {
-		ctx.JSON(404, gin.H{"error": err.Error()})
+		httperr.E(ctx, err)
 		return
 	}
 
-	ctx.JSON(200, gin.H{"group": convertGroupToGroupV1(group)})
+	ctx.JSON(200, convertGroupToGroupV1(group))
+}
+
+func (s *Server) handleDisableGroup(ctx *gin.Context) {
+	group, err := s.gm.GetGroup(ctx.Param("name"))
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	err = s.gm.DisableGroup(group.Name)
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	ctx.Status(204)
+}
+
+func (s *Server) handleEnableGroup(ctx *gin.Context) {
+	group, err := s.gm.GetGroup(ctx.Param("name"))
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	err = s.gm.EnableGroup(group.Name)
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	ctx.Status(204)
 }
 
 func convertGroupToGroupV1(group *structs.Group) *api.Group {
 	g := &api.Group{
-		Name: group.Name,
+		Name:    group.Name,
+		Enabled: group.Enabled,
 	}
 
 	return g

@@ -93,11 +93,19 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 		return
 	}
 
-	group, err := s.GetGroupByName(label.Group)
+	group, err := s.gm.GetGroup(label.Group)
 	if err != nil {
-		s.log.Debug().Msgf("skipped job %s: unrecognized group %s: %s", jobID, label.Group, err.Error())
+		s.log.Debug().Msgf("skipped job %s: error getting Group %s: %s", jobID, label.Group, err.Error())
 		ctx.JSON(200, gin.H{
-			"message": fmt.Sprintf("Skipped job due to unrecognized group: %s", err.Error()),
+			"message": fmt.Sprintf("Skipped job due to error getting Group: %s", err.Error()),
+		})
+		return
+	}
+
+	if !group.Enabled {
+		s.log.Debug().Msgf("skipped job %s: Group %s is disabled", jobID, label.Group)
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("Skipped job due to Group %s being disabled", label.Group),
 		})
 		return
 	}
