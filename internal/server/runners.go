@@ -69,13 +69,16 @@ func convertRunnerToRunnerV1(runner *structs.Runner) *api.Runner {
 		ID:           runner.ID,
 		Organisation: runner.Organisation,
 		Group:        convertGroupToGroupV1(runner.Group),
-		Node:         convertNodeToNodeV1(runner.Node),
 		Name:         runner.Name,
 		Status:       string(runner.Status),
 		Flavor:       convertFlavorToFlavorV1(runner.Flavor),
 		Labels:       runner.Labels,
 		CreatedAt:    runner.CreatedAt,
 		UpdatedAt:    runner.UpdatedAt,
+	}
+
+	if runner.Node != nil {
+		r.Node = convertNodeToNodeV1(runner.Node)
 	}
 
 	return r
