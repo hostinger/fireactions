@@ -16,6 +16,7 @@ import (
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
 	"github.com/hostinger/fireactions/internal/server/store/bbolt"
+	"github.com/hostinger/fireactions/internal/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -66,14 +67,18 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 	s.scheduler = scheduler.New(&s.log, cfg.Scheduler, store)
 	s.Store = store
 
-	err = s.fm.AddFlavors(cfg.Flavors...)
-	if err != nil {
-		return nil, fmt.Errorf("error adding flavors: %w", err)
-	}
-
-	err = s.fm.SetDefaultFlavor(cfg.DefaultFlavor)
-	if err != nil {
-		return nil, fmt.Errorf("error setting default flavor: %w", err)
+	for _, flavor := range cfg.Flavors {
+		err := s.fm.AddFlavor(&structs.Flavor{
+			Name:         flavor.Name,
+			Enabled:      *flavor.Enabled,
+			DiskSizeGB:   flavor.Disk,
+			MemorySizeMB: flavor.Mem,
+			VCPUs:        flavor.CPU,
+			ImageName:    flavor.Image,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error adding flavor: %w", err)
+		}
 	}
 
 	for _, opt := range opts {
@@ -104,6 +109,8 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 		v1.Handle(http.MethodGet, "/runners", s.handleGetRunners)
 		v1.Handle(http.MethodGet, "/flavors", s.handleGetFlavors)
 		v1.Handle(http.MethodGet, "/flavors/:name", s.handleGetFlavor)
+		v1.Handle(http.MethodPost, "/flavors/:name/disable", s.handleDisableFlavor)
+		v1.Handle(http.MethodPost, "/flavors/:name/enable", s.handleEnableFlavor)
 		v1.Handle(http.MethodGet, "/groups", s.handleGetGroups)
 		v1.Handle(http.MethodGet, "/groups/:name", s.handleGetGroup)
 	}

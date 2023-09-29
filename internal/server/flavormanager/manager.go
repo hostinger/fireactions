@@ -9,37 +9,20 @@ import (
 )
 
 var (
-	defaultFlavor = &structs.Flavor{Name: "default", VCPUs: 1, MemorySizeMB: 1024, DiskSizeGB: 50}
-)
-
-var (
 	ErrFlavorNotFound = fmt.Errorf("flavor not found")
 	ErrFlavorExists   = fmt.Errorf("flavor already exists")
 )
 
 // FlavorManager manages flavors.
 type FlavorManager struct {
-	flavors       map[string]*structs.Flavor
-	defaultFlavor *structs.Flavor
-	mu            sync.RWMutex
+	flavors map[string]*structs.Flavor
+	mu      sync.RWMutex
 
 	log *zerolog.Logger
 }
 
-// FlavorManagerOpt is a function that configures a FlavorManager.
-type FlavorManagerOpt func(*FlavorManager)
-
-// WithDefaultFlavor sets the default Flavor for the FlavorManager.
-func WithDefaultFlavor(flavor *structs.Flavor) FlavorManagerOpt {
-	f := func(fm *FlavorManager) {
-		fm.defaultFlavor = flavor
-	}
-
-	return f
-}
-
 // New creates a new FlavorManager.
-func New(log *zerolog.Logger, opts ...FlavorManagerOpt) *FlavorManager {
+func New(log *zerolog.Logger) *FlavorManager {
 	fm := &FlavorManager{
 		flavors: make(map[string]*structs.Flavor),
 		mu:      sync.RWMutex{},
@@ -48,14 +31,6 @@ func New(log *zerolog.Logger, opts ...FlavorManagerOpt) *FlavorManager {
 
 	logger := log.With().Str("component", "flavor-manager").Logger()
 	fm.log = &logger
-
-	for _, opt := range opts {
-		opt(fm)
-	}
-
-	if fm.defaultFlavor == nil {
-		fm.defaultFlavor = defaultFlavor
-	}
 
 	return fm
 }
@@ -87,7 +62,7 @@ func (fm *FlavorManager) AddFlavors(f ...*structs.Flavor) error {
 	return nil
 }
 
-// GetFlavor returns a Flavor by name.
+// GetFlavor returns a Flavor by name. In case the Flavor is not found or is disabled, an error is returned.
 func (fm *FlavorManager) GetFlavor(name string) (*structs.Flavor, error) {
 	fm.mu.RLock()
 	defer fm.mu.RUnlock()
@@ -116,19 +91,32 @@ func (fm *FlavorManager) ListFlavors() ([]*structs.Flavor, error) {
 	return flavors, nil
 }
 
-// GetDefaultFlavor gets the default Flavor.
-func (fm *FlavorManager) GetDefaultFlavor() *structs.Flavor {
-	return fm.defaultFlavor
-}
+// DisableFlavor disables a Flavor by name.
+func (fm *FlavorManager) DisableFlavor(name string) error {
+	fm.mu.Lock()
+	defer fm.mu.Unlock()
 
-// SetDefaultFlavor sets the default Flavor.
-func (fm *FlavorManager) SetDefaultFlavor(flavor string) error {
-	f, err := fm.GetFlavor(flavor)
-	if err != nil {
-		return err
+	f, ok := fm.flavors[name]
+	if !ok {
+		return ErrFlavorNotFound
 	}
 
-	fm.defaultFlavor = f
-	fm.log.Info().Msgf("set default flavor: %s", f.String())
+	f.Enabled = false
+	fm.log.Info().Msgf("disabled flavor: %s", f)
+	return nil
+}
+
+// EnableFlavor enables a Flavor by name.
+func (fm *FlavorManager) EnableFlavor(name string) error {
+	fm.mu.Lock()
+	defer fm.mu.Unlock()
+
+	f, ok := fm.flavors[name]
+	if !ok {
+		return ErrFlavorNotFound
+	}
+
+	f.Enabled = true
+	fm.log.Info().Msgf("enabled flavor: %s", f)
 	return nil
 }

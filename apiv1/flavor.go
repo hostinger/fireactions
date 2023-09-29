@@ -14,6 +14,7 @@ type Flavor struct {
 	MemorySizeMB int64  `json:"mem"`
 	VCPUs        int64  `json:"cpu"`
 	ImageName    string `json:"image"`
+	Enabled      bool   `json:"enabled"`
 }
 
 func (f *Flavor) String() string {
@@ -21,15 +22,15 @@ func (f *Flavor) String() string {
 }
 
 func (f *Flavor) Headers() []string {
-	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image"}
+	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image", "Enabled"}
 }
 
 func (f *Flavor) Rows() [][]string {
-	return [][]string{{f.Name, fmt.Sprintf("%d", f.VCPUs), fmt.Sprintf("%d", f.MemorySizeMB), fmt.Sprintf("%d", f.DiskSizeGB), f.ImageName}}
+	return [][]string{{f.Name, fmt.Sprintf("%d", f.VCPUs), fmt.Sprintf("%d", f.MemorySizeMB), fmt.Sprintf("%d", f.DiskSizeGB), f.ImageName, fmt.Sprintf("%t", f.Enabled)}}
 }
 
 func (f Flavors) Headers() []string {
-	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image"}
+	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image", "Enabled"}
 }
 
 func (f Flavors) Rows() [][]string {
@@ -69,4 +70,14 @@ func (c *flavorsClient) Get(ctx context.Context, name string) (*Flavor, error) {
 	}
 
 	return flavor, nil
+}
+
+// Disable disables a Flavor by name.
+func (c *flavorsClient) Disable(ctx context.Context, name string) error {
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/disable", name), http.MethodPost, nil, nil)
+}
+
+// Enable enables a Flavor by name.
+func (c *flavorsClient) Enable(ctx context.Context, name string) error {
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/enable", name), http.MethodPost, nil, nil)
 }

@@ -17,7 +17,7 @@ type Config struct {
 	Scheduler     *scheduler.Config `mapstructure:"scheduler"`
 	LogLevel      string            `mapstructure:"log-level"`
 	DefaultFlavor string            `mapstructure:"default-flavor"`
-	Flavors       []*structs.Flavor `mapstructure:"flavors"`
+	Flavors       []*FlavorConfig   `mapstructure:"flavors"`
 	DefaultGroup  string            `mapstructure:"default-group"`
 	Groups        []*structs.Group  `mapstructure:"groups"`
 	DataDir       string            `mapstructure:"data-dir"`
@@ -67,24 +67,9 @@ func (c *Config) Validate() error {
 
 	defaultFlavorExists := false
 	for _, f := range c.Flavors {
-		if f.Name == "" {
-			err = multierror.Append(err, errors.New("Flavor.Name is required, but was not provided"))
-		}
-
-		if f.DiskSizeGB == 0 {
-			err = multierror.Append(err, errors.New("Flavor.DiskSizeGB is required, but was not provided"))
-		}
-
-		if f.MemorySizeMB == 0 {
-			err = multierror.Append(err, errors.New("Flavor.MemorySizeMB is required, but was not provided"))
-		}
-
-		if f.VCPUs == 0 {
-			err = multierror.Append(err, errors.New("Flavor.VCPUs is required, but was not provided"))
-		}
-
-		if f.ImageName == "" {
-			err = multierror.Append(err, errors.New("Flavor.Image is required, but was not provided"))
+		err := f.Validate()
+		if err != nil {
+			err = multierror.Append(err, fmt.Errorf("Config.Flavors is invalid: %w", err))
 		}
 
 		if f.Name == c.DefaultFlavor {
@@ -148,6 +133,52 @@ func (c *GitHubConfig) Validate() error {
 
 	if c.WebhookSecret == "" {
 		err = multierror.Append(err, errors.New("GitHub.WebhookSecret is required, but was not provided"))
+	}
+
+	return err
+}
+
+// FlavorConfig is the configuration for a Flavor.
+type FlavorConfig struct {
+	Name    string `mapstructure:"name"`
+	Enabled *bool  `mapstructure:"enabled"`
+	Disk    int64  `mapstructure:"disk"`
+	Mem     int64  `mapstructure:"mem"`
+	CPU     int64  `mapstructure:"cpu"`
+	Image   string `mapstructure:"image"`
+}
+
+// Validate validates the configuration.
+func (c *FlavorConfig) Validate() error {
+	var err error
+
+	if c.Name == "" {
+		err = multierror.Append(err, errors.New("Flavor.Name is required, but was not provided"))
+	}
+
+	if strings.Contains(c.Name, "-") {
+		err = multierror.Append(err, fmt.Errorf("Flavor.Name (%s) must not contain any hyphens", c.Name))
+	}
+
+	if c.Disk == 0 {
+		err = multierror.Append(err, errors.New("Flavor.Disk is required, but was not provided"))
+	}
+
+	if c.Mem == 0 {
+		err = multierror.Append(err, errors.New("Flavor.Mem is required, but was not provided"))
+	}
+
+	if c.CPU == 0 {
+		err = multierror.Append(err, errors.New("Flavor.CPU is required, but was not provided"))
+	}
+
+	if c.Image == "" {
+		err = multierror.Append(err, errors.New("Flavor.Image is required, but was not provided"))
+	}
+
+	if c.Enabled == nil {
+		b := true
+		c.Enabled = &b
 	}
 
 	return err

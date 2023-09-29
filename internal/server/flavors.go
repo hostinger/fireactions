@@ -27,6 +27,38 @@ func (s *Server) handleGetFlavor(ctx *gin.Context) {
 	ctx.JSON(200, convertFlavorToFlavorV1(flavor))
 }
 
+func (s *Server) handleDisableFlavor(ctx *gin.Context) {
+	flavor, err := s.fm.GetFlavor(ctx.Param("name"))
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	err = s.fm.DisableFlavor(flavor.Name)
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	ctx.Status(204)
+}
+
+func (s *Server) handleEnableFlavor(ctx *gin.Context) {
+	flavor, err := s.fm.GetFlavor(ctx.Param("name"))
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	err = s.fm.EnableFlavor(flavor.Name)
+	if err != nil {
+		httperr.E(ctx, err)
+		return
+	}
+
+	ctx.Status(204)
+}
+
 func convertFlavorToFlavorV1(flavor *structs.Flavor) api.Flavor {
 	f := api.Flavor{
 		Name:         flavor.Name,
@@ -34,6 +66,7 @@ func convertFlavorToFlavorV1(flavor *structs.Flavor) api.Flavor {
 		MemorySizeMB: flavor.MemorySizeMB,
 		VCPUs:        flavor.VCPUs,
 		ImageName:    flavor.ImageName,
+		Enabled:      flavor.Enabled,
 	}
 
 	return f

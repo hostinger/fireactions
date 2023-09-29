@@ -78,15 +78,27 @@ func (s *Server) handleGitHubWebhook(ctx *gin.Context) {
 
 	flavor, err := s.fm.GetFlavor(label.Flavor)
 	if err != nil {
-		s.log.Debug().Msgf("skipped job %s: unrecognized flavor %s: %s", jobID, label.Flavor, err.Error())
-		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized flavor: %s", err.Error())})
+		s.log.Debug().Msgf("skipped job %s: error getting Flavor %s: %s", jobID, label.Flavor, err.Error())
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("Skipped job due to error getting Flavor: %s", err.Error()),
+		})
+		return
+	}
+
+	if !flavor.Enabled {
+		s.log.Debug().Msgf("skipped job %s: Flavor %s is disabled", jobID, label.Flavor)
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("Skipped job due to Flavor %s being disabled", label.Flavor),
+		})
 		return
 	}
 
 	group, err := s.GetGroupByName(label.Group)
 	if err != nil {
 		s.log.Debug().Msgf("skipped job %s: unrecognized group %s: %s", jobID, label.Group, err.Error())
-		ctx.JSON(200, gin.H{"message": fmt.Sprintf("Skipped job due to unrecognized group: %s", err.Error())})
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("Skipped job due to unrecognized group: %s", err.Error()),
+		})
 		return
 	}
 

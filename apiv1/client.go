@@ -80,7 +80,7 @@ func (c *Client) Do(ctx context.Context, endpoint string, method string, body in
 	}
 
 	switch rsp.StatusCode {
-	case 200:
+	case 200, 201, 204:
 		if v == nil {
 			return nil
 		}
