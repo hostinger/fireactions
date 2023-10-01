@@ -8,9 +8,6 @@ import (
 // result, otherwise it is excluded.
 type JobFilterFunc func(*Job) bool
 
-// Jobs represents a slice of Job
-type Jobs []*Job
-
 // Job struct.
 type Job struct {
 	ID           string
@@ -20,7 +17,6 @@ type Job struct {
 	Name         string
 	Status       JobStatus
 	Repository   string
-	CompletedAt  time.Time
 	CreatedAt    time.Time
 }
 
@@ -28,21 +24,21 @@ type Job struct {
 type JobStatus string
 
 const (
-	JobStatusQueued     JobStatus = "queued"
-	JobStatusInProgress JobStatus = "in_progress"
-	JobStatusCompleted  JobStatus = "completed"
+	JobStatusQueued     JobStatus = "Queued"
+	JobStatusInProgress JobStatus = "In Progress"
 )
 
-// Filter filters Jobs using a JobFilterFunc.
-func (j Jobs) Filter(fn JobFilterFunc) Jobs {
-	result := make(Jobs, 0, len(j))
-	for _, job := range j {
+// FilterJobs filters a slice of Jobs using a JobFilterFunc. If the function returns true, the Job is
+// included in the result, otherwise it is excluded.
+func FilterJobs(jobs []*Job, fn JobFilterFunc) []*Job {
+	filtered := make([]*Job, 0, len(jobs))
+	for _, job := range jobs {
 		if !fn(job) {
 			continue
 		}
 
-		result = append(result, job)
+		filtered = append(filtered, job)
 	}
 
-	return result
+	return filtered
 }

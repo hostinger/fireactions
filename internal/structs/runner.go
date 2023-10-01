@@ -9,9 +9,6 @@ import (
 // result, otherwise it is excluded.
 type RunnerFilterFunc func(*Runner) bool
 
-// Runners is a slice of Runner.
-type Runners []*Runner
-
 // Runner struct.
 type Runner struct {
 	ID           string
@@ -30,13 +27,13 @@ type Runner struct {
 type RunnerStatus string
 
 const (
-	RunnerStatusAssigned      RunnerStatus = "Assigned"
-	RunnerStatusAccepted      RunnerStatus = "Accepted"
-	RunnerStatusRejected      RunnerStatus = "Rejected"
-	RunnerStatusRunning       RunnerStatus = "Running"
-	RunnerStatusComplete      RunnerStatus = "Complete"
-	RunnerStatusUnschedulable RunnerStatus = "Unschedulable"
-	RunnerStatusPending       RunnerStatus = "Pending"
+	RunnerStatusAssigned    RunnerStatus = "Assigned"
+	RunnerStatusAccepted    RunnerStatus = "Accepted"
+	RunnerStatusRejected    RunnerStatus = "Rejected"
+	RunnerStatusRunning     RunnerStatus = "Running"
+	RunnerStatusComplete    RunnerStatus = "Complete"
+	RunnerStatusPending     RunnerStatus = "Pending"
+	RunnerStatusTerminating RunnerStatus = "Terminating"
 )
 
 // String returns a string representation of a Runner.
@@ -44,16 +41,17 @@ func (r *Runner) String() string {
 	return fmt.Sprintf("%s (%s)", r.Name, r.ID)
 }
 
-// Filter filters Runners using a RunnerFilterFunc.
-func (r Runners) Filter(fn RunnerFilterFunc) Runners {
-	runners := make(Runners, 0, len(r))
-	for _, runner := range r {
+// FilterRunners filters a slice of Runners using a RunnerFilterFunc. If the function returns true, the Runner is
+// included in the result, otherwise it is excluded.
+func FilterRunners(runners []*Runner, fn RunnerFilterFunc) []*Runner {
+	filtered := make([]*Runner, 0, len(runners))
+	for _, runner := range runners {
 		if !fn(runner) {
 			continue
 		}
 
-		runners = append(runners, runner)
+		filtered = append(filtered, runner)
 	}
 
-	return runners
+	return filtered
 }

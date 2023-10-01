@@ -4,10 +4,20 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+var (
+	nodesBucket   = []byte("nodes")
+	runnersBucket = []byte("runners")
+	jobsBucket    = []byte("jobs")
+	groupsBucket  = []byte("groups")
+	flavorsBucket = []byte("flavors")
+)
+
+// Store is a bbolt implementation of the Store interface.
 type Store struct {
 	db *bbolt.DB
 }
 
+// New creates a new bbolt Store.
 func New(path string) (*Store, error) {
 	db, err := bbolt.Open(path, 0600, nil)
 	if err != nil {
@@ -19,17 +29,27 @@ func New(path string) (*Store, error) {
 	}
 
 	err = db.Update(func(tx *bbolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("nodes"))
+		_, err := tx.CreateBucketIfNotExists(nodesBucket)
 		if err != nil {
 			return err
 		}
 
-		_, err = tx.CreateBucketIfNotExists([]byte("jobs"))
+		_, err = tx.CreateBucketIfNotExists(jobsBucket)
 		if err != nil {
 			return err
 		}
 
-		_, err = tx.CreateBucketIfNotExists([]byte("runners"))
+		_, err = tx.CreateBucketIfNotExists(runnersBucket)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists(groupsBucket)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists(flavorsBucket)
 		if err != nil {
 			return err
 		}
@@ -43,6 +63,7 @@ func New(path string) (*Store, error) {
 	return s, nil
 }
 
+// Close closes the Store.
 func (s *Store) Close() error {
 	return s.db.Close()
 }

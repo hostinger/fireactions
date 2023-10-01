@@ -32,22 +32,6 @@ func (s *Store) GetRunner(ctx context.Context, id string) (*structs.Runner, erro
 	return runner, nil
 }
 
-func (s *Store) CreateRunner(ctx context.Context, runner *structs.Runner) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		data, err := json.Marshal(runner)
-		if err != nil {
-			return err
-		}
-
-		return tx.Bucket([]byte("runners")).Put([]byte(runner.ID), data)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Store) DeleteRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket([]byte("runners")).Delete([]byte(id))
@@ -59,7 +43,7 @@ func (s *Store) DeleteRunner(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) GetRunners(ctx context.Context) (structs.Runners, error) {
+func (s *Store) ListRunners(ctx context.Context) ([]*structs.Runner, error) {
 	runners := []*structs.Runner{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
@@ -83,7 +67,7 @@ func (s *Store) GetRunners(ctx context.Context) (structs.Runners, error) {
 	return runners, nil
 }
 
-func (s *Store) UpdateRunner(ctx context.Context, runner *structs.Runner) error {
+func (s *Store) SaveRunner(ctx context.Context, runner *structs.Runner) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(runner)
 		if err != nil {

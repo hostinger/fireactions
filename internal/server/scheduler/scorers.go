@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"fmt"
+
 	"github.com/hostinger/fireactions/internal/structs"
 )
 
@@ -8,12 +10,17 @@ import (
 type Scorer interface {
 	// Name returns the name of the scorer.
 	Name() string
+
 	// Score scores nodes based on certain criteria.
 	Score(runner *structs.Runner, node *structs.Node) (float64, error)
+
+	// String returns a string representation of the Scorer.
+	String() string
 }
 
 var (
-	defaultRamScorerMultiplier = 1.0
+	defaultFreeRamScorerMultiplier = 1.0
+	defaultFreeCpuScorerMultiplier = 1.0
 )
 
 // FreeRamScorer is a Scorer that scores Nodes based on their free RAM.
@@ -31,9 +38,10 @@ func (s *FreeRamScorer) Score(runner *structs.Runner, node *structs.Node) (float
 	return float64(node.RAM.Available()) * s.Multiplier, nil
 }
 
-var (
-	defaultCpuScorerMultiplier = 1.0
-)
+// String returns a string representation of the Scorer.
+func (s *FreeRamScorer) String() string {
+	return fmt.Sprintf("%s (Multiplier: %f)", s.Name(), s.Multiplier)
+}
 
 // FreeCpuScorer is a Scorer that scores Nodes based on their free CPU.
 type FreeCpuScorer struct {
@@ -48,4 +56,9 @@ func (s *FreeCpuScorer) Name() string {
 // Score returns the score of the Node.
 func (s *FreeCpuScorer) Score(runner *structs.Runner, node *structs.Node) (float64, error) {
 	return float64(node.CPU.Available()) * s.Multiplier, nil
+}
+
+// String returns a string representation of the Scorer.
+func (s *FreeCpuScorer) String() string {
+	return fmt.Sprintf("%s (Multiplier: %f)", s.Name(), s.Multiplier)
 }

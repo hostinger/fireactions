@@ -12,8 +12,12 @@ import (
 type Filter interface {
 	// Name returns the name of the filter.
 	Name() string
+
 	// Filter filters out nodes that don't meet certain criteria.
 	Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error)
+
+	// String returns a string representation of the Filter.
+	String() string
 }
 
 // StatusFilter is a filter that filters out nodes that are not online.
@@ -28,6 +32,11 @@ func (f *StatusFilter) Name() string {
 // Filter filters out nodes that are not online.
 func (f *StatusFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
 	return node.Status == structs.NodeStatusOnline, nil
+}
+
+// String returns a string representation of the filter.
+func (f *StatusFilter) String() string {
+	return f.Name()
 }
 
 // RamCapacityFilter is a filter that filters out nodes that don't have enough
@@ -46,6 +55,10 @@ func (f *RamCapacityFilter) Filter(ctx context.Context, runner *structs.Runner, 
 	return node.RAM.IsAvailable(runner.Flavor.GetMemorySizeBytes()), nil
 }
 
+func (f *RamCapacityFilter) String() string {
+	return f.Name()
+}
+
 // OrganisationFilter is a filter that filters out nodes that don't belong to
 // the same organisation as the Runner.
 type OrganisationFilter struct {
@@ -62,6 +75,11 @@ func (f *OrganisationFilter) Filter(ctx context.Context, runner *structs.Runner,
 	return runner.Organisation == node.Organisation, nil
 }
 
+// String returns a string representation of the filter.
+func (f *OrganisationFilter) String() string {
+	return f.Name()
+}
+
 // GroupFilter is a filter that filters out nodes that don't belong to the same group
 // as the Runner.
 type GroupFilter struct {
@@ -75,6 +93,11 @@ func (f *GroupFilter) Name() string {
 // Filter filters out nodes that don't belong to the same group as the Runner.
 func (f *GroupFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
 	return runner.Group.Equals(node.Group), nil
+}
+
+// String returns a string representation of the filter.
+func (f *GroupFilter) String() string {
+	return f.Name()
 }
 
 // CpuCapacityFilter is a filter that filters out nodes that don't have enough
@@ -93,6 +116,11 @@ func (f *CpuCapacityFilter) Filter(ctx context.Context, runner *structs.Runner, 
 	return node.CPU.IsAvailable(runner.Flavor.VCPUs), nil
 }
 
+// String returns a string representation of the filter.
+func (f *CpuCapacityFilter) String() string {
+	return f.Name()
+}
+
 // HeartbeatFilter is a filter that filters out nodes that haven't been updated
 // in the last 60 seconds.
 type HeartbeatFilter struct {
@@ -106,4 +134,9 @@ func (f *HeartbeatFilter) Name() string {
 // Filter filters out nodes that haven't been updated in the last 60 seconds.
 func (f *HeartbeatFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
 	return node.UpdatedAt.After(time.Now().Add(-60 * time.Second)), nil
+}
+
+// String returns a string representation of the filter.
+func (f *HeartbeatFilter) String() string {
+	return f.Name()
 }

@@ -10,10 +10,10 @@ type Flavors []Flavor
 
 type Flavor struct {
 	Name         string `json:"name"`
-	DiskSizeGB   int64  `json:"disk"`
-	MemorySizeMB int64  `json:"mem"`
-	VCPUs        int64  `json:"cpu"`
-	ImageName    string `json:"image"`
+	DiskSizeGB   int64  `json:"disk_size_gb"`
+	MemorySizeMB int64  `json:"memory_size_mb"`
+	VCPUs        int64  `json:"vcpus"`
+	ImageName    string `json:"image_name"`
 	Enabled      bool   `json:"enabled"`
 }
 
@@ -74,10 +74,10 @@ func (c *flavorsClient) Get(ctx context.Context, name string) (*Flavor, error) {
 
 // Disable disables a Flavor by name.
 func (c *flavorsClient) Disable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/disable", name), http.MethodPost, nil, nil)
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/disable", name), http.MethodPatch, nil, nil)
 }
 
 // Enable enables a Flavor by name.
 func (c *flavorsClient) Enable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/enable", name), http.MethodPost, nil, nil)
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/enable", name), http.MethodPatch, nil, nil)
 }

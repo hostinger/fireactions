@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/internal/server"
+	"github.com/hostinger/fireactions/internal/server/store"
+	"github.com/hostinger/fireactions/internal/server/store/bbolt"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,6 +52,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 	if err := viper.Unmarshal(&config); err != nil {
 		return err
 	}
+	config.SetDefaults()
 
 	err := config.Validate()
 	if err != nil {
@@ -60,13 +64,17 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	logLevel, err := zerolog.ParseLevel(config.LogLevel)
+	logger, err := createLogger(config)
 	if err != nil {
-		return fmt.Errorf("error parsing log level: %w", err)
+		return fmt.Errorf("error creating logger: %w", err)
 	}
-	log := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(logLevel)
 
-	srv, err := server.New(log, config)
+	store, err := createStore(config)
+	if err != nil {
+		return fmt.Errorf("error creating store: %w", err)
+	}
+
+	srv, err := server.New(logger, config, store)
 	if err != nil {
 		return fmt.Errorf("error creating server: %w", err)
 	}
@@ -85,4 +93,23 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func createStore(cfg *server.Config) (store.Store, error) {
+	store, err := bbolt.New(filepath.Join(cfg.DataDir, "fireactions.db"))
+	if err != nil {
+		return nil, fmt.Errorf("error creating store: %w", err)
+	}
+
+	return store, nil
+}
+
+func createLogger(cfg *server.Config) (*zerolog.Logger, error) {
+	logLevel, err := zerolog.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing log level: %w", err)
+	}
+
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(logLevel)
+	return &logger, nil
 }

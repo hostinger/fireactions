@@ -23,3 +23,13 @@ func (f *Flavor) String() string {
 func (f *Flavor) GetMemorySizeBytes() int64 {
 	return f.MemorySizeMB * 1024 * 1024
 }
+
+// Enable enables the Flavor for usage.
+func (f *Flavor) Enable() {
+	f.Enabled = true
+}
+
+// Disable disables the Flavor for usage.
+func (f *Flavor) Disable() {
+	f.Enabled = false
+}

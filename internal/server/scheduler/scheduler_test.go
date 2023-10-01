@@ -19,6 +19,10 @@ func (f *successFilter) Filter(ctx context.Context, runner *structs.Runner, node
 	return true, nil
 }
 
+func (f *successFilter) String() string {
+	return f.Name()
+}
+
 type failureFilter struct {
 }
 
@@ -28,6 +32,10 @@ func (f *failureFilter) Name() string {
 
 func (f *failureFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
 	return false, nil
+}
+
+func (f *failureFilter) String() string {
+	return f.Name()
 }
 
 func TestFindFeasibleNodesSuccess(t *testing.T) {

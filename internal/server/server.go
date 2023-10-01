@@ -5,18 +5,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/hostinger/fireactions/internal/server/flavormanager"
 	"github.com/hostinger/fireactions/internal/server/ghclient"
-	"github.com/hostinger/fireactions/internal/server/groupmanager"
+	"github.com/hostinger/fireactions/internal/server/handler"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
-	"github.com/hostinger/fireactions/internal/server/store/bbolt"
 	"github.com/hostinger/fireactions/internal/structs"
 	"github.com/rs/zerolog"
 )
@@ -24,16 +21,13 @@ import (
 // Server struct.
 type Server struct {
 	TLSConfig    *tls.Config
-	Store        store.Store
+	store        store.Store
 	scheduler    *scheduler.Scheduler
 	server       *http.Server
-	ghClient     *ghclient.Client
-	fm           *flavormanager.FlavorManager
-	gm           *groupmanager.GroupManager
 	shutdownOnce sync.Once
 	shutdownMu   sync.Mutex
 	shutdownCh   chan struct{}
-	log          zerolog.Logger
+	log          *zerolog.Logger
 	cfg          *Config
 }
 
@@ -41,17 +35,23 @@ type Server struct {
 type ServerOpt func(*Server)
 
 // New creates a new Server.
-func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
+func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt) (*Server, error) {
 	s := &Server{
 		TLSConfig:    &tls.Config{},
 		cfg:          cfg,
-		fm:           flavormanager.New(&log),
-		gm:           groupmanager.New(&log),
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		shutdownMu:   sync.Mutex{},
-		log:          log.With().Str("component", "server").Logger(),
+		store:        store,
+		scheduler:    scheduler.New(log, cfg.Scheduler, store),
 	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	logger := log.With().Str("component", "server").Logger()
+	s.log = &logger
 
 	ghClient, err := ghclient.New(&ghclient.Config{
 		AppID:         cfg.GitHub.AppID,
@@ -60,43 +60,6 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating GitHub client: %w", err)
 	}
-	s.ghClient = ghClient
-
-	store, err := bbolt.New(filepath.Join(cfg.DataDir, "fireactions.db"))
-	if err != nil {
-		return nil, fmt.Errorf("error creating store: %w", err)
-	}
-
-	s.scheduler = scheduler.New(&s.log, cfg.Scheduler, store)
-	s.Store = store
-
-	for _, flavor := range cfg.Flavors {
-		err := s.fm.AddFlavor(&structs.Flavor{
-			Name:         flavor.Name,
-			Enabled:      *flavor.Enabled,
-			DiskSizeGB:   flavor.Disk,
-			MemorySizeMB: flavor.Mem,
-			VCPUs:        flavor.CPU,
-			ImageName:    flavor.Image,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error adding flavor: %w", err)
-		}
-	}
-
-	for _, group := range cfg.Groups {
-		err := s.gm.AddGroup(&structs.Group{
-			Name:    group.Name,
-			Enabled: *group.Enabled,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error adding group: %w", err)
-		}
-	}
-
-	for _, opt := range opts {
-		opt(s)
-	}
 
 	mux := gin.New()
 	mux.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
@@ -104,42 +67,24 @@ func New(log zerolog.Logger, cfg *Config, opts ...ServerOpt) (*Server, error) {
 
 	v1 := mux.Group("/api/v1")
 	{
-		v1.Handle(http.MethodDelete, "/jobs/:id", s.handleDelJob)
-		v1.Handle(http.MethodGet, "/jobs", s.handleGetJobs)
-		v1.Handle(http.MethodGet, "/jobs/:id", s.handleGetJob)
-		v1.Handle(http.MethodGet, "/nodes", s.handleGetNodes)
-		v1.Handle(http.MethodPost, "/nodes/:id/connect", s.handleNodeConnect)
-		v1.Handle(http.MethodGet, "/nodes/:id", s.handleGetNode)
-		v1.Handle(http.MethodPost, "/nodes/:id/disconnect", s.handleNodeDisconnect)
-		v1.Handle(http.MethodPost, "/nodes", s.handleNodeRegister)
-		v1.Handle(http.MethodPost, "/nodes/:id/runners/:runner/complete", s.handleCompleteRunnerAssignment)
-		v1.Handle(http.MethodPost, "/nodes/:id/runners/:runner/accept", s.handleAcceptRunnerAssignment)
-		v1.Handle(http.MethodPost, "/nodes/:id/runners/:runner/reject", s.handleRejectRunnerAssignment)
-		v1.Handle(http.MethodDelete, "/nodes/:id", s.handleNodeDeregister)
-		v1.Handle(http.MethodGet, "/nodes/:id/runners", s.handleGetNodeAssignments)
-		v1.Handle(http.MethodPost, "/github/:organisation/registration-token", s.handleGitHubRegistrationToken)
-		v1.Handle(http.MethodGet, "/runners/:id", s.handleGetRunner)
-		v1.Handle(http.MethodGet, "/runners", s.handleGetRunners)
-		v1.Handle(http.MethodGet, "/flavors", s.handleGetFlavors)
-		v1.Handle(http.MethodGet, "/flavors/:name", s.handleGetFlavor)
-		v1.Handle(http.MethodPost, "/flavors/:name/disable", s.handleDisableFlavor)
-		v1.Handle(http.MethodPost, "/flavors/:name/enable", s.handleEnableFlavor)
-		v1.Handle(http.MethodGet, "/groups", s.handleGetGroups)
-		v1.Handle(http.MethodGet, "/groups/:name", s.handleGetGroup)
-		v1.Handle(http.MethodPost, "/groups/:name/disable", s.handleDisableGroup)
-		v1.Handle(http.MethodPost, "/groups/:name/enable", s.handleEnableGroup)
+		handler.RegisterJobsV1(v1, log, store)
+		handler.RegisterFlavorsV1(v1, log, store)
+		handler.RegisterGitHubV1(v1, log, ghClient)
+		handler.RegisterGroupsV1(v1, log, store)
+		handler.RegisterRunnersV1(v1, log, store)
+		handler.RegisterNodesV1(v1, log, s.scheduler, store)
 	}
 
-	mux.Handle(http.MethodPost, "/webhook", s.handleGitHubWebhook)
+	mux.POST("/webhook", handler.GetGitHubWebhookHandlerFuncV1(
+		log, cfg.GitHub.WebhookSecret, cfg.GitHub.JobLabelPrefix, cfg.DefaultFlavor, cfg.DefaultGroup, s.scheduler, store))
 
-	srv := &http.Server{
+	s.server = &http.Server{
 		Addr:         cfg.ListenAddr,
 		Handler:      mux,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-	s.server = srv
 
 	return s, nil
 }
@@ -153,8 +98,8 @@ func (s *Server) Shutdown(ctx context.Context) {
 			s.log.Error().Err(err).Msg("error shutting down server")
 		}
 
-		s.Store.Close()
 		s.scheduler.Shutdown()
+		s.store.Close()
 
 		close(s.shutdownCh)
 	})
@@ -164,7 +109,14 @@ func (s *Server) Shutdown(ctx context.Context) {
 func (s *Server) Start() error {
 	s.log.Info().Msgf("starting server on %s", s.server.Addr)
 
-	err := s.scheduler.Start()
+	var err error
+
+	err = s.init()
+	if err != nil {
+		return fmt.Errorf("error initializing server: %w", err)
+	}
+
+	err = s.scheduler.Start()
 	if err != nil {
 		return fmt.Errorf("error starting scheduler: %w", err)
 	}
@@ -172,6 +124,60 @@ func (s *Server) Start() error {
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("error starting server: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Server) init() error {
+	err := initPreconfiguredFlavors(s.log, s.cfg.Flavors, s.store)
+	if err != nil {
+		return fmt.Errorf("error initializing preconfigured flavors: %w", err)
+	}
+
+	err = initPreconfiguredGroups(s.log, s.cfg.Groups, s.store)
+	if err != nil {
+		return fmt.Errorf("error initializing preconfigured groups: %w", err)
+	}
+
+	return nil
+}
+
+func initPreconfiguredFlavors(log *zerolog.Logger, flavors []*FlavorConfig, store store.Store) error {
+	log.Info().Msg("creating preconfigured Flavor(s)")
+
+	for _, cfg := range flavors {
+		err := store.SaveFlavor(context.Background(), &structs.Flavor{
+			Name:         cfg.Name,
+			DiskSizeGB:   cfg.Disk,
+			MemorySizeMB: cfg.Mem,
+			VCPUs:        cfg.CPU,
+			ImageName:    cfg.Image,
+			Enabled:      *cfg.Enabled,
+		})
+		if err != nil {
+			return fmt.Errorf("error saving flavor: %w", err)
+		}
+
+		log.Info().Msgf("created Flavor: %s", cfg.Name)
+	}
+
+	return nil
+}
+
+func initPreconfiguredGroups(log *zerolog.Logger, groups []*GroupConfig, store store.Store) error {
+	log.Info().Msg("creating preconfigured Group(s)")
+
+	for _, cfg := range groups {
+		err := store.SaveGroup(context.Background(), &structs.Group{
+			Name:    cfg.Name,
+			Enabled: *cfg.Enabled,
+		})
+		if err != nil {
+			return fmt.Errorf("error saving group: %w", err)
+		}
+
+		log.Info().Msgf("created Group: %s", cfg.Name)
 	}
 
 	return nil

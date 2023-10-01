@@ -32,18 +32,6 @@ func (s *Store) GetJob(ctx context.Context, id string) (*structs.Job, error) {
 	return job, nil
 }
 
-func (s *Store) CreateJob(ctx context.Context, job *structs.Job) error {
-	f := s.db.Update(func(tx *bbolt.Tx) error {
-		data, err := json.Marshal(job)
-		if err != nil {
-			return err
-		}
-
-		return tx.Bucket([]byte("jobs")).Put([]byte(job.ID), data)
-	})
-	return f
-}
-
 func (s *Store) DeleteJob(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket([]byte("jobs")).Delete([]byte(id))
@@ -55,7 +43,7 @@ func (s *Store) DeleteJob(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) GetJobs(ctx context.Context) (structs.Jobs, error) {
+func (s *Store) ListJobs(ctx context.Context) ([]*structs.Job, error) {
 	var jobs []*structs.Job
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
@@ -79,7 +67,7 @@ func (s *Store) GetJobs(ctx context.Context) (structs.Jobs, error) {
 	return jobs, nil
 }
 
-func (s *Store) UpdateJob(ctx context.Context, job *structs.Job) error {
+func (s *Store) SaveJob(ctx context.Context, job *structs.Job) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(job)
 		if err != nil {

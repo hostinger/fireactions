@@ -9,9 +9,6 @@ import (
 // result, otherwise it is excluded.
 type NodeFilterFunc func(*Node) bool
 
-// Nodes is a slice of Node.
-type Nodes []*Node
-
 // Node struct.
 type Node struct {
 	ID           string
@@ -39,16 +36,15 @@ func (n *Node) String() string {
 	return fmt.Sprintf("%s (%s)", n.Name, n.ID)
 }
 
-// Filter filters Nodes using a NodeFilterFunc.
-func (n Nodes) Filter(f NodeFilterFunc) Nodes {
-	var nodes Nodes
-	for _, node := range n {
-		if !f(node) {
-			continue
+// FilterNodes filters a slice of Nodes using a NodeFilterFunc. If the function returns true, the Node is
+// included in the result, otherwise it is excluded.
+func FilterNodes(nodes []*Node, filter NodeFilterFunc) []*Node {
+	filtered := make([]*Node, 0, len(nodes))
+	for _, node := range nodes {
+		if filter(node) {
+			filtered = append(filtered, node)
 		}
-
-		nodes = append(nodes, node)
 	}
 
-	return nodes
+	return filtered
 }

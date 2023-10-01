@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, c)
 }
 
-func TestSetToken(t *testing.T) {
+func TestSetRegistrationToken(t *testing.T) {
 	c := New()
 
 	token := &github.RegistrationToken{
@@ -22,12 +22,24 @@ func TestSetToken(t *testing.T) {
 		ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour)},
 	}
 
-	c.SetToken("org", token)
+	c.SetRegistrationToken("org", token)
 
-	assert.Equal(t, token, c.tokens["org"])
+	assert.Equal(t, token, c.registrationTokens["org"])
 }
 
-func TestGetToken(t *testing.T) {
+func TestSetRemoveToken(t *testing.T) {
+	c := New()
+
+	token := &github.RemoveToken{
+		Token: github.String("token"),
+	}
+
+	c.SetRemoveToken("org", token)
+
+	assert.Equal(t, token, c.removeTokens["org"])
+}
+
+func TestGetRegistrationToken(t *testing.T) {
 	c := New()
 
 	token := &github.RegistrationToken{
@@ -35,12 +47,12 @@ func TestGetToken(t *testing.T) {
 		ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour)},
 	}
 
-	c.SetToken("org", token)
+	c.SetRegistrationToken("org", token)
 
-	assert.Equal(t, token.Token, c.GetToken("org"))
+	assert.Equal(t, token.Token, c.GetRegistrationToken("org"))
 }
 
-func TestGetTokenExpired(t *testing.T) {
+func TestGetRegistrationToken_Expired(t *testing.T) {
 	c := New()
 
 	token := &github.RegistrationToken{
@@ -48,12 +60,12 @@ func TestGetTokenExpired(t *testing.T) {
 		ExpiresAt: &github.Timestamp{Time: time.Now().Add(-time.Hour)},
 	}
 
-	c.SetToken("org", token)
+	c.SetRegistrationToken("org", token)
 
-	assert.Nil(t, c.GetToken("org"))
+	assert.Nil(t, c.GetRegistrationToken("org"))
 }
 
-func TestGetTokenExpiresSoon(t *testing.T) {
+func TestGetRegistrationToken_ExpiresIn1m(t *testing.T) {
 	c := New()
 
 	token := &github.RegistrationToken{
@@ -61,13 +73,58 @@ func TestGetTokenExpiresSoon(t *testing.T) {
 		ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Minute)},
 	}
 
-	c.SetToken("org", token)
+	c.SetRegistrationToken("org", token)
 
-	assert.Nil(t, c.GetToken("org"))
+	assert.Nil(t, c.GetRegistrationToken("org"))
 }
 
-func TestGetTokenNotFound(t *testing.T) {
+func TestGetRegistrationToken_NotFound(t *testing.T) {
 	c := New()
 
-	assert.Nil(t, c.GetToken("org"))
+	assert.Nil(t, c.GetRegistrationToken("org"))
+}
+
+func TestGetRemoveToken(t *testing.T) {
+	c := New()
+
+	token := &github.RemoveToken{
+		Token:     github.String("token"),
+		ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour)},
+	}
+
+	c.SetRemoveToken("org", token)
+
+	assert.Equal(t, token.Token, c.GetRemoveToken("org"))
+}
+
+func TestGetRemoveToken_Expired(t *testing.T) {
+	c := New()
+
+	token := &github.RemoveToken{
+		Token:     github.String("token"),
+		ExpiresAt: &github.Timestamp{Time: time.Now().Add(-time.Hour)},
+	}
+
+	c.SetRemoveToken("org", token)
+
+	assert.Nil(t, c.GetRemoveToken("org"))
+}
+
+func TestGetRemoveToken_NotFound(t *testing.T) {
+	c := New()
+
+	assert.Nil(t, c.GetRemoveToken("org"))
+}
+
+func TestGetRemoveToken_ExpiresIn1m(t *testing.T) {
+	c := New()
+
+	token := &github.RemoveToken{
+		Token:     github.String("token"),
+		ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Minute)},
+	}
+
+	c.SetRemoveToken("org", token)
+
+	assert.Nil(t, c.GetRemoveToken("org"))
 }

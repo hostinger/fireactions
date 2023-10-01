@@ -17,3 +17,13 @@ func (g *Group) String() string {
 func (g *Group) Equals(other *Group) bool {
 	return g.Name == other.Name
 }
+
+// Enable enables the Group for usage.
+func (g *Group) Enable() {
+	g.Enabled = true
+}
+
+// Disable disables the Group for usage.
+func (g *Group) Disable() {
+	g.Enabled = false
+}

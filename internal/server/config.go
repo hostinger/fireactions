@@ -107,6 +107,27 @@ func (c *Config) Validate() error {
 	return err
 }
 
+// SetDefaults sets the default values for the configuration.
+func (c *Config) SetDefaults() {
+	if c.LogLevel == "" {
+		c.LogLevel = "info"
+	}
+
+	if c.DataDir == "" {
+		c.DataDir = "/var/lib/fireactions"
+	}
+
+	c.GitHub.SetDefaults()
+	for _, f := range c.Flavors {
+		f.SetDefaults()
+	}
+	for _, g := range c.Groups {
+		g.SetDefaults()
+	}
+
+	c.Scheduler.SetDefaults()
+}
+
 // GitHubConfig is the configuration for the GitHub integration.
 type GitHubConfig struct {
 	JobLabelPrefix string `mapstructure:"job-label-prefix"`
@@ -136,6 +157,13 @@ func (c *GitHubConfig) Validate() error {
 	}
 
 	return err
+}
+
+// SetDefaults sets the default values for the configuration.
+func (c *GitHubConfig) SetDefaults() {
+	if c.JobLabelPrefix == "" {
+		c.JobLabelPrefix = "fireactions"
+	}
 }
 
 // FlavorConfig is the configuration for a Flavor.
@@ -172,12 +200,15 @@ func (c *FlavorConfig) Validate() error {
 		err = multierror.Append(err, errors.New("Flavor.Image is required, but was not provided"))
 	}
 
+	return err
+}
+
+// SetDefaults sets the default values for the configuration.
+func (c *FlavorConfig) SetDefaults() {
 	if c.Enabled == nil {
 		b := true
 		c.Enabled = &b
 	}
-
-	return err
 }
 
 // GroupConfig is the configuration for a Group.
@@ -198,10 +229,13 @@ func (c *GroupConfig) Validate() error {
 		err = multierror.Append(err, fmt.Errorf("Group.Name (%s) must not contain any hyphens", c.Name))
 	}
 
+	return err
+}
+
+// SetDefaults sets the default values for the configuration.
+func (c *GroupConfig) SetDefaults() {
 	if c.Enabled == nil {
 		b := true
 		c.Enabled = &b
 	}
-
-	return err
 }

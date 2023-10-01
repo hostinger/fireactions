@@ -6,10 +6,17 @@ import (
 	"sync"
 
 	"github.com/hostinger/fireactions/internal/server/scheduler/cache"
-	"github.com/hostinger/fireactions/internal/server/store"
 	"github.com/hostinger/fireactions/internal/structs"
 	"github.com/rs/zerolog"
 )
+
+// Storer is an interface that stores and retrieves Runners and Nodes.
+type Storer interface {
+	ListRunners(ctx context.Context) ([]*structs.Runner, error)
+	SaveRunner(ctx context.Context, runner *structs.Runner) error
+	ListNodes(ctx context.Context) ([]*structs.Node, error)
+	ReserveNodeResources(ctx context.Context, nodeID string, vcpus int64, ram int64) error
+}
 
 var (
 	// ErrFilterExists is returned when a Filter with the same name already
@@ -24,25 +31,18 @@ var (
 type Scheduler struct {
 	queue        *SchedulingQueue
 	cache        Cache
-	store        store.Store
+	store        Storer
 	filters      map[string]Filter
 	scorers      map[string]Scorer
 	shutdownOnce sync.Once
 	shutdownCh   chan struct{}
 	isShutdown   bool
 	log          *zerolog.Logger
+	cfg          *Config
 }
 
 // New creates a new Scheduler.
-func New(log *zerolog.Logger, cfg *Config, store store.Store) *Scheduler {
-	if cfg.FreeCpuScorerMultiplier == 0 {
-		cfg.FreeCpuScorerMultiplier = defaultCpuScorerMultiplier
-	}
-
-	if cfg.FreeMemScorerMultiplier == 0 {
-		cfg.FreeMemScorerMultiplier = defaultRamScorerMultiplier
-	}
-
+func New(log *zerolog.Logger, cfg *Config, store Storer) *Scheduler {
 	s := &Scheduler{
 		queue:        NewSchedulingQueue(),
 		filters:      make(map[string]Filter, 0),
@@ -53,23 +53,14 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store) *Scheduler {
 		shutdownCh:   make(chan struct{}),
 		isShutdown:   false,
 		log:          log,
+		cfg:          cfg,
 	}
 
 	logger := log.With().Str("subsystem", "scheduler").Logger()
 	s.log = &logger
 
-	s.MustRegisterScorer(&FreeCpuScorer{
-		Multiplier: cfg.FreeCpuScorerMultiplier})
-	s.MustRegisterScorer(&FreeRamScorer{
-		Multiplier: cfg.FreeMemScorerMultiplier})
-
-	s.MustRegisterFilter(&OrganisationFilter{})
-	s.MustRegisterFilter(&CpuCapacityFilter{})
-	s.MustRegisterFilter(&RamCapacityFilter{})
-	s.MustRegisterFilter(&GroupFilter{})
-	s.MustRegisterFilter(&HeartbeatFilter{})
-	s.MustRegisterFilter(&StatusFilter{})
-
+	s.registerFilters()
+	s.registerScorers()
 	return s
 }
 
@@ -104,52 +95,36 @@ func (s *Scheduler) Schedule(r *structs.Runner) error {
 	return nil
 }
 
-// MustRegisterFilter registers a Filter. If a Filter with the same name already
-// exists, the program panics.
-func (s *Scheduler) MustRegisterFilter(filter Filter) {
-	err := s.RegisterFilter(filter)
-	if err != nil {
-		panic(err)
+func (s *Scheduler) registerFilters() {
+	filters := []Filter{
+		&OrganisationFilter{},
+		&CpuCapacityFilter{},
+		&RamCapacityFilter{},
+		&GroupFilter{},
+		&HeartbeatFilter{},
+		&StatusFilter{},
+	}
+
+	for _, filter := range filters {
+		s.filters[filter.Name()] = filter
+		s.log.Debug().Msgf("registered filter %s", filter)
 	}
 }
 
-// MustRegisterScorer registers a Scorer. If a Scorer with the same name already
-// exists, the program panics.
-func (s *Scheduler) MustRegisterScorer(scorer Scorer) {
-	err := s.RegisterScorer(scorer)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// RegisterFilter registers a Filter. If a Filter with the same name already
-// exists, an error is returned.
-func (s *Scheduler) RegisterFilter(filter Filter) error {
-	_, ok := s.filters[filter.Name()]
-	if ok {
-		return ErrFilterExists
+func (s *Scheduler) registerScorers() {
+	scorers := []Scorer{
+		&FreeCpuScorer{Multiplier: s.cfg.FreeCpuScorerMultiplier},
+		&FreeRamScorer{Multiplier: s.cfg.FreeRamScorerMultiplier},
 	}
 
-	s.filters[filter.Name()] = filter
-	s.log.Debug().Msgf("registered filter %s", filter.Name())
-	return nil
-}
-
-// RegisterScorer registers a Scorer. If a Scorer with the same name already
-// exists, an error is returned.
-func (s *Scheduler) RegisterScorer(scorer Scorer) error {
-	_, ok := s.scorers[scorer.Name()]
-	if ok {
-		return ErrScorerExists
+	for _, scorer := range scorers {
+		s.scorers[scorer.Name()] = scorer
+		s.log.Debug().Msgf("registered scorer %s", scorer)
 	}
-
-	s.scorers[scorer.Name()] = scorer
-	s.log.Debug().Msgf("registered scorer %s", scorer.Name())
-	return nil
 }
 
 func (s *Scheduler) init() error {
-	nodes, err := s.store.GetNodes(context.Background())
+	nodes, err := s.store.ListNodes(context.Background())
 	if err != nil {
 		return err
 	}
@@ -163,12 +138,12 @@ func (s *Scheduler) init() error {
 		s.log.Debug().Msgf("added existing node %s to internal cache", n)
 	}
 
-	runners, err := s.store.GetRunners(context.Background())
+	runners, err := s.store.ListRunners(context.Background())
 	if err != nil {
 		return err
 	}
 
-	runners = runners.Filter(func(r *structs.Runner) bool {
+	runners = structs.FilterRunners(runners, func(r *structs.Runner) bool {
 		return r.Status == structs.RunnerStatusPending
 	})
 
@@ -228,7 +203,7 @@ func (s *Scheduler) schedule() {
 
 	runner.Status = structs.RunnerStatusAssigned
 	runner.Node = bestNode
-	err = s.store.UpdateRunner(context.Background(), runner)
+	err = s.store.SaveRunner(context.Background(), runner)
 	if err != nil {
 		s.log.Error().Err(err).Msg("error updating runner")
 		return

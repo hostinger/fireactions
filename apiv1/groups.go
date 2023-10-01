@@ -69,10 +69,10 @@ func (c *groupsClient) Get(ctx context.Context, name string) (*Group, error) {
 
 // Disable disables a Group by name.
 func (c *groupsClient) Disable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/disable", name), http.MethodPost, nil, nil)
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/disable", name), http.MethodPatch, nil, nil)
 }
 
 // Enable enables a Group by name.
 func (c *groupsClient) Enable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/enable", name), http.MethodPost, nil, nil)
+	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/enable", name), http.MethodPatch, nil, nil)
 }

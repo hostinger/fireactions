@@ -32,23 +32,7 @@ func (s *Store) GetNode(ctx context.Context, id string) (*structs.Node, error) {
 	return node, nil
 }
 
-func (s *Store) CreateNode(ctx context.Context, node *structs.Node) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		data, err := json.Marshal(node)
-		if err != nil {
-			return err
-		}
-
-		return tx.Bucket([]byte("nodes")).Put([]byte(node.ID), data)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Store) UpdateNode(ctx context.Context, node *structs.Node) error {
+func (s *Store) SaveNode(ctx context.Context, node *structs.Node) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(node)
 		if err != nil {
@@ -75,7 +59,7 @@ func (s *Store) DeleteNode(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) GetNodes(ctx context.Context) (structs.Nodes, error) {
+func (s *Store) ListNodes(ctx context.Context) ([]*structs.Node, error) {
 	nodes := []*structs.Node{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {

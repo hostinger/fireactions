@@ -94,6 +94,7 @@ default-group: ltbnk
 groups:
   - name: ltbnk
   - name: usimm
+    enabled: false # (optional) Whether the group is enabled or not. Defaults to true.
 
 # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
 log-level: debug
