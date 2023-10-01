@@ -143,3 +143,21 @@ func (s *Store) ReleaseNodeResources(ctx context.Context, id string, cpu, mem in
 
 	return nil
 }
+
+func (s *Store) GetNodesCount(ctx context.Context) (int, error) {
+	var count int
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(nodesBucket)
+		if b == nil {
+			return nil
+		}
+
+		count = b.Stats().KeyN
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

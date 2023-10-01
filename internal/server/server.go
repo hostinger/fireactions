@@ -15,6 +15,8 @@ import (
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
 	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 )
 
@@ -29,6 +31,9 @@ type Server struct {
 	shutdownCh   chan struct{}
 	log          *zerolog.Logger
 	cfg          *Config
+
+	up       prometheus.Gauge
+	registry *prometheus.Registry
 }
 
 // ServerOpt is a function that configures a Server.
@@ -44,6 +49,13 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt)
 		shutdownMu:   sync.Mutex{},
 		store:        store,
 		scheduler:    scheduler.New(log, cfg.Scheduler, store),
+		up: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "up",
+			Namespace: "fireactions",
+			Subsystem: "server",
+			Help:      "Whether the server is up",
+		}),
+		registry: prometheus.NewRegistry(),
 	}
 
 	for _, opt := range opts {
@@ -75,6 +87,7 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt)
 		handler.RegisterNodesV1(v1, log, s.scheduler, store)
 	}
 
+	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
 	mux.POST("/webhook", handler.GetGitHubWebhookHandlerFuncV1(
 		log, cfg.GitHub.WebhookSecret, cfg.GitHub.JobLabelPrefix, cfg.DefaultFlavor, cfg.DefaultGroup, s.scheduler, store))
 
@@ -121,6 +134,8 @@ func (s *Server) Start() error {
 		return fmt.Errorf("error starting scheduler: %w", err)
 	}
 
+	s.up.Set(1)
+
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("error starting server: %w", err)
@@ -130,6 +145,9 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) init() error {
+	s.registry.MustRegister(s.store)
+	s.registry.MustRegister(s)
+
 	err := initPreconfiguredFlavors(s.log, s.cfg.Flavors, s.store)
 	if err != nil {
 		return fmt.Errorf("error initializing preconfigured flavors: %w", err)
@@ -141,6 +159,16 @@ func (s *Server) init() error {
 	}
 
 	return nil
+}
+
+// Collect implements the prometheus.Collector interface.
+func (s *Server) Collect(ch chan<- prometheus.Metric) {
+	s.up.Collect(ch)
+}
+
+// Describe implements the prometheus.Collector interface.
+func (s *Server) Describe(ch chan<- *prometheus.Desc) {
+	s.up.Describe(ch)
 }
 
 func initPreconfiguredFlavors(log *zerolog.Logger, flavors []*FlavorConfig, store store.Store) error {

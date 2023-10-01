@@ -33,6 +33,30 @@ The label format is based on the following template:
 
 Flavors and groups are defined in the `flavors` and `groups` section of the [configuration](./docs/configuration.md) file. The default flavor and group can be specified in the `default-flavor`, `default-group` options.
 
+## Metrics
+
+[Prometheus](https://prometheus.io/) metrics are exposed on the same port and can be accessed at `/metrics` endpoint.
+
+### Server
+
+Currently, the following metrics are exposed:
+
+| Metric name                | Description                                                                 |
+|----------------------------|-----------------------------------------------------------------------------|
+| fireactions_server_up | Whether the Fireactions server is up and running. |
+| fireactions_store_scrape_errors_total | Total number of errors encountered while scraping the store. |
+| fireactions_store_resources_total | Number of resources in the store (nodes, jobs, runners, groups, flavors) |
+
+Example Prometheus scrape configuration:
+
+```yaml
+scrape_configs:
+- job_name: fireactions-server
+  static_configs:
+  - targets:
+      - 127.0.0.1:8080
+```
+
 ## Roadmap
 
 - Support for right-sizing virtual machines based on actual (historical) GitHub job resource usage via [Prometheus](https://prometheus.io/)

@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	structs "github.com/hostinger/fireactions/internal/structs"
+	prometheus "github.com/prometheus/client_golang/prometheus"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -51,6 +52,18 @@ func (m *MockStore) Close() error {
 func (mr *MockStoreMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockStore)(nil).Close))
+}
+
+// Collect mocks base method.
+func (m *MockStore) Collect(arg0 chan<- prometheus.Metric) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Collect", arg0)
+}
+
+// Collect indicates an expected call of Collect.
+func (mr *MockStoreMockRecorder) Collect(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockStore)(nil).Collect), arg0)
 }
 
 // DeleteFlavor mocks base method.
@@ -121,6 +134,18 @@ func (m *MockStore) DeleteRunner(ctx context.Context, id string) error {
 func (mr *MockStoreMockRecorder) DeleteRunner(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRunner", reflect.TypeOf((*MockStore)(nil).DeleteRunner), ctx, id)
+}
+
+// Describe mocks base method.
+func (m *MockStore) Describe(arg0 chan<- *prometheus.Desc) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Describe", arg0)
+}
+
+// Describe indicates an expected call of Describe.
+func (mr *MockStoreMockRecorder) Describe(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Describe", reflect.TypeOf((*MockStore)(nil).Describe), arg0)
 }
 
 // GetFlavor mocks base method.

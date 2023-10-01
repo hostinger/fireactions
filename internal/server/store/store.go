@@ -4,10 +4,13 @@ import (
 	"context"
 
 	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Store is a common interface for all storage backend implementations.
 type Store interface {
+	prometheus.Collector
+
 	ListNodes(ctx context.Context) ([]*structs.Node, error)
 	GetNode(ctx context.Context, id string) (*structs.Node, error)
 	SaveNode(ctx context.Context, node *structs.Node) error
