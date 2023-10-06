@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 type Cache interface {

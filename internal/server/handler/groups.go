@@ -5,7 +5,7 @@ import (
 	v1 "github.com/hostinger/fireactions/apiv1"
 	"github.com/hostinger/fireactions/internal/server/httperr"
 	"github.com/hostinger/fireactions/internal/server/store"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/rs/zerolog"
 )
 

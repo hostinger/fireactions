@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hostinger/fireactions/internal/server/scheduler/queue"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

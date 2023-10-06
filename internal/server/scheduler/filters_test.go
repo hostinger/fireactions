@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 func TestRamCapacityFilter(t *testing.T) {

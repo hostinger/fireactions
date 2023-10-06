@@ -12,7 +12,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	structs "github.com/hostinger/fireactions/internal/structs"
+	structs "github.com/hostinger/fireactions/internal/server/structs"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	gomock "go.uber.org/mock/gomock"
 )

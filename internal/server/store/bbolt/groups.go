@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/hostinger/fireactions/internal/server/store"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"go.etcd.io/bbolt"
 )
 

@@ -14,7 +14,7 @@ import (
 	"github.com/hostinger/fireactions/internal/server/handler"
 	"github.com/hostinger/fireactions/internal/server/scheduler"
 	"github.com/hostinger/fireactions/internal/server/store"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"

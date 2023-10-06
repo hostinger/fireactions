@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hostinger/fireactions/internal/server/ghlabel"
 	"github.com/hostinger/fireactions/internal/server/store"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
