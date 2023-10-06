@@ -38,10 +38,6 @@ func (c *Config) Validate() error {
 		err = multierror.Append(err, fmt.Errorf("Config.GitHub is invalid: %w", err))
 	}
 
-	if c.Scheduler == nil {
-		err = multierror.Append(err, errors.New("Config.Scheduler is required, but was not provided"))
-	}
-
 	if err := c.Scheduler.Validate(); err != nil {
 		err = multierror.Append(err, fmt.Errorf("Config.Scheduler is invalid: %w", err))
 	}
@@ -123,6 +119,10 @@ func (c *Config) SetDefaults() {
 	}
 	for _, g := range c.Groups {
 		g.SetDefaults()
+	}
+
+	if c.Scheduler == nil {
+		c.Scheduler = &scheduler.Config{}
 	}
 
 	c.Scheduler.SetDefaults()
