@@ -15,7 +15,21 @@ var (
 	flavorsBucket = []byte("flavors")
 )
 
-// Store is a bbolt implementation of the Store interface.
+/*
+Store is a bbolt implementation of the Store interface using BoltDB.
+
+Current BoltDB schema:
+|-- nodes
+|   |-- <ID> -> structs.Node
+|-- jobs
+|   |-- <ID> -> structs.Job
+|-- runners
+|   |-- <ID> -> structs.Runner
+|-- groups
+|   |-- <ID> -> structs.Group
+|-- flavors
+|   |-- <ID> -> structs.Flavor
+*/
 type Store struct {
 	db *bbolt.DB
 
