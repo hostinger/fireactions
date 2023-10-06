@@ -38,11 +38,8 @@ type Client struct {
 	cfg               *Config
 }
 
-// ClientOpt is a functional option for configuring a Client.
-type ClientOpt func(*Client)
-
 // New creates a new Client.
-func New(log *zerolog.Logger, cfg *Config, opts ...ClientOpt) *Client {
+func New(log *zerolog.Logger, cfg *Config) *Client {
 	c := &Client{
 		preflightChecks:   make(map[string]preflight.Check),
 		shutdownOnce:      sync.Once{},
@@ -59,30 +56,18 @@ func New(log *zerolog.Logger, cfg *Config, opts ...ClientOpt) *Client {
 	logger := log.With().Str("component", "client").Logger()
 	c.log = &logger
 
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	c.MustRegisterPreflightCheck(preflight.NewFirecrackerCheck())
+	c.addPreflightCheck(preflight.NewFirecrackerCheck())
 
 	return c
 }
 
-func (c *Client) RegisterPreflightCheck(check preflight.Check) error {
+func (c *Client) addPreflightCheck(check preflight.Check) {
 	_, ok := c.preflightChecks[check.Name()]
 	if ok {
-		return fmt.Errorf("preflight check %s already registered", check.Name())
+		panic(fmt.Errorf("preflight check %s already registered", check.Name()))
 	}
 
 	c.preflightChecks[check.Name()] = check
-	return nil
-}
-
-func (c *Client) MustRegisterPreflightCheck(check preflight.Check) {
-	err := c.RegisterPreflightCheck(check)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func (c *Client) RunPreflightChecks() error {
