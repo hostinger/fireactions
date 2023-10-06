@@ -9,8 +9,6 @@ builds:
   env:
   - CGO_ENABLED=0
   ldflags:
-  - -X github.com/hostinger/fireactions/internal/buildinfo.Revision={{ .ShortCommit }}
-  - -X github.com/hostinger/fireactions/internal/buildinfo.Date={{ .CommitDate }}
   - -X github.com/hostinger/fireactions/internal/buildinfo.Version={{ .Version }}
   goos:
   - linux

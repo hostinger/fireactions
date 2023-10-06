@@ -12,10 +12,10 @@ kind: StatefulSet
 
 # Container image for fireactions-server
 image:
-  repository: eu.gcr.io/hostinger-systems/actions-on-firecrackers/server
+  repository: ghcr.io/hostinger/fireactions
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: 0.0.1
 
 # Configure a list of imagePullsecrets
 # e.g.:
