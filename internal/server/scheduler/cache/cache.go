@@ -3,7 +3,7 @@ package cache
 import (
 	"sync"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 type cacheImpl struct {

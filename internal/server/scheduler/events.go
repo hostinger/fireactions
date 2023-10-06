@@ -1,6 +1,6 @@
 package scheduler
 
-import "github.com/hostinger/fireactions/internal/structs"
+import "github.com/hostinger/fireactions/internal/server/structs"
 
 func (s *Scheduler) HandleEvent(e *structs.Event) {
 	switch e.Topic {

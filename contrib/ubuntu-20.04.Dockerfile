@@ -86,8 +86,7 @@ COPY overlay/etc /etc
 COPY overlay/usr /usr
 COPY --chown=runner:docker overlay/home/runner /home/runner
 
-RUN systemctl enable runner.service && \
-    systemctl enable fcnet.service
+RUN systemctl enable runner.service
 
 USER runner
 

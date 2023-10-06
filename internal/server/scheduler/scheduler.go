@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/hostinger/fireactions/internal/server/scheduler/cache"
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/rs/zerolog"
 )
 

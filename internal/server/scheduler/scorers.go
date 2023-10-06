@@ -3,7 +3,7 @@ package scheduler
 import (
 	"fmt"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 // Scorer is an interface that scores nodes based on certain criteria.

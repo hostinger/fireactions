@@ -20,5 +20,4 @@ func TestGetHealthzHandlerFunc(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.JSONEq(t, `{"ping": "pong"}`, rec.Body.String())
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/hashicorp/go-multierror"
@@ -39,12 +40,13 @@ func runClientCmd(cmd *cobra.Command, args []string) error {
 	if err := viper.Unmarshal(&config); err != nil {
 		return err
 	}
+	config.SetDefaults()
 
 	err := config.Validate()
 	if err != nil {
 		cmd.PrintErrf("Client configuration is invalid (%s). Please fix the following errors:\n", viper.ConfigFileUsed())
 		for _, e := range err.(*multierror.Error).Errors {
-			cmd.PrintErrln("  -", e)
+			cmd.PrintErrln("  -", strings.TrimSpace(e.Error()))
 		}
 
 		os.Exit(1)

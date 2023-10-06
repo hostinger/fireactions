@@ -1,6 +1,0 @@
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/fcnet-setup.sh
-
-[Install]
-WantedBy=sshd.service

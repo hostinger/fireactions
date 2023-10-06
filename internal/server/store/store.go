@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

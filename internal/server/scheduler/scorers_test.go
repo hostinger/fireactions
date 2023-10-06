@@ -3,7 +3,7 @@ package scheduler
 import (
 	"testing"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 func TestFreeCpuScorer(t *testing.T) {

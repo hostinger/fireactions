@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/hashicorp/go-multierror"
@@ -58,7 +59,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		cmd.PrintErrf("Server configuration is invalid (%s). Please fix the following errors:\n", viper.ConfigFileUsed())
 		for _, e := range err.(*multierror.Error).Errors {
-			cmd.PrintErrln("  -", e)
+			cmd.PrintErrln("  -", strings.TrimSpace(e.Error()))
 		}
 
 		os.Exit(1)

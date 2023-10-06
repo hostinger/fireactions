@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 )
 
 // Filter is an interface that filters out nodes that don't meet certain

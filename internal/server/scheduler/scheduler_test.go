@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hostinger/fireactions/internal/structs"
+	"github.com/hostinger/fireactions/internal/server/structs"
 	"github.com/stretchr/testify/assert"
 )
 
