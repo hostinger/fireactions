@@ -9,7 +9,7 @@ import (
 // GetHealthzHandlerFunc returns a handler function that returns a 200 OK
 func GetHealthzHandlerFunc() gin.HandlerFunc {
 	f := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"ping": "pong"})
+		c.String(http.StatusOK, "OK")
 	}
 
 	return f

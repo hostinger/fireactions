@@ -87,6 +87,7 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt)
 		handler.RegisterNodesV1(v1, log, s.scheduler, store)
 	}
 
+	mux.GET("/healthz", handler.GetHealthzHandlerFunc())
 	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
 	mux.POST("/webhook", handler.GetGitHubWebhookHandlerFuncV1(
 		log, cfg.GitHub.WebhookSecret, cfg.GitHub.JobLabelPrefix, cfg.DefaultFlavor, cfg.DefaultGroup, s.scheduler, store))
