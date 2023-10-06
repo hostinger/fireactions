@@ -5,7 +5,7 @@ before:
 
 builds:
 - id: fireactions
-  main: ./cmd/fireactions
+  main: .
   env:
   - CGO_ENABLED=0
   ldflags:
