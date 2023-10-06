@@ -19,7 +19,7 @@ Grab the latest [Helm release](https://github.com/helm/helm#install).
 Add the repo as follows:
 
 ```console
-helm repo add fireactions https://fireactions.github.io/charts
+helm repo add fireactions https://hostinger.github.io/fireactions/
 helm repo update
 ```
 
