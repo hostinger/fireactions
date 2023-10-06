@@ -1,0 +1,20 @@
+# ![Fireactions Server](./chart-icon.png "Fireactions")
+
+## Fireactions Server Helm Chart
+
+## Introduction
+
+This chart bootstraps a Fireactions server component as deployment/daemonset on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+### Prerequisites
+
+- Kubernetes 1.17+ (recommended 1.20+)
+- Helm 3.6+ (recommended 3.7+)
+
+### Values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+{{- range .Values }}
+| {{ .Key }} | {{ .Type }} | {{ if .Default }}{{ .Default }}{{ else }}{{ .AutoDefault }}{{ end }} | {{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }} |
+{{- end }}

@@ -1,0 +1,222 @@
+# Default values for fireactions-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Number of replicas to run. At the moment HA setup is not supported, so this must be 1.
+replicaCount: 1
+
+# Use either Deployment or StatefulSet (default)
+# ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+#
+kind: StatefulSet
+
+# Container image for fireactions-server
+image:
+  repository: eu.gcr.io/hostinger-systems/actions-on-firecrackers/server
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: latest
+
+# Configure a list of imagePullsecrets
+# e.g.:
+# imagePullSecrets:
+#   - name: ghcr.io
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+config:
+  # Listen address for the HTTP server. This is where the GitHub webhook should be configured to send events.
+  listenAddr: 0.0.0.0:8080
+
+  # Data directory for the server. This is where the server will store its state.
+  dataDir: /var/lib/fireactions
+
+  # GitHub configuration options.
+  github:
+    # Existing secret name to use. The secret must contain `webhook-secret` (optional), `app-id` and `app-private-key` keys.
+    existingSecret: ""
+
+    # Job label prefix to search for in received GitHub events.
+    jobLabelPrefix: fireactions-
+
+    # The secret used to verify GitHub webhook payloads.
+    # webhookSecret: SECRET
+    webhookSecret: ""
+
+    # The GitHub App ID and PEM-encoded private key.
+    # See: https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#generating-a-private-key
+    # appId: 123456
+    # appPrivateKey: |
+    #   -----BEGIN RSA PRIVATE KEY-----
+    appId: ""
+    appPrivateKey: ""
+
+  # Scheduler configuration options (optional).
+    scheduler: ""
+  # scheduler: |
+  # Multiplier for the CPU and RAM scores. This is used to adjust the scheduler's preference for free CPU and RAM.
+    # free-cpu-scorer-multiplier: 1.0
+    # free-ram-scorer-multiplier: 1.0
+
+  # The default flavor to use for jobs if no flavor is specified.
+  defaultFlavor: 1vcpu-1gb
+
+  # Flavors are used to define the resources available to a job. Atleast one flavor must be defined.
+  # The name of the flavor must be unique.
+  # The disk size is in GB, the memory size is in MB, and the CPU count is the number of vCPUs.
+  flavors: []
+  # flavors:
+  #   - name: 1vcpu-1gb
+  #     disk: 50
+  #     image: ubuntu-22.04
+  #     mem: 1024
+  #     cpu: 1
+  #   - name: 2vcpu-2gb
+  #     disk: 50
+  #     image: ubuntu-22.04
+  #     mem: 2048
+  #     cpu: 2
+  #   - name: 4vcpu-4gb
+  #     disk: 50
+  #     image: ubuntu-22.04
+  #     mem: 4096
+  #     cpu: 4
+
+  # The default group to use for jobs if no group is specified in GitHub job label.
+  # The group must be defined in the 'groups' section.
+  defaultGroup: us-east-2
+
+  # Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined.
+  # Group name must be unique and should not contain any hyphens (-).
+  groups:
+    - name: us-east-2
+    - name: us-west-1
+      enabled: false # (optional) Whether the group is enabled or not. Defaults to true.
+
+  # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
+  logLevel: info
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+hostAliases: []
+# hostAliases:
+# - ip: 127.0.0.1
+#   hostnames:
+#   - domain.tld
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # runAsUser: 1000
+  # runAsGroup: 1000
+  # fsGroup: 1000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+livenessProve: {}
+# livenessProbe:
+#   httpGet:
+#     path: /healthz
+#     port: http
+#     initialDelaySeconds: 20
+#     periodSeconds: 5
+#     timeoutSeconds: 1
+#     successThreshold: 1
+#     failureThreshold: 5
+
+readinessProbe: {}
+# readinessProbe:
+#   httpGet:
+#     path: /healthz
+#     port: http
+#     initialDelaySeconds: 20
+#     periodSeconds: 5
+#     timeoutSeconds: 1
+#     successThreshold: 1
+#     failureThreshold: 5
+
+service:
+  type: ClusterIP
+  port: 8080
+
+metrics:
+  enabled: false
+  port: 8081
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+persistence:
+  enabled: true
+  subPath: ""
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  existingClaim: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Array of extra manifests to deploy
+extraObjects: []
+  # - apiVersion: v1
+  #   kind: Secret
+  #   type: kubernetes.io/dockerconfigjson
+  #   metadata:
+  #     name: docker-credentials
+  #   data:
+  #     .dockerconfigjson: ewogICAgImF1d==
+  # - apiVersion: external-secrets.io/v1beta1
+  #   kind: SecretStore
+  #   metadata:
+  #     name: member-area-hosting-rest-secret-store
+  #   spec:
+  #     provider:
+  #       vault:
+  #         auth:
+  #           kubernetes:
+  #             mountPath: kubernetes/fireactions
+  #             role: fireactions
+  #             serviceAccountRef:
+  #               name: default
+  #         version: v2

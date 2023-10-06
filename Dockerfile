@@ -14,16 +14,16 @@ ENV GO111MODULE=on \
     GOOS=linux     \
     GOARCH=amd64
 
-RUN go build -v -o server ./cmd/fireactions
+RUN go build -v -o fireactions .
 
-RUN adduser --disabled-password --gecos '' appuser && \
+RUN adduser --disabled-password --uid 1000 --gecos '' appuser && \
     chown -R appuser /app
 
-FROM scratch
+FROM alpine:3.18.4
 
 COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /app/server /app/server
+COPY --from=build /app/fireactions /usr/bin/fireactions
 
 USER appuser
 
-ENTRYPOINT ["/app/fireactions", "server"]
+ENTRYPOINT ["/usr/bin/fireactions", "server"]

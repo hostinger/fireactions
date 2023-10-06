@@ -1,0 +1,15 @@
+apiVersion: v2
+name: fireactions-server
+sources:
+- https://github.com/hostinger/fireactions/helm
+version: 0.0.1
+appVersion: 0.0.4
+description: BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines.
+home: https://github.com/hostinger/fireactions
+icon: https://raw.githubusercontent.com/hostinger/fireactions/main/helm/fireactions-server/chart-icon.png
+keywords:
+- firecracker
+- github-actions
+kubeVersion: '>=1.20.0-0'
+maintainers:
+- name: konradasb
