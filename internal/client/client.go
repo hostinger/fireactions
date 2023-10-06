@@ -97,7 +97,7 @@ func (c *Client) shutdown() {
 	c.isShuttingDown = true
 
 	err := retryDo(context.Background(), c.log, "error deregistering client", func() error {
-		return c.Disconnect(context.Background())
+		return c.disconnect(context.Background())
 	})
 	if err != nil {
 		c.log.Error().Err(err).Msg("error shutting down client")
@@ -106,8 +106,7 @@ func (c *Client) shutdown() {
 	close(c.shutdownCh)
 }
 
-// Register registers the client with the server.
-func (c *Client) Register(ctx context.Context) error {
+func (c *Client) register(ctx context.Context) error {
 	_, err := c.GetID()
 	if err != nil {
 		return fmt.Errorf("error getting client ID: %w", err)
@@ -118,12 +117,12 @@ func (c *Client) Register(ctx context.Context) error {
 		return fmt.Errorf("error getting hostname: %w", err)
 	}
 
-	cpu, err := c.GetTotalCpu()
+	cpu, err := c.getTotalCpu()
 	if err != nil {
 		return fmt.Errorf("error getting total CPU: %w", err)
 	}
 
-	mem, err := c.GetTotalMem()
+	mem, err := c.getTotalMem()
 	if err != nil {
 		return fmt.Errorf("error getting total memory: %w", err)
 	}
@@ -145,8 +144,7 @@ func (c *Client) Register(ctx context.Context) error {
 	return nil
 }
 
-// Deregister deregisters the client from the server.
-func (c *Client) Deregister(ctx context.Context) error {
+func (c *Client) deregister(ctx context.Context) error {
 	_, err := c.GetID()
 	if err != nil {
 		return fmt.Errorf("error getting client ID: %w", err)
@@ -174,14 +172,14 @@ func (c *Client) Start() error {
 	defer cancel()
 
 	err = retryDo(ctx, c.log, "error registering client", func() error {
-		return c.Register(ctx)
+		return c.register(ctx)
 	})
 	if err != nil {
 		return err
 	}
 
 	err = retryDo(ctx, c.log, "error connecting client", func() error {
-		return c.Connect(ctx)
+		return c.connect(ctx)
 	})
 	if err != nil {
 		return err
@@ -214,8 +212,7 @@ func (c *Client) GetID() (string, error) {
 	return string(uuid), nil
 }
 
-// GetTotalCpu returns the total number of CPU cores.
-func (c *Client) GetTotalCpu() (int64, error) {
+func (c *Client) getTotalCpu() (int64, error) {
 	cpu, err := cpu.Info()
 	if err != nil {
 		return 0, err
@@ -229,8 +226,7 @@ func (c *Client) GetTotalCpu() (int64, error) {
 	return total, nil
 }
 
-// GetTotalMem returns the total amount of memory in bytes.
-func (c *Client) GetTotalMem() (int64, error) {
+func (c *Client) getTotalMem() (int64, error) {
 	mem, err := mem.VirtualMemory()
 	if err != nil {
 		return 0, err
@@ -239,8 +235,7 @@ func (c *Client) GetTotalMem() (int64, error) {
 	return int64(mem.Total), nil
 }
 
-// Connect connects the client to the server.
-func (c *Client) Connect(ctx context.Context) error {
+func (c *Client) connect(ctx context.Context) error {
 	if !c.isDisconnected {
 		return nil
 	}
@@ -254,8 +249,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	return nil
 }
 
-// Disconnect disconnects the client from the server.
-func (c *Client) Disconnect(ctx context.Context) error {
+func (c *Client) disconnect(ctx context.Context) error {
 	if c.isDisconnected {
 		return nil
 	}
