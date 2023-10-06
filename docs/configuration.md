@@ -87,13 +87,13 @@ flavors:
 
 # The default group to use for jobs if no group is specified in GitHub job label.
 # The group must be defined in the 'groups' section.
-default-group: ltbnk
+default-group: us-east-2
 
 # Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined.
 # Group name must be unique and should not contain any hyphens (-).
 groups:
-  - name: ltbnk
-  - name: usimm
+  - name: us-east-2
+  - name: us-west-1
     enabled: false # (optional) Whether the group is enabled or not. Defaults to true.
 
 # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
