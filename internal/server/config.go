@@ -27,44 +27,44 @@ func (c *Config) Validate() error {
 	var err error
 
 	if c.ListenAddr == "" {
-		err = multierror.Append(err, errors.New("Config.ListenAddr is required, but was not provided"))
+		err = multierror.Append(err, errors.New("listen-addr is required"))
 	}
 
 	if c.GitHub == nil {
-		err = multierror.Append(err, errors.New("Config.GitHub is required, but was not provided"))
+		err = multierror.Append(err, errors.New("github config is required"))
 	}
 
 	if err := c.GitHub.Validate(); err != nil {
-		err = multierror.Append(err, fmt.Errorf("Config.GitHub is invalid: %w", err))
+		err = multierror.Append(err, fmt.Errorf("github config is invalid: %w", err))
 	}
 
 	if err := c.Scheduler.Validate(); err != nil {
-		err = multierror.Append(err, fmt.Errorf("Config.Scheduler is invalid: %w", err))
+		err = multierror.Append(err, fmt.Errorf("scheduler config is invalid: %w", err))
 	}
 
 	switch c.LogLevel {
 	case "debug", "info", "warn", "error", "fatal", "panic":
 	default:
-		err = multierror.Append(err, fmt.Errorf("Config.LogLevel is invalid (%s). Must be one of: debug, info, warn, error, fatal, panic", c.LogLevel))
+		err = multierror.Append(err, fmt.Errorf("log-level (%s) is invalid", c.LogLevel))
 	}
 
 	if c.DataDir == "" {
-		err = multierror.Append(err, errors.New("Config.DataDir is required, but was not provided"))
+		err = multierror.Append(err, errors.New("data-dir is required"))
 	}
 
 	if c.DefaultFlavor == "" {
-		err = multierror.Append(err, errors.New("Config.DefaultFlavor is required, but was not provided"))
+		err = multierror.Append(err, errors.New("default-flavor is required"))
 	}
 
 	if len(c.Flavors) == 0 {
-		err = multierror.Append(err, errors.New("Config.Flavors is required, but was not provided"))
+		err = multierror.Append(err, errors.New("at least one flavor must be defined"))
 	}
 
 	defaultFlavorExists := false
 	for _, f := range c.Flavors {
 		err := f.Validate()
 		if err != nil {
-			err = multierror.Append(err, fmt.Errorf("Config.Flavors is invalid: %w", err))
+			err = multierror.Append(err, fmt.Errorf("flavor (%s) is invalid: %w", f.Name, err))
 		}
 
 		if f.Name == c.DefaultFlavor {
@@ -73,22 +73,22 @@ func (c *Config) Validate() error {
 	}
 
 	if !defaultFlavorExists {
-		err = multierror.Append(err, fmt.Errorf("Config.DefaultFlavor (%s) does not exist in Config.Flavors", c.DefaultFlavor))
+		err = multierror.Append(err, fmt.Errorf("default-flavor (%s) does not exist in flavors", c.DefaultFlavor))
 	}
 
 	if c.DefaultGroup == "" {
-		err = multierror.Append(err, errors.New("Config.DefaultGroup is required, but was not provided"))
+		err = multierror.Append(err, errors.New("default-group is required"))
 	}
 
 	if len(c.Groups) == 0 {
-		err = multierror.Append(err, errors.New("Config.Groups is required, but was not provided"))
+		err = multierror.Append(err, errors.New("at least one group must be defined"))
 	}
 
 	defaultGroupExists := false
 	for _, g := range c.Groups {
 		err := g.Validate()
 		if err != nil {
-			err = multierror.Append(err, fmt.Errorf("Config.Groups is invalid: %w", err))
+			err = multierror.Append(err, fmt.Errorf("group (%s) is invalid: %w", g.Name, err))
 		}
 
 		if g.Name == c.DefaultGroup {
@@ -97,7 +97,7 @@ func (c *Config) Validate() error {
 	}
 
 	if !defaultGroupExists {
-		err = multierror.Append(err, fmt.Errorf("Config.DefaultGroup (%s) does not exist in Config.Groups", c.DefaultGroup))
+		err = multierror.Append(err, fmt.Errorf("default-group (%s) does not exist in groups", c.DefaultGroup))
 	}
 
 	return err
@@ -141,19 +141,19 @@ func (c *GitHubConfig) Validate() error {
 	var err error
 
 	if c.JobLabelPrefix == "" {
-		err = multierror.Append(err, errors.New("GitHub.JobLabelPrefix is required, but was not provided"))
+		err = multierror.Append(err, errors.New("job-label-prefix is required"))
 	}
 
 	if c.AppID == 0 {
-		err = multierror.Append(err, errors.New("GitHub.AppID is required, but was not provided"))
+		err = multierror.Append(err, errors.New("app-id is required"))
 	}
 
 	if c.AppPrivateKey == "" {
-		err = multierror.Append(err, errors.New("GitHub.AppPrivateKey is required, but was not provided"))
+		err = multierror.Append(err, errors.New("app-private-key is required"))
 	}
 
 	if c.WebhookSecret == "" {
-		err = multierror.Append(err, errors.New("GitHub.WebhookSecret is required, but was not provided"))
+		err = multierror.Append(err, errors.New("webhook-secret is required"))
 	}
 
 	return err
@@ -181,23 +181,23 @@ func (c *FlavorConfig) Validate() error {
 	var err error
 
 	if c.Name == "" {
-		err = multierror.Append(err, errors.New("Flavor.Name is required, but was not provided"))
+		err = multierror.Append(err, errors.New("name is required"))
 	}
 
 	if c.Disk == 0 {
-		err = multierror.Append(err, errors.New("Flavor.Disk is required, but was not provided"))
+		err = multierror.Append(err, errors.New("disk is required"))
 	}
 
 	if c.Mem == 0 {
-		err = multierror.Append(err, errors.New("Flavor.Mem is required, but was not provided"))
+		err = multierror.Append(err, errors.New("mem is required"))
 	}
 
 	if c.CPU == 0 {
-		err = multierror.Append(err, errors.New("Flavor.CPU is required, but was not provided"))
+		err = multierror.Append(err, errors.New("cpu is required"))
 	}
 
 	if c.Image == "" {
-		err = multierror.Append(err, errors.New("Flavor.Image is required, but was not provided"))
+		err = multierror.Append(err, errors.New("image is required"))
 	}
 
 	return err
@@ -222,11 +222,11 @@ func (c *GroupConfig) Validate() error {
 	var err error
 
 	if c.Name == "" {
-		err = multierror.Append(err, errors.New("Group.Name is required, but was not provided"))
+		err = multierror.Append(err, errors.New("name is required"))
 	}
 
 	if strings.Contains(c.Name, "-") {
-		err = multierror.Append(err, fmt.Errorf("Group.Name (%s) must not contain any hyphens", c.Name))
+		err = multierror.Append(err, errors.New("name cannot contain dashes"))
 	}
 
 	return err
