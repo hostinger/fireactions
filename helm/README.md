@@ -1,6 +1,6 @@
-<img src="./fireactions-server/chart-icon.png" alt="logo" width="150"/>
-
 # Fireactions
+
+<img src="./fireactions-server/chart-icon.png" alt="logo" width="150"/>
 
 ## Fireactions Helm Charts
 
