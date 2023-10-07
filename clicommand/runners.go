@@ -58,9 +58,9 @@ func newRunnersListCmd() *cobra.Command {
 }
 
 func runRunnersListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runners, err := client.Runners().List(cmd.Context())
+	runners, _, err := client.Runners().List(cmd.Context(), nil)
 	if err != nil {
 		return fmt.Errorf("error fetching Runner(s): %w", err)
 	}
@@ -70,9 +70,9 @@ func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runRunnersGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runner, err := client.Runners().Get(cmd.Context(), args[0])
+	runner, _, err := client.Runners().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Runner(s): %w", err)
 	}

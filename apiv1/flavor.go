@@ -46,38 +46,71 @@ type flavorsClient struct {
 	client *Client
 }
 
+type FlavorsListOptions struct {
+	ListOptions
+}
+
+// Flavors returns a client for interacting with Flavors.
+func (c *Client) Flavors() *flavorsClient {
+	return &flavorsClient{client: c}
+}
+
 // List returns a list of Flavors.
-func (c *flavorsClient) List(ctx context.Context) (Flavors, error) {
-	type response struct {
+func (c *flavorsClient) List(ctx context.Context, opts *FlavorsListOptions) (Flavors, *Response, error) {
+	type Root struct {
 		Flavors Flavors `json:"flavors"`
 	}
 
-	var rsp response
-	err := c.client.Do(ctx, "/api/v1/flavors", http.MethodGet, nil, &rsp)
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/flavors", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return rsp.Flavors, nil
+	if opts != nil {
+		opts.Apply(req)
+	}
+
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return root.Flavors, response, nil
 }
 
 // Get returns a Flavor by name.
-func (c *flavorsClient) Get(ctx context.Context, name string) (*Flavor, error) {
-	var flavor *Flavor
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s", name), http.MethodGet, nil, &flavor)
+func (c *flavorsClient) Get(ctx context.Context, name string) (*Flavor, *Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/flavors/%s", name), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var flavor Flavor
+	response, err := c.client.Do(req, &flavor)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &flavor, response, nil
+}
+
+// Disable disables a Flavor by name.
+func (c *flavorsClient) Disable(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/flavors/%s/disable", name), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return flavor, nil
-}
-
-// Disable disables a Flavor by name.
-func (c *flavorsClient) Disable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/disable", name), http.MethodPatch, nil, nil)
+	return c.client.Do(req, nil)
 }
 
 // Enable enables a Flavor by name.
-func (c *flavorsClient) Enable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/flavors/%s/enable", name), http.MethodPatch, nil, nil)
+func (c *flavorsClient) Enable(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/flavors/%s/enable", name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
 }

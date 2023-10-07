@@ -10,30 +10,47 @@ type githubClent struct {
 	client *Client
 }
 
-func (c *githubClent) GetRegistrationToken(ctx context.Context, org string) (string, error) {
-	type response struct {
-		Token string `json:"token"`
-	}
-
-	var resp response
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/github/%s/registration-token", org), http.MethodPost, nil, &resp)
-	if err != nil {
-		return "", err
-	}
-
-	return resp.Token, nil
+// GitHub returns a client for interacting with GitHub.
+func (c *Client) GitHub() *githubClent {
+	return &githubClent{client: c}
 }
 
-func (c *githubClent) GetRemoveToken(ctx context.Context, org string) (string, error) {
-	type response struct {
+// GetRegistrationToken returns a GitHub registration token for the given organization.
+func (c *githubClent) GetRegistrationToken(ctx context.Context, org string) (string, *Response, error) {
+	type Root struct {
 		Token string `json:"token"`
 	}
 
-	var resp response
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/github/%s/remove-token", org), http.MethodPost, nil, &resp)
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/github/%s/registration-token", org), nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return resp.Token, nil
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return "", response, err
+	}
+
+	return root.Token, response, nil
+}
+
+// GetRemoveToken returns a GitHub remove token for the given organization.
+func (c *githubClent) GetRemoveToken(ctx context.Context, org string) (string, *Response, error) {
+	type Root struct {
+		Token string `json:"token"`
+	}
+
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/github/%s/remove-token", org), nil)
+	if err != nil {
+		return "", nil, err
+	}
+
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return "", response, err
+	}
+
+	return root.Token, response, nil
 }

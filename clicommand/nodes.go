@@ -70,14 +70,14 @@ func newNodesDeregisterCmd() *cobra.Command {
 }
 
 func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, err := client.Nodes().Get(cmd.Context(), args[0])
+	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}
 
-	err = client.Nodes().Deregister(cmd.Context(), node.ID)
+	_, err = client.Nodes().Deregister(cmd.Context(), node.ID)
 	if err != nil {
 		return fmt.Errorf("error deregistering Node: %w", err)
 	}
@@ -86,9 +86,9 @@ func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runNodesGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, err := client.Nodes().Get(cmd.Context(), args[0])
+	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}
@@ -98,9 +98,9 @@ func runNodesGetCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runNodesListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	nodes, err := client.Nodes().List(cmd.Context())
+	nodes, _, err := client.Nodes().List(cmd.Context(), nil)
 	if err != nil {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}

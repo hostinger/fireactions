@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type runnersClient struct {
-	client *Client
-}
-
 type Runners []*Runner
 
 type Runner struct {
@@ -67,26 +63,55 @@ func (r Runners) Rows() [][]string {
 	return rows
 }
 
-func (c *runnersClient) List(ctx context.Context) (Runners, error) {
-	type response struct {
+type runnersClient struct {
+	client *Client
+}
+
+// Runners returns a client for interacting with Runners.
+func (c *Client) Runners() *runnersClient {
+	return &runnersClient{client: c}
+}
+
+type RunnersListOptions struct {
+	ListOptions
+}
+
+// List returns a list of Runners.
+func (c *runnersClient) List(ctx context.Context, opts *RunnersListOptions) (Runners, *Response, error) {
+	type Root struct {
 		Runners []*Runner `json:"runners"`
 	}
 
-	var resp response
-	err := c.client.Do(ctx, "/api/v1/runners", http.MethodGet, nil, &resp)
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/runners", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return resp.Runners, nil
+	if opts != nil {
+		opts.Apply(req)
+	}
+
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return root.Runners, response, nil
 }
 
-func (c *runnersClient) Get(ctx context.Context, id string) (*Runner, error) {
-	var runner Runner
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/runners/%s", id), http.MethodGet, nil, &runner)
+// Get returns a Runner by ID.
+func (c *runnersClient) Get(ctx context.Context, id string) (*Runner, *Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s", id), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &runner, nil
+	var runner Runner
+	response, err := c.client.Do(req, &runner)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &runner, response, nil
 }

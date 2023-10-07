@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type jobsClient struct {
-	client *Client
-}
-
 // Jobs represents a slice of Job objects.
 type Jobs []*Job
 
@@ -96,33 +92,64 @@ func (j Jobs) Rows() [][]string {
 	return rows
 }
 
+type jobsClient struct {
+	client *Client
+}
+
+type JobsListOptions struct {
+	ListOptions
+}
+
+func (c *Client) Jobs() *jobsClient {
+	return &jobsClient{client: c}
+}
+
 // Get returns a Job by ID.
-func (c *jobsClient) Get(ctx context.Context, id string) (*Job, error) {
-	var job *Job
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/jobs/%s", id), http.MethodGet, nil, &job)
+func (c *jobsClient) Get(ctx context.Context, id string) (*Job, *Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/jobs/%s", id), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return job, nil
+	var job Job
+	response, err := c.client.Do(req, &job)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &job, response, nil
 }
 
 // List returns a list of Jobs.
-func (c *jobsClient) List(ctx context.Context) (Jobs, error) {
-	type response struct {
+func (c *jobsClient) List(ctx context.Context, opts *JobsListOptions) (Jobs, *Response, error) {
+	type Root struct {
 		Jobs Jobs `json:"jobs"`
 	}
 
-	var rsp response
-	err := c.client.Do(ctx, "/api/v1/jobs", http.MethodGet, nil, &rsp)
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/jobs", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if opts != nil {
+		opts.Apply(req)
+	}
+
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return root.Jobs, response, nil
+}
+
+// Delete deletes a Job by ID.
+func (c *jobsClient) Delete(ctx context.Context, id string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/jobs/%s", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return rsp.Jobs, nil
-}
-
-// Delete deletes a Job by ID.
-func (c *jobsClient) Delete(ctx context.Context, id string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/jobs/%s", id), http.MethodDelete, nil, nil)
+	return c.client.Do(req, nil)
 }

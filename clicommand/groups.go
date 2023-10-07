@@ -96,9 +96,9 @@ Example:
 }
 
 func runGroupsDisableCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	err := client.Groups().Disable(cmd.Context(), args[0])
+	_, err := client.Groups().Disable(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error disabling Group(s): %w", err)
 	}
@@ -108,9 +108,9 @@ func runGroupsDisableCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runGroupsEnableCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	err := client.Groups().Enable(cmd.Context(), args[0])
+	_, err := client.Groups().Enable(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error enabling Group(s): %w", err)
 	}
@@ -120,9 +120,9 @@ func runGroupsEnableCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runGroupsListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	groups, err := client.Groups().List(cmd.Context())
+	groups, _, err := client.Groups().List(cmd.Context(), nil)
 	if err != nil {
 		return fmt.Errorf("error fetching Group(s): %w", err)
 	}
@@ -132,9 +132,9 @@ func runGroupsListCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runGroupsGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	group, err := client.Groups().Get(cmd.Context(), args[0])
+	group, _, err := client.Groups().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Group(s): %w", err)
 	}

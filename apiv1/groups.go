@@ -41,38 +41,67 @@ type groupsClient struct {
 	client *Client
 }
 
+type GroupsListOptions struct {
+	ListOptions
+}
+
+// Groups returns a client for interacting with Groups.
+func (c *Client) Groups() *groupsClient {
+	return &groupsClient{client: c}
+}
+
 // List returns a list of Flavors.
-func (c *groupsClient) List(ctx context.Context) (Groups, error) {
-	type response struct {
+func (c *groupsClient) List(ctx context.Context, opts *GroupsListOptions) (Groups, *Response, error) {
+	type Root struct {
 		Groups Groups `json:"groups"`
 	}
 
-	var rsp response
-	err := c.client.Do(ctx, "/api/v1/groups", http.MethodGet, nil, &rsp)
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/groups", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return rsp.Groups, nil
+	var root Root
+	response, err := c.client.Do(req, &root)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return root.Groups, response, nil
 }
 
 // Get returns a Flavor by name.
-func (c *groupsClient) Get(ctx context.Context, name string) (*Group, error) {
-	var group *Group
-	err := c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s", name), http.MethodGet, nil, &group)
+func (c *groupsClient) Get(ctx context.Context, name string) (*Group, *Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/groups/%s", name), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var group Group
+	response, err := c.client.Do(req, &group)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &group, response, nil
+}
+
+// Disable disables a Group by name.
+func (c *groupsClient) Disable(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/groups/%s/disable", name), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return group, nil
-}
-
-// Disable disables a Group by name.
-func (c *groupsClient) Disable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/disable", name), http.MethodPatch, nil, nil)
+	return c.client.Do(req, nil)
 }
 
 // Enable enables a Group by name.
-func (c *groupsClient) Enable(ctx context.Context, name string) error {
-	return c.client.Do(ctx, fmt.Sprintf("/api/v1/groups/%s/enable", name), http.MethodPatch, nil, nil)
+func (c *groupsClient) Enable(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/groups/%s/enable", name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
 }

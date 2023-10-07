@@ -49,7 +49,7 @@ func New(cfg *Config) (*Client, error) {
 		config:            cfg,
 		reconcileInterval: 1 * time.Second,
 		isDisconnected:    true,
-		client:            api.NewClient(api.WithEndpoint(cfg.ServerURL)),
+		client:            api.NewClient(nil, api.WithEndpoint(cfg.ServerURL)),
 	}
 
 	logLevel, err := zerolog.ParseLevel(cfg.LogLevel)
@@ -131,7 +131,7 @@ func (c *Client) register(ctx context.Context) error {
 		return fmt.Errorf("error getting total memory: %w", err)
 	}
 
-	err = c.client.Nodes().Register(ctx, &api.NodeRegisterRequest{
+	_, err = c.client.Nodes().Register(ctx, &api.NodeRegisterRequest{
 		UUID:               c.ID,
 		Name:               name,
 		Organisation:       c.config.Organisation,
@@ -230,7 +230,7 @@ func (c *Client) connect(ctx context.Context) error {
 		return nil
 	}
 
-	err := c.client.Nodes().Connect(ctx, c.ID)
+	_, err := c.client.Nodes().Connect(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func (c *Client) disconnect(ctx context.Context) error {
 		return nil
 	}
 
-	err := c.client.Nodes().Disconnect(ctx, c.ID)
+	_, err := c.client.Nodes().Disconnect(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -274,14 +274,14 @@ func (c *Client) reconcileOnce() {
 		return
 	}
 
-	runners, err := c.client.Nodes().GetRunners(context.Background(), c.ID)
+	runners, _, err := c.client.Nodes().GetRunners(context.Background(), c.ID)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("error getting runners")
 		return
 	}
 
 	for _, r := range runners {
-		err = c.client.Nodes().Accept(context.Background(), c.ID, r.ID)
+		_, err = c.client.Nodes().Accept(context.Background(), c.ID, r.ID)
 		if err != nil {
 			c.logger.Error().Err(err).Msgf("error accepting runner %s", r.Name)
 			continue
@@ -289,7 +289,7 @@ func (c *Client) reconcileOnce() {
 
 		c.logger.Info().Msgf("runner %s accepted", r.Name)
 
-		runnerToken, err := c.client.GitHub().GetRegistrationToken(context.Background(), c.config.Organisation)
+		runnerToken, _, err := c.client.GitHub().GetRegistrationToken(context.Background(), c.config.Organisation)
 		if err != nil {
 			c.logger.Error().Err(err).Msgf("error getting registration token for runner %s", r.Name)
 			continue
@@ -324,7 +324,7 @@ func (c *Client) reconcileOnce() {
 				c.logger.Error().Err(err).Msgf("error waiting for runner %s", r.Config.Name)
 			}
 
-			err = c.client.Nodes().Complete(context.Background(), c.ID, r.Config.ID.String())
+			_, err = c.client.Nodes().Complete(context.Background(), c.ID, r.Config.ID.String())
 			if err != nil {
 				c.logger.Error().Err(err).Msgf("error completing runner %s", r.Config.Name)
 				return

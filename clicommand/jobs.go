@@ -58,9 +58,9 @@ func newJobsListCmd() *cobra.Command {
 }
 
 func runJobsListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	jobs, err := client.Jobs().List(cmd.Context())
+	jobs, _, err := client.Jobs().List(cmd.Context(), nil)
 	if err != nil {
 		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
@@ -70,9 +70,9 @@ func runJobsListCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runJobsGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	job, err := client.Jobs().Get(cmd.Context(), args[0])
+	job, _, err := client.Jobs().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Job(s): %w", err)
 	}

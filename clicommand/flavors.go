@@ -96,9 +96,9 @@ Example:
 }
 
 func runFlavorsEnableCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	err := client.Flavors().Enable(cmd.Context(), args[0])
+	_, err := client.Flavors().Enable(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
@@ -108,11 +108,11 @@ func runFlavorsEnableCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runFlavorsDisableCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	err := client.Flavors().Disable(cmd.Context(), args[0])
+	_, err := client.Flavors().Disable(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Job(s): %w", err)
+		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
 	cmd.Println("Successfully disabled Flavor.")
@@ -120,11 +120,11 @@ func runFlavorsDisableCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runFlavorsListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	flavors, err := client.Flavors().List(cmd.Context())
+	flavors, _, err := client.Flavors().List(cmd.Context(), nil)
 	if err != nil {
-		return fmt.Errorf("error fetching Job(s): %w", err)
+		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
 	printer.Get().Print(flavors)
@@ -132,11 +132,11 @@ func runFlavorsListCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runFlavorsGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	flavor, err := client.Flavors().Get(cmd.Context(), args[0])
+	flavor, _, err := client.Flavors().Get(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Job(s): %w", err)
+		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
 	printer.Get().Print(flavor)
