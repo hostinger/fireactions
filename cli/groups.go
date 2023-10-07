@@ -127,7 +127,8 @@ func runGroupsListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Group(s): %w", err)
 	}
 
-	printer.Get().Print(groups)
+	item := &printer.Group{Groups: groups}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
@@ -139,6 +140,7 @@ func runGroupsGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Group(s): %w", err)
 	}
 
-	printer.Get().Print(group)
+	item := &printer.Group{Groups: api.Groups{*group}}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }

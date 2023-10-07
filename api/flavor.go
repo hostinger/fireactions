@@ -19,32 +19,6 @@ type Flavor struct {
 	Image        string `json:"image"`
 }
 
-// String returns the string representation of a Flavor.
-func (f *Flavor) String() string {
-	return f.Name
-}
-
-func (f *Flavor) Headers() []string {
-	return []string{"Name", "Enabled", "VCPUs", "Memory", "Disk", "Image"}
-}
-
-func (f *Flavor) Rows() [][]string {
-	return [][]string{{f.Name, fmt.Sprintf("%t", f.Enabled), fmt.Sprintf("%d", f.VCPUs), fmt.Sprintf("%dMB", f.MemorySizeMB), fmt.Sprintf("%dGB", f.DiskSizeGB), f.Image}}
-}
-
-func (f Flavors) Headers() []string {
-	return []string{"Name", "Enabled", "VCPUs", "Memory", "Disk", "Image"}
-}
-
-func (f Flavors) Rows() [][]string {
-	rows := make([][]string, 0, len(f))
-	for _, flavor := range f {
-		rows = append(rows, flavor.Rows()[0])
-	}
-
-	return rows
-}
-
 type flavorsClient struct {
 	client *Client
 }

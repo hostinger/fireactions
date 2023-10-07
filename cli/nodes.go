@@ -93,7 +93,8 @@ func runNodesGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}
 
-	printer.Get().Print(node)
+	item := &printer.Node{Nodes: api.Nodes{node}}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
@@ -105,6 +106,7 @@ func runNodesListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}
 
-	printer.Get().Print(nodes)
+	item := &printer.Node{Nodes: nodes}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }

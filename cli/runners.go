@@ -65,7 +65,8 @@ func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Runner(s): %w", err)
 	}
 
-	printer.Get().Print(runners)
+	item := &printer.Runner{Runners: runners}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
@@ -77,6 +78,7 @@ func runRunnersGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Runner(s): %w", err)
 	}
 
-	printer.Get().Print(runner)
+	item := &printer.Runner{Runners: api.Runners{runner}}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }

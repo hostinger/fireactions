@@ -22,47 +22,6 @@ type Runner struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-func (r *Runner) String() string {
-	return r.Name
-}
-
-func (r *Runner) GetCreatedAt() string {
-	return r.CreatedAt.Format("2006-01-02 15:04:05")
-}
-
-func (r *Runner) GetUpdatedAt() string {
-	return r.UpdatedAt.Format("2006-01-02 15:04:05")
-}
-
-func (r *Runner) GetNodeName() string {
-	if r.Node == nil {
-		return "N/A (Not assigned)"
-	}
-
-	return r.Node.Name
-}
-
-func (r *Runner) Headers() []string {
-	return []string{"Name", "Node", "Organisation", "Group", "Status", "Flavor", "Created At", "Updated At"}
-}
-
-func (r *Runner) Rows() [][]string {
-	return [][]string{{r.Name, r.GetNodeName(), r.Organisation, r.Group.Name, r.Status, r.Flavor.Name, r.GetCreatedAt(), r.GetUpdatedAt()}}
-}
-
-func (r Runners) Headers() []string {
-	return []string{"Name", "Node", "Organisation", "Group", "Status", "Flavor", "Created At", "Updated At"}
-}
-
-func (r Runners) Rows() [][]string {
-	var rows [][]string
-	for _, runner := range r {
-		rows = append(rows, []string{runner.Name, runner.GetNodeName(), runner.Organisation, runner.Group.Name, runner.Status, runner.Flavor.Name, runner.GetCreatedAt(), runner.GetUpdatedAt()})
-	}
-
-	return rows
-}
-
 type runnersClient struct {
 	client *Client
 }

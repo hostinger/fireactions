@@ -65,7 +65,8 @@ func runJobsListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
 
-	printer.Get().Print(jobs)
+	item := &printer.Job{Jobs: jobs}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
@@ -77,6 +78,7 @@ func runJobsGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
 
-	printer.Get().Print(job)
+	item := &printer.Job{Jobs: api.Jobs{job}}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }

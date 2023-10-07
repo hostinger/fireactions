@@ -15,31 +15,6 @@ type Group struct {
 	Enabled bool   `json:"enabled"`
 }
 
-// String returns the string representation of a Group.
-func (g *Group) String() string {
-	return g.Name
-}
-
-func (g *Group) Headers() []string {
-	return []string{"Name", "Enabled"}
-}
-
-func (g *Group) Rows() [][]string {
-	return [][]string{{g.Name, fmt.Sprintf("%t", g.Enabled)}}
-}
-
-func (g Groups) Headers() []string {
-	return []string{"Name", "Enabled"}
-}
-
-func (g Groups) Rows() [][]string {
-	rows := make([][]string, len(g))
-	for i, group := range g {
-		rows[i] = []string{group.Name, fmt.Sprintf("%t", group.Enabled)}
-	}
-	return rows
-}
-
 type groupsClient struct {
 	client *Client
 }

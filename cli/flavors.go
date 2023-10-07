@@ -127,7 +127,8 @@ func runFlavorsListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
-	printer.Get().Print(flavors)
+	item := &printer.Flavor{Flavors: flavors}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
@@ -139,6 +140,7 @@ func runFlavorsGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
-	printer.Get().Print(flavor)
+	item := &printer.Flavor{Flavors: api.Flavors{*flavor}}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
