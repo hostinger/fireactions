@@ -100,7 +100,7 @@ func (c *Client) shutdown() {
 
 	c.isShuttingDown = true
 
-	err := retryDo(context.Background(), c.logger, "error deregistering client", func() error {
+	err := retryDo(context.Background(), c.logger, "error disconnecting client", func() error {
 		return c.disconnect(context.Background())
 	})
 	if err != nil {
@@ -141,20 +141,6 @@ func (c *Client) register(ctx context.Context) error {
 		MemTotal:           mem,
 		MemOvercommitRatio: c.config.MemOvercommitRatio,
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Client) deregister(ctx context.Context) error {
-	_, err := c.GetID()
-	if err != nil {
-		return fmt.Errorf("error getting client ID: %w", err)
-	}
-
-	err = c.client.Nodes().Deregister(ctx, c.ID)
 	if err != nil {
 		return err
 	}
