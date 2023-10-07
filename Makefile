@@ -15,7 +15,7 @@ build:
 
 .PHONY: clean
 clean:
-	@ rm -f dist
+	@ rm -rf dist
 
 .PHONY: fmt
 fmt:
