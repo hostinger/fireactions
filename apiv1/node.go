@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
+// Nodes represents a slice of Node objects.
 type Nodes []*Node
 
+// Node represents a Node.
 type Node struct {
 	ID           string    `json:"id"`
 	Organisation string    `json:"organisation"`
@@ -22,6 +24,7 @@ type Node struct {
 	LastSeen     time.Time `json:"last_seen"`
 }
 
+// String returns the string representation of a Node.
 func (n *Node) String() string {
 	return fmt.Sprintf("%s (%s)", n.Name, n.ID)
 }
@@ -91,10 +94,13 @@ type nodesClient struct {
 	client *Client
 }
 
+// Nodes returns a client for interacting with Nodes.
 func (c *Client) Nodes() *nodesClient {
 	return &nodesClient{client: c}
 }
 
+// NodesListOptions specifies the optional parameters to the
+// NodesClient.List method.
 type NodesListOptions struct {
 	ListOptions
 }
@@ -139,6 +145,7 @@ func (c *nodesClient) Get(ctx context.Context, id string) (*Node, *Response, err
 	return &node, response, nil
 }
 
+// NodeRegisterRequest represents a request to register a Node.
 type NodeRegisterRequest struct {
 	UUID               string  `json:"uuid"`
 	Name               string  `json:"name"`

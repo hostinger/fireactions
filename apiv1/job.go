@@ -96,10 +96,13 @@ type jobsClient struct {
 	client *Client
 }
 
+// JobsListOptions specifies the optional parameters to the
+// JobsClient.List method.
 type JobsListOptions struct {
 	ListOptions
 }
 
+// Jobs returns a client for interacting with Jobs.
 func (c *Client) Jobs() *jobsClient {
 	return &jobsClient{client: c}
 }

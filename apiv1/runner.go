@@ -72,6 +72,8 @@ func (c *Client) Runners() *runnersClient {
 	return &runnersClient{client: c}
 }
 
+// RunnersListOptions specifies the optional parameters to the
+// RunnersClient.List method.
 type RunnersListOptions struct {
 	ListOptions
 }

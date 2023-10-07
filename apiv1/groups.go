@@ -6,13 +6,16 @@ import (
 	"net/http"
 )
 
+// Groups represents a slice of Group objects.
 type Groups []Group
 
+// Group represents a Group.
 type Group struct {
 	Name    string `json:"name"`
 	Enabled bool   `json:"enabled"`
 }
 
+// String returns the string representation of a Group.
 func (g *Group) String() string {
 	return g.Name
 }
@@ -41,6 +44,8 @@ type groupsClient struct {
 	client *Client
 }
 
+// GroupsListOptions specifies the optional parameters to the
+// GroupsClient.List method.
 type GroupsListOptions struct {
 	ListOptions
 }

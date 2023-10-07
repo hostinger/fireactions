@@ -6,8 +6,10 @@ import (
 	"net/http"
 )
 
+// Flavors represents a slice of Flavor objects.
 type Flavors []Flavor
 
+// Flavor represents a Flavor.
 type Flavor struct {
 	Name         string `json:"name"`
 	Enabled      bool   `json:"enabled"`
@@ -17,6 +19,7 @@ type Flavor struct {
 	Image        string `json:"image"`
 }
 
+// String returns the string representation of a Flavor.
 func (f *Flavor) String() string {
 	return f.Name
 }
@@ -46,6 +49,8 @@ type flavorsClient struct {
 	client *Client
 }
 
+// FlavorsListOptions specifies the optional parameters to the
+// FlavorsClient.List method.
 type FlavorsListOptions struct {
 	ListOptions
 }

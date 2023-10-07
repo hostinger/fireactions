@@ -16,6 +16,7 @@ var (
 	defaultEndpoint  = "http://127.0.0.1:8080"
 )
 
+// Client manages communication with the Fireactions API.
 type Client struct {
 	client *http.Client
 
@@ -23,8 +24,11 @@ type Client struct {
 	UserAgent string
 }
 
+// ClientOpt is an option for a new Fireactions client.
 type ClientOpt func(*Client)
 
+// WithHTTPClient returns a ClientOpt that specifies the HTTP client to use when
+// making requests to the Fireactions API.
 func WithHTTPClient(client *http.Client) ClientOpt {
 	f := func(c *Client) {
 		c.client = client
@@ -32,6 +36,8 @@ func WithHTTPClient(client *http.Client) ClientOpt {
 	return f
 }
 
+// WithEndpoint returns a ClientOpt that specifies the Fireactions API endpoint
+// to use when making requests to the Fireactions API.
 func WithEndpoint(endpoint string) ClientOpt {
 	f := func(c *Client) {
 		c.Endpoint = endpoint
@@ -39,6 +45,8 @@ func WithEndpoint(endpoint string) ClientOpt {
 	return f
 }
 
+// WithUserAgent returns a ClientOpt that specifies the User-Agent header to use
+// when making requests to the Fireactions API.
 func WithUserAgent(userAgent string) ClientOpt {
 	f := func(c *Client) {
 		c.UserAgent = userAgent
@@ -65,6 +73,7 @@ func NewClient(client *http.Client, opts ...ClientOpt) *Client {
 	return c
 }
 
+// NewRequestWithContext returns a new HTTP request with a context.
 func (c *Client) NewRequestWithContext(ctx context.Context, method, endpoint string, body interface{}) (*http.Request, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
@@ -83,6 +92,7 @@ func (c *Client) NewRequestWithContext(ctx context.Context, method, endpoint str
 	return req, nil
 }
 
+// Do sends an HTTP request and returns an HTTP response.
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	rsp, err := c.client.Do(req)
 	if err != nil {
@@ -112,23 +122,28 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	return &Response{Response: rsp}, nil
 }
 
+// ErrorResponse represents an error response from the Fireactions API.
 type ErrorResponse struct {
 	Response *http.Response
 	Message  string `json:"error"`
 }
 
+// Error returns the error message.
 func (r *ErrorResponse) Error() string {
 	return fmt.Sprintf("%v %v: %d: %v", r.Response.Request.Method, r.Response.Request.URL, r.Response.StatusCode, r.Message)
 }
 
+// Response wraps an HTTP response.
 type Response struct {
 	*http.Response
 }
 
+// HasNextPage returns true if the response has a next page.
 func (r *Response) HasNextPage() bool {
 	return r.Header.Get("Link") != ""
 }
 
+// NextPage returns the next page URL.
 func (r *Response) NextPage() (string, error) {
 	link := r.Header.Get("Link")
 	if link == "" {
