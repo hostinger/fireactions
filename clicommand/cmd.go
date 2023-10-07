@@ -23,6 +23,7 @@ func New() *cobra.Command {
 		return nil
 	})
 
-	cmd.AddCommand(newFlavorsCmd(), newRunnersCmd(), newJobsCmd(), newGroupsCmd(), newNodesCmd(), newServerCmd(), newClientCmd())
+	cmd.AddCommand(newVersionCmd(),
+		newFlavorsCmd(), newRunnersCmd(), newJobsCmd(), newGroupsCmd(), newNodesCmd(), newServerCmd(), newClientCmd())
 	return cmd
 }
