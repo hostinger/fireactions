@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	v1 "github.com/hostinger/fireactions/apiv1"
+	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/server/structs"

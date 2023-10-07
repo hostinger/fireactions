@@ -12,7 +12,7 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
-	api "github.com/hostinger/fireactions/apiv1"
+	api "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/client/preflight"
 	"github.com/rs/zerolog"
 	"github.com/shirou/gopsutil/cpu"

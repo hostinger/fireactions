@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	v1 "github.com/hostinger/fireactions/apiv1"
+	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
 	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"

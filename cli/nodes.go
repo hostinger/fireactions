@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	api "github.com/hostinger/fireactions/apiv1"
-	"github.com/hostinger/fireactions/clicommand/printer"
+	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/cli/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/hostinger/fireactions/clicommand"
+	clicommand "github.com/hostinger/fireactions/cli"
 )
 
 func main() {

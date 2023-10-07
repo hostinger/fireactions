@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"os"
 
-	api "github.com/hostinger/fireactions/apiv1"
-	"github.com/hostinger/fireactions/clicommand/printer"
+	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/cli/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func newRunnersCmd() *cobra.Command {
+func newJobsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "runners",
-		Short: "Subcommand for managing Runner(s)",
+		Use:   "jobs",
+		Short: "Subcommand for managing Job(s)",
 	}
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if viper.GetString("fireactions-server-url") == "" {
@@ -29,54 +29,54 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newRunnersListCmd(), newRunnersGetCmd())
+	cmd.AddCommand(newJobsGetCmd(), newJobsListCmd())
 	return cmd
 }
 
-func newRunnersGetCmd() *cobra.Command {
+func newJobsGetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "get",
-		Short:   "Get a specific Runner by ID",
+		Use:     "get ID",
+		Short:   "Get a specific GitHub job by ID",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"show"},
-		RunE:    runRunnersGetCmd,
+		RunE:    runJobsGetCmd,
 	}
 
 	return cmd
 }
 
-func newRunnersListCmd() *cobra.Command {
+func newJobsListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls",
-		Short:   "List all created GitHub runners",
-		Args:    cobra.NoArgs,
+		Short:   "List all received GitHub jobs",
 		Aliases: []string{"list"},
-		RunE:    runRunnersListCmd,
+		Args:    cobra.NoArgs,
+		RunE:    runJobsListCmd,
 	}
 
 	return cmd
 }
 
-func runRunnersListCmd(cmd *cobra.Command, args []string) error {
+func runJobsListCmd(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runners, _, err := client.Runners().List(cmd.Context(), nil)
+	jobs, _, err := client.Jobs().List(cmd.Context(), nil)
 	if err != nil {
-		return fmt.Errorf("error fetching Runner(s): %w", err)
+		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
 
-	printer.Get().Print(runners)
+	printer.Get().Print(jobs)
 	return nil
 }
 
-func runRunnersGetCmd(cmd *cobra.Command, args []string) error {
+func runJobsGetCmd(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runner, _, err := client.Runners().Get(cmd.Context(), args[0])
+	job, _, err := client.Jobs().Get(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Runner(s): %w", err)
+		return fmt.Errorf("error fetching Job(s): %w", err)
 	}
 
-	printer.Get().Print(runner)
+	printer.Get().Print(job)
 	return nil
 }
