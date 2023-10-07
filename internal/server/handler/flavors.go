@@ -41,9 +41,7 @@ func GetFlavorsHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handler
 // the v1 format.
 func GetFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		name := ctx.Param("name")
-
-		flavor, err := store.GetFlavor(ctx, name)
+		flavor, err := store.GetFlavor(ctx, ctx.Param("name"))
 		if err != nil {
 			httperr.E(ctx, err)
 			return
@@ -58,9 +56,7 @@ func GetFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerF
 // DisableFlavorHandlerFuncV1 returns a HTTP handler function that disables a Flavor by name.
 func DisableFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		name := ctx.Param("name")
-
-		flavor, err := store.GetFlavor(ctx, name)
+		flavor, err := store.GetFlavor(ctx, ctx.Param("name"))
 		if err != nil {
 			httperr.E(ctx, err)
 			return
@@ -82,9 +78,7 @@ func DisableFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Hand
 // EnableFlavorHandlerFuncV1 returns a HTTP handler function that enables a Flavor by name.
 func EnableFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		name := ctx.Param("name")
-
-		flavor, err := store.GetFlavor(ctx, name)
+		flavor, err := store.GetFlavor(ctx, ctx.Param("name"))
 		if err != nil {
 			httperr.E(ctx, err)
 			return
@@ -109,7 +103,7 @@ func convertFlavorToFlavorV1(flavor *structs.Flavor) v1.Flavor {
 		DiskSizeGB:   flavor.DiskSizeGB,
 		MemorySizeMB: flavor.MemorySizeMB,
 		VCPUs:        flavor.VCPUs,
-		ImageName:    flavor.ImageName,
+		Image:        flavor.Image,
 		Enabled:      flavor.Enabled,
 	}
 

@@ -9,6 +9,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+// ListFlavors returns all Flavors.
 func (s *Store) ListFlavors(ctx context.Context) ([]*structs.Flavor, error) {
 	var flavors []*structs.Flavor
 
@@ -33,6 +34,7 @@ func (s *Store) ListFlavors(ctx context.Context) ([]*structs.Flavor, error) {
 	return flavors, nil
 }
 
+// GetFlavor returns a Flavor by name.
 func (s *Store) GetFlavor(ctx context.Context, name string) (*structs.Flavor, error) {
 	flavor := &structs.Flavor{}
 
@@ -56,6 +58,7 @@ func (s *Store) GetFlavor(ctx context.Context, name string) (*structs.Flavor, er
 	return flavor, nil
 }
 
+// DeleteFlavor deletes a Flavor by name.
 func (s *Store) DeleteFlavor(ctx context.Context, name string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		return tx.Bucket([]byte("flavors")).Delete([]byte(name))
@@ -67,6 +70,7 @@ func (s *Store) DeleteFlavor(ctx context.Context, name string) error {
 	return nil
 }
 
+// SaveFlavor saves a Flavor.
 func (s *Store) SaveFlavor(ctx context.Context, flavor *structs.Flavor) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("flavors"))
@@ -84,6 +88,7 @@ func (s *Store) SaveFlavor(ctx context.Context, flavor *structs.Flavor) error {
 	return nil
 }
 
+// GetFlavorsCount returns the number of Flavors.
 func (s *Store) GetFlavorsCount(ctx context.Context) (int, error) {
 	var count int
 	err := s.db.View(func(tx *bbolt.Tx) error {

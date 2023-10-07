@@ -42,7 +42,7 @@ func TestGetFlavorsHandlerFuncV1(t *testing.T) {
 				DiskSizeGB:   10,
 				MemorySizeMB: 1024,
 				VCPUs:        2,
-				ImageName:    "ubuntu-18.04",
+				Image:        "ubuntu-18.04",
 			},
 			{
 				Name:         "flavor2",
@@ -50,7 +50,7 @@ func TestGetFlavorsHandlerFuncV1(t *testing.T) {
 				DiskSizeGB:   10,
 				MemorySizeMB: 1024,
 				VCPUs:        2,
-				ImageName:    "ubuntu-18.04",
+				Image:        "ubuntu-18.04",
 			},
 		}, nil)
 
@@ -59,7 +59,7 @@ func TestGetFlavorsHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 200, rec.Code)
-		assert.JSONEq(t, `{"flavors":[{"name":"flavor1","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image_name":"ubuntu-18.04"},{"name":"flavor2","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image_name":"ubuntu-18.04"}]}`, rec.Body.String())
+		assert.JSONEq(t, `{"flavors":[{"name":"flavor1","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image":"ubuntu-18.04"},{"name":"flavor2","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image":"ubuntu-18.04"}]}`, rec.Body.String())
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestGetFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}, nil)
 
 		rec := httptest.NewRecorder()
@@ -98,7 +98,7 @@ func TestGetFlavorHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 200, rec.Code)
-		assert.JSONEq(t, `{"name":"flavor1","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image_name":"ubuntu-18.04"}`, rec.Body.String())
+		assert.JSONEq(t, `{"name":"flavor1","enabled":true,"disk_size_gb":10,"memory_size_mb":1024,"vcpus":2,"image":"ubuntu-18.04"}`, rec.Body.String())
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}, nil)
 
 		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
@@ -138,7 +138,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}).Return(nil)
 
 		rec := httptest.NewRecorder()
@@ -166,7 +166,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}, nil)
 
 		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
@@ -175,7 +175,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}).Return(errors.New("error"))
 
 		rec := httptest.NewRecorder()
@@ -203,7 +203,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}, nil)
 
 		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
@@ -212,7 +212,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}).Return(nil)
 
 		rec := httptest.NewRecorder()
@@ -240,7 +240,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}, nil)
 
 		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
@@ -249,7 +249,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			DiskSizeGB:   10,
 			MemorySizeMB: 1024,
 			VCPUs:        2,
-			ImageName:    "ubuntu-18.04",
+			Image:        "ubuntu-18.04",
 		}).Return(errors.New("error"))
 
 		rec := httptest.NewRecorder()

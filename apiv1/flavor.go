@@ -10,11 +10,11 @@ type Flavors []Flavor
 
 type Flavor struct {
 	Name         string `json:"name"`
+	Enabled      bool   `json:"enabled"`
 	DiskSizeGB   int64  `json:"disk_size_gb"`
 	MemorySizeMB int64  `json:"memory_size_mb"`
 	VCPUs        int64  `json:"vcpus"`
-	ImageName    string `json:"image_name"`
-	Enabled      bool   `json:"enabled"`
+	Image        string `json:"image"`
 }
 
 func (f *Flavor) String() string {
@@ -22,15 +22,15 @@ func (f *Flavor) String() string {
 }
 
 func (f *Flavor) Headers() []string {
-	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image", "Enabled"}
+	return []string{"Name", "Enabled", "VCPUs", "Memory", "Disk", "Image"}
 }
 
 func (f *Flavor) Rows() [][]string {
-	return [][]string{{f.Name, fmt.Sprintf("%d", f.VCPUs), fmt.Sprintf("%d", f.MemorySizeMB), fmt.Sprintf("%d", f.DiskSizeGB), f.ImageName, fmt.Sprintf("%t", f.Enabled)}}
+	return [][]string{{f.Name, fmt.Sprintf("%t", f.Enabled), fmt.Sprintf("%d", f.VCPUs), fmt.Sprintf("%dMB", f.MemorySizeMB), fmt.Sprintf("%dGB", f.DiskSizeGB), f.Image}}
 }
 
 func (f Flavors) Headers() []string {
-	return []string{"Name", "VCPUs", "Memory (MB)", "Disk (GB)", "Image", "Enabled"}
+	return []string{"Name", "Enabled", "VCPUs", "Memory", "Disk", "Image"}
 }
 
 func (f Flavors) Rows() [][]string {

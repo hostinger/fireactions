@@ -36,11 +36,8 @@ type Server struct {
 	registry *prometheus.Registry
 }
 
-// ServerOpt is a function that configures a Server.
-type ServerOpt func(*Server)
-
 // New creates a new Server.
-func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt) (*Server, error) {
+func New(log *zerolog.Logger, cfg *Config, store store.Store) (*Server, error) {
 	s := &Server{
 		TLSConfig:    &tls.Config{},
 		cfg:          cfg,
@@ -56,10 +53,6 @@ func New(log *zerolog.Logger, cfg *Config, store store.Store, opts ...ServerOpt)
 			Help:      "Whether the server is up",
 		}),
 		registry: prometheus.NewRegistry(),
-	}
-
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	logger := log.With().Str("component", "server").Logger()
@@ -149,12 +142,14 @@ func (s *Server) init() error {
 	s.registry.MustRegister(s.store)
 	s.registry.MustRegister(s)
 
-	err := initPreconfiguredFlavors(s.log, s.cfg.Flavors, s.store)
+	var err error
+
+	err = s.initPreconfiguredFlavors()
 	if err != nil {
 		return fmt.Errorf("error initializing preconfigured flavors: %w", err)
 	}
 
-	err = initPreconfiguredGroups(s.log, s.cfg.Groups, s.store)
+	err = s.initPreconfiguredGroups()
 	if err != nil {
 		return fmt.Errorf("error initializing preconfigured groups: %w", err)
 	}
@@ -172,41 +167,41 @@ func (s *Server) Describe(ch chan<- *prometheus.Desc) {
 	s.up.Describe(ch)
 }
 
-func initPreconfiguredFlavors(log *zerolog.Logger, flavors []*FlavorConfig, store store.Store) error {
-	log.Info().Msg("creating preconfigured Flavor(s)")
+func (s *Server) initPreconfiguredFlavors() error {
+	s.log.Info().Msg("creating preconfigured Flavor(s)")
 
-	for _, cfg := range flavors {
-		err := store.SaveFlavor(context.Background(), &structs.Flavor{
+	for _, cfg := range s.cfg.Flavors {
+		err := s.store.SaveFlavor(context.Background(), &structs.Flavor{
 			Name:         cfg.Name,
-			DiskSizeGB:   cfg.Disk,
-			MemorySizeMB: cfg.Mem,
-			VCPUs:        cfg.CPU,
-			ImageName:    cfg.Image,
 			Enabled:      *cfg.Enabled,
+			VCPUs:        cfg.CPU,
+			MemorySizeMB: cfg.Mem,
+			DiskSizeGB:   cfg.Disk,
+			Image:        cfg.Image,
 		})
 		if err != nil {
-			return fmt.Errorf("error saving flavor: %w", err)
+			return fmt.Errorf("error creating preconfigured flavor (%s): %w", cfg.Name, err)
 		}
 
-		log.Info().Msgf("created Flavor: %s", cfg.Name)
+		s.log.Info().Msgf("created preconfigured flavor (%s)", cfg.Name)
 	}
 
 	return nil
 }
 
-func initPreconfiguredGroups(log *zerolog.Logger, groups []*GroupConfig, store store.Store) error {
-	log.Info().Msg("creating preconfigured Group(s)")
+func (s *Server) initPreconfiguredGroups() error {
+	s.log.Info().Msg("creating preconfigured Group(s)")
 
-	for _, cfg := range groups {
-		err := store.SaveGroup(context.Background(), &structs.Group{
+	for _, cfg := range s.cfg.Groups {
+		err := s.store.SaveGroup(context.Background(), &structs.Group{
 			Name:    cfg.Name,
 			Enabled: *cfg.Enabled,
 		})
 		if err != nil {
-			return fmt.Errorf("error saving group: %w", err)
+			return fmt.Errorf("error creating preconfigured group (%s): %w", cfg.Name, err)
 		}
 
-		log.Info().Msgf("created Group: %s", cfg.Name)
+		s.log.Info().Msgf("created preconfigured group (%s)", cfg.Name)
 	}
 
 	return nil

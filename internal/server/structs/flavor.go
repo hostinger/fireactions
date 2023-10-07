@@ -7,16 +7,16 @@ import (
 // Flavor struct.
 type Flavor struct {
 	Name         string
+	Enabled      bool
 	DiskSizeGB   int64
 	MemorySizeMB int64
 	VCPUs        int64
-	ImageName    string
-	Enabled      bool
+	Image        string
 }
 
 // String returns a string representation of a Flavor.
 func (f *Flavor) String() string {
-	return fmt.Sprintf("%s (vCPUs: %d, Memory: %d MB, Disk: %d GB, Enabled: %t)", f.Name, f.VCPUs, f.MemorySizeMB, f.DiskSizeGB, f.Enabled)
+	return fmt.Sprintf("%s (Enabled: %t, vCPUs: %d, Memory: %dMB, Disk: %dGB, Image: %s)", f.Name, f.Enabled, f.VCPUs, f.MemorySizeMB, f.DiskSizeGB, f.Image)
 }
 
 // GetMemorySizeBytes returns the memory size in bytes.

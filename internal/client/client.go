@@ -313,7 +313,7 @@ func (c *Client) reconcileOnce() {
 			VCPUs:        r.Flavor.VCPUs,
 			MemorySizeMB: r.Flavor.MemorySizeMB,
 			DiskSizeGB:   r.Flavor.DiskSizeGB,
-			Image:        r.Flavor.ImageName,
+			Image:        r.Flavor.Image,
 			Token:        runnerToken,
 		})
 		if err != nil {
