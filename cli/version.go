@@ -1,4 +1,4 @@
-package clicommand
+package cli
 
 import (
 	"github.com/hostinger/fireactions/build"

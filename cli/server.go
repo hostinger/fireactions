@@ -1,4 +1,4 @@
-package clicommand
+package cli
 
 import (
 	"context"

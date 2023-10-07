@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	clicommand "github.com/hostinger/fireactions/cli"
+	"github.com/hostinger/fireactions/cli"
 )
 
 func main() {
-	cmd := clicommand.New()
+	cmd := cli.New()
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("Error: %s\n", err.Error())
 		os.Exit(1)
