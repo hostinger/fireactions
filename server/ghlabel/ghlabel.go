@@ -5,34 +5,62 @@ import (
 	"strings"
 )
 
+var (
+	// ErrEmptyLabel is returned when the label is empty.
+	ErrEmptyLabel = fmt.Errorf("label is empty")
+)
+
+var defaultSeparator = "."
+
 // Label is a GitHub Actions job label.
 type Label struct {
+	Prefix string
 	Group  string
 	Flavor string
 }
 
 // New returns a new Label from the specified string and LabelOpts.
-func New(s string) *Label {
-	fields := strings.SplitN(s, ".", 2)
-
-	l := &Label{}
-
-	if len(fields) >= 1 {
-		l.Group = fields[0]
+func New(s string) (*Label, error) {
+	if s == "" {
+		return nil, ErrEmptyLabel
 	}
 
-	if len(fields) >= 2 {
-		l.Flavor = fields[1]
+	values := strings.SplitN(s, defaultSeparator, 3)
+
+	l := &Label{
+		Prefix: values[0],
 	}
 
-	return l
+	if len(values) >= 2 {
+		l.Group = values[1]
+	}
+
+	if len(values) >= 3 {
+		l.Flavor = values[2]
+	}
+
+	return l, nil
 }
 
 // String returns the string representation of the Label.
 func (l *Label) String() string {
-	if l.Flavor == "" {
-		return l.Group
+	s := l.Prefix
+
+	if l.Group != "" {
+		s += fmt.Sprintf("%s%s", defaultSeparator, l.Group)
 	}
 
-	return fmt.Sprintf("%s.%s", l.Group, l.Flavor)
+	if l.Flavor != "" {
+		s += fmt.Sprintf("%s%s", defaultSeparator, l.Flavor)
+	}
+
+	return s
+}
+
+func (l *Label) FlavorIsEmpty() bool {
+	return l.Flavor == ""
+}
+
+func (l *Label) GroupIsEmpty() bool {
+	return l.Group == ""
 }

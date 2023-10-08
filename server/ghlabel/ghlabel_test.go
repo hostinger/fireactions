@@ -1,52 +1,48 @@
 package ghlabel
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestLabel(t *testing.T) {
-	t.Parallel()
+	t.Run("fireactions.us-east-1.1vcpu-2gb", func(t *testing.T) {
+		label, err := New("fireactions.us-east-1.1vcpu-2gb")
 
-	tests := []struct {
-		name string
-		s    string
-		want *Label
-	}{
-		{
-			name: "",
-			s:    "",
-			want: &Label{},
-		},
-		{
-			name: "group1",
-			s:    "group1",
-			want: &Label{
-				Group: "group1",
-			},
-		},
-		{
-			name: "group-1.1vcpu-2gb",
-			s:    "group-1.1vcpu-2gb",
-			want: &Label{
-				Group:  "group-1",
-				Flavor: "1vcpu-2gb",
-			},
-		},
-	}
+		assert.NoError(t, err)
+		assert.Equal(t, "fireactions", label.Prefix)
+		assert.Equal(t, "us-east-1", label.Group)
+		assert.Equal(t, "1vcpu-2gb", label.Flavor)
+		assert.Equal(t, "fireactions.us-east-1.1vcpu-2gb", label.String())
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := New(tt.s)
+	t.Run("fireactions.us-east-1", func(t *testing.T) {
+		label, err := New("fireactions.us-east-1")
 
-			if l.Group != tt.want.Group {
-				t.Errorf("got %s; want %s", l.Group, tt.want.Group)
-			}
+		assert.NoError(t, err)
+		assert.Equal(t, "fireactions", label.Prefix)
+		assert.Equal(t, "us-east-1", label.Group)
+		assert.Equal(t, "", label.Flavor)
+		assert.Equal(t, "fireactions.us-east-1", label.String())
+	})
 
-			if l.Flavor != tt.want.Flavor {
-				t.Errorf("got %s; want %s", l.Flavor, tt.want.Flavor)
-			}
+	t.Run("fireactions", func(t *testing.T) {
+		label, err := New("fireactions")
 
-			if l.String() != tt.s {
-				t.Errorf("got %s; want %s", l.String(), tt.s)
-			}
-		})
-	}
+		assert.NoError(t, err)
+		assert.Equal(t, "fireactions", label.Prefix)
+		assert.Equal(t, "", label.Group)
+		assert.Equal(t, "", label.Flavor)
+		assert.Equal(t, "fireactions", label.String())
+		assert.True(t, label.FlavorIsEmpty())
+		assert.True(t, label.GroupIsEmpty())
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		label, err := New("")
+
+		assert.Error(t, err)
+		assert.Nil(t, label)
+	})
 }

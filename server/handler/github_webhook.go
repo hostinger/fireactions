@@ -71,13 +71,19 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 			return
 		}
 
-		l = strings.TrimPrefix(l, jobLabelPrefix)
-		l = strings.TrimPrefix(l, ".")
-		label := ghlabel.New(l)
-		if label.Flavor == "" {
+		label, err := ghlabel.New(l)
+		if err != nil {
+			log.Debug().Msgf("skipped job %s: error parsing label '%s': %s", jobID, l, err.Error())
+			ctx.JSON(200, gin.H{
+				"message": fmt.Sprintf("Skipped job due to error parsing label: %s", err.Error()),
+			})
+			return
+		}
+
+		if label.FlavorIsEmpty() {
 			label.Flavor = defaultFlavor
 		}
-		if label.Group == "" {
+		if label.GroupIsEmpty() {
 			label.Group = defaultGroup
 		}
 
