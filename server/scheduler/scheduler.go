@@ -6,6 +6,16 @@ import (
 	"sync"
 
 	"github.com/hostinger/fireactions/server/scheduler/cache"
+	"github.com/hostinger/fireactions/server/scheduler/filter"
+	"github.com/hostinger/fireactions/server/scheduler/filter/cpucapacity"
+	"github.com/hostinger/fireactions/server/scheduler/filter/group"
+	"github.com/hostinger/fireactions/server/scheduler/filter/heartbeat"
+	"github.com/hostinger/fireactions/server/scheduler/filter/organisation"
+	"github.com/hostinger/fireactions/server/scheduler/filter/ramcapacity"
+	"github.com/hostinger/fireactions/server/scheduler/filter/status"
+	"github.com/hostinger/fireactions/server/scheduler/scorer"
+	"github.com/hostinger/fireactions/server/scheduler/scorer/freecpu"
+	"github.com/hostinger/fireactions/server/scheduler/scorer/freeram"
 	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
@@ -18,22 +28,13 @@ type Storer interface {
 	ReserveNodeResources(ctx context.Context, nodeID string, vcpus int64, ram int64) error
 }
 
-var (
-	// ErrFilterExists is returned when a Filter with the same name already
-	// exists.
-	ErrFilterExists = fmt.Errorf("filter already exists")
-	// ErrScorerExists is returned when a Scorer with the same name already
-	// exists.
-	ErrScorerExists = fmt.Errorf("scorer already exists")
-)
-
 // Scheduler is responsible for scheduling Runners onto Nodes.
 type Scheduler struct {
 	queue        *SchedulingQueue
 	cache        Cache
 	store        Storer
-	filters      map[string]Filter
-	scorers      map[string]Scorer
+	filters      map[string]filter.Filter
+	scorers      map[string]scorer.Scorer
 	shutdownOnce sync.Once
 	shutdownCh   chan struct{}
 	isShutdown   bool
@@ -45,8 +46,8 @@ type Scheduler struct {
 func New(log *zerolog.Logger, cfg *Config, store Storer) *Scheduler {
 	s := &Scheduler{
 		queue:        NewSchedulingQueue(),
-		filters:      make(map[string]Filter, 0),
-		scorers:      make(map[string]Scorer, 0),
+		filters:      make(map[string]filter.Filter, 0),
+		scorers:      make(map[string]scorer.Scorer, 0),
 		cache:        cache.New(),
 		store:        store,
 		shutdownOnce: sync.Once{},
@@ -96,28 +97,32 @@ func (s *Scheduler) Schedule(r *structs.Runner) error {
 }
 
 func (s *Scheduler) registerFilters() {
-	filters := []Filter{
-		&OrganisationFilter{},
-		&CpuCapacityFilter{},
-		&RamCapacityFilter{},
-		&GroupFilter{},
-		&HeartbeatFilter{},
-		&StatusFilter{},
+	filters := []filter.Filter{
+		organisation.New(), cpucapacity.New(), ramcapacity.New(), group.New(), heartbeat.New(), status.New(),
 	}
 
 	for _, filter := range filters {
+		_, ok := s.filters[filter.Name()]
+		if ok {
+			panic(fmt.Sprintf("filter %s already exists", filter.Name()))
+		}
+
 		s.filters[filter.Name()] = filter
 		s.log.Debug().Msgf("registered filter %s", filter)
 	}
 }
 
 func (s *Scheduler) registerScorers() {
-	scorers := []Scorer{
-		&FreeCpuScorer{Multiplier: s.cfg.FreeCpuScorerMultiplier},
-		&FreeRamScorer{Multiplier: s.cfg.FreeRamScorerMultiplier},
+	scorers := []scorer.Scorer{
+		freecpu.New(s.cfg.FreeCpuScorerMultiplier), freeram.New(s.cfg.FreeRamScorerMultiplier),
 	}
 
 	for _, scorer := range scorers {
+		_, ok := s.scorers[scorer.Name()]
+		if ok {
+			panic(fmt.Sprintf("scorer %s already exists", scorer.Name()))
+		}
+
 		s.scorers[scorer.Name()] = scorer
 		s.log.Debug().Msgf("registered scorer %s", scorer)
 	}
@@ -218,7 +223,7 @@ func (s *Scheduler) schedule() {
 	s.log.Info().Msgf("runner %s is assigned to node %s", runner.ID, bestNode.ID)
 }
 
-func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters map[string]Filter) []*structs.Node {
+func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters map[string]filter.Filter) []*structs.Node {
 	feasible := make([]*structs.Node, 0, len(nodes))
 	for _, n := range nodes {
 		if !runFilters(runner, n, filters) {
@@ -230,7 +235,7 @@ func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters ma
 	return feasible
 }
 
-func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[string]Scorer) *structs.Node {
+func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[string]scorer.Scorer) *structs.Node {
 	if len(nodes) == 0 {
 		return nil
 	}
@@ -264,7 +269,7 @@ func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[str
 	return bestNode
 }
 
-func runScorers(runner *structs.Runner, node *structs.Node, scorers map[string]Scorer) (float64, error) {
+func runScorers(runner *structs.Runner, node *structs.Node, scorers map[string]scorer.Scorer) (float64, error) {
 	var score float64
 	for _, scorer := range scorers {
 		result, err := scorer.Score(runner, node)
@@ -278,7 +283,7 @@ func runScorers(runner *structs.Runner, node *structs.Node, scorers map[string]S
 	return score, nil
 }
 
-func runFilters(runner *structs.Runner, node *structs.Node, filters map[string]Filter) bool {
+func runFilters(runner *structs.Runner, node *structs.Node, filters map[string]filter.Filter) bool {
 	for _, filter := range filters {
 		ok, err := filter.Filter(context.Background(), runner, node)
 		if err != nil {

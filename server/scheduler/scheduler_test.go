@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hostinger/fireactions/server/scheduler/filter"
 	"github.com/hostinger/fireactions/server/structs"
 	"github.com/stretchr/testify/assert"
 )
@@ -55,7 +56,7 @@ func TestFindFeasibleNodesSuccess(t *testing.T) {
 		ID: "1",
 	}
 
-	filters := map[string]Filter{
+	filters := map[string]filter.Filter{
 		"filter1": &successFilter{},
 		"filter2": &successFilter{},
 	}
@@ -81,7 +82,7 @@ func TestFindFeasibleNodesFailure(t *testing.T) {
 		ID: "1",
 	}
 
-	filters := map[string]Filter{
+	filters := map[string]filter.Filter{
 		"filter1": &successFilter{},
 		"filter2": &failureFilter{},
 	}

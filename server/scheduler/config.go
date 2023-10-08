@@ -26,10 +26,10 @@ func (c *Config) Validate() error {
 // SetDefaults sets the default values for the Scheduler configuration.
 func (c *Config) SetDefaults() {
 	if c.FreeCpuScorerMultiplier == 0 {
-		c.FreeCpuScorerMultiplier = defaultFreeCpuScorerMultiplier
+		c.FreeCpuScorerMultiplier = 1.0
 	}
 
 	if c.FreeRamScorerMultiplier == 0 {
-		c.FreeRamScorerMultiplier = defaultFreeRamScorerMultiplier
+		c.FreeRamScorerMultiplier = 1.0
 	}
 }
