@@ -23,10 +23,10 @@ func TestLabel(t *testing.T) {
 			},
 		},
 		{
-			name: "group1-1vcpu-2gb",
-			s:    "group1-1vcpu-2gb",
+			name: "group-1.1vcpu-2gb",
+			s:    "group-1.1vcpu-2gb",
 			want: &Label{
-				Group:  "group1",
+				Group:  "group-1",
 				Flavor: "1vcpu-2gb",
 			},
 		},

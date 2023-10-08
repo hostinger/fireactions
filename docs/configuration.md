@@ -47,7 +47,7 @@ data-dir: /var/lib/fireactions
 # GitHub configuration options.
 github:
 # Job label prefix to search for in received GitHub events.
-  job-label-prefix: fireactions-
+  job-label-prefix: fireactions
 # The secret used to verify GitHub webhook payloads.
   webhook-secret: SECRET
 # The GitHub App ID and PEM-encoded private key.
@@ -90,7 +90,6 @@ flavors:
 default-group: us-east-2
 
 # Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined.
-# Group name must be unique and should not contain any hyphens (-).
 groups:
   - name: us-east-2
   - name: us-west-1

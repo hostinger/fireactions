@@ -24,16 +24,12 @@ To start using self-hosted GitHub runners, add the label to your workflow jobs:
 <...>
 runs-on:
 - self-hosted
-- actions-<GROUP>-<FLAVOR>
+- <PREFIX>[.GROUP][.FLAVOR] # e.g. fireactions.group1.1vcpu-1gb, fireactions.group1, fireactions
 ```
 
-Job labels identify the type of virtual machine to create for the Job. Label must begin with prefix `actions-` and must be followed by the group and flavor name. If the flavor name is not specified, the default configured flavor will be used.
+Job labels identify the type of virtual machine to create for the Job. Label must begin with prefix and must be followed by the group and flavor name, separated by a dot. If neither group nor flavor is specified, the default group and flavor will be used.
 
-The label format is based on the following template:
-
-`<PREFIX>-<GROUP>-<FLAVOR>`
-
-Flavors and groups are defined in the `flavors` and `groups` section of the [configuration](./docs/configuration.md) file. The default flavor and group can be specified in the `default-flavor`, `default-group` options.
+See [Configuration](./docs//configuration.md) for more information on how to configure the default job label prefix, groups and flavors.
 
 ## Metrics
 

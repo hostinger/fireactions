@@ -40,7 +40,7 @@ config:
     existingSecret: ""
 
     # -- Job label prefix to search for in received GitHub events.
-    jobLabelPrefix: fireactions-
+    jobLabelPrefix: fireactions
 
     # -- The secret used to verify GitHub webhook payloads.
     webhookSecret: ""
@@ -90,7 +90,6 @@ config:
   defaultGroup: us-east-2
 
   # -- Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined.
-  # Group name must be unique and should not contain any hyphens (-).
   groups:
     - name: us-east-2
     - name: us-west-1

@@ -13,7 +13,7 @@ type Label struct {
 
 // New returns a new Label from the specified string and LabelOpts.
 func New(s string) *Label {
-	fields := strings.SplitN(s, "-", 2)
+	fields := strings.SplitN(s, ".", 2)
 
 	l := &Label{}
 
@@ -34,5 +34,5 @@ func (l *Label) String() string {
 		return l.Group
 	}
 
-	return fmt.Sprintf("%s-%s", l.Group, l.Flavor)
+	return fmt.Sprintf("%s.%s", l.Group, l.Flavor)
 }

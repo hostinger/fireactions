@@ -72,7 +72,7 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 		}
 
 		l = strings.TrimPrefix(l, jobLabelPrefix)
-		l = strings.TrimPrefix(l, "-")
+		l = strings.TrimPrefix(l, ".")
 		label := ghlabel.New(l)
 		if label.Flavor == "" {
 			label.Flavor = defaultFlavor
