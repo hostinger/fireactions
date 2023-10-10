@@ -23,7 +23,7 @@ archives:
 - id: fireactions
   builds:
   - fireactions
-  name_template: fireactions-{{ .Version }}-{{ .Os }}-{{ .Arch }}
+  name_template: fireactions-v{{ .Version }}-{{ .Os }}-{{ .Arch }}
   format: tar.gz
   files:
   - src: LICENSE
