@@ -21,50 +21,54 @@ popd () {
 
 function download_firecracker_amd64()
 {
+  mkdir -p tmp
   curl -fsSL -o firecracker.tgz "https://github.com/firecracker-microvm/firecracker/releases/download/v${FIRECRACKER_VERSION}/firecracker-v${FIRECRACKER_VERSION}-x86_64.tgz"
-  tar -zxf firecracker.tgz --strip-components=1 \
-    --include "release-v${FIRECRACKER_VERSION}-x86_64/firecracker-v${FIRECRACKER_VERSION}-x86_64"
-
+  tar -zxf firecracker.tgz \
+    --strip-components=1   \
+    -C tmp
   rm -rf firecracker.tgz
-  mv firecracker-v${FIRECRACKER_VERSION}-x86_64 firecracker
+
+  cp tmp/firecracker-v${FIRECRACKER_VERSION}-x86_64 firecracker
+  rm -rf tmp
 }
 
 function download_firecracker_arm64()
 {
+  mkdir -p tmp
   curl -fsSL -o firecracker.tgz "https://github.com/firecracker-microvm/firecracker/releases/download/v${FIRECRACKER_VERSION}/firecracker-v${FIRECRACKER_VERSION}-aarch64.tgz"
-  tar -zxf firecracker.tgz --strip-components=1 \
-    --include "release-v${FIRECRACKER_VERSION}-aarch64/firecracker-v${FIRECRACKER_VERSION}-aarch64"
-
+  tar -zxf firecracker.tgz \
+    --strip-components=1   \
+    -C tmp
   rm -rf firecracker.tgz
-  mv firecracker-v${FIRECRACKER_VERSION}-aarch64 firecracker
+
+  cp tmp/firecracker-v${FIRECRACKER_VERSION}-aarch64 firecracker
+  rm -rf tmp
 }
 
 function download_cni_plugins_amd64()
 {
-  mkdir -p cni/bin
+  mkdir -p cni/bin tmp
   curl -fsSL -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v${CNI_PLUGINS_VERSION}/cni-plugins-linux-amd64-v${CNI_PLUGINS_VERSION}.tgz
-  tar -zxf cni-plugins.tgz \
-    --include bridge     \
-    --include host-local \
-    --include firewall   \
-    --directory cni/bin && rm -rf cni-plugins.tgz
+  tar -zxf cni-plugins.tgz -C tmp && rm -rf cni-plugins.tgz
 
-  curl -fsSL -o cni/bin/tc-redirect-tap https://github.com/alexellis/tc-tap-redirect-builder/releases/download/2022-04-01-1337/tc-redirect-tap
-  chmod +x cni/bin/tc-redirect-tap
+  curl -fsSL -o tmp/tc-redirect-tap https://github.com/alexellis/tc-tap-redirect-builder/releases/download/2022-04-01-1337/tc-redirect-tap
+  chmod +x tmp/tc-redirect-tap
+
+  cp tmp/bridge tmp/host-local tmp/firewall tmp/tc-redirect-tap cni/bin
+  rm -rf tmp
 }
 
 function download_cni_plugins_arm64()
 {
-  mkdir -p cni/bin
+  mkdir -p cni/bin tmp
   curl -fsSL -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v${CNI_PLUGINS_VERSION}/cni-plugins-linux-arm64-v${CNI_PLUGINS_VERSION}.tgz
-  tar -zxf cni-plugins.tgz \
-    --include bridge     \
-    --include host-local \
-    --include firewall   \
-    --directory cni/bin && rm -rf cni-plugins.tgz
+  tar -zxf cni-plugins.tgz -C tmp && rm -rf cni-plugins.tgz
 
-  curl -fsSL -o cni/bin/tc-redirect-tap https://github.com/alexellis/tc-tap-redirect-builder/releases/download/2022-04-01-1337/tc-redirect-tap-arm64
-  chmod +x cni/bin/tc-redirect-tap
+  curl -fsSL -o tmp/tc-redirect-tap https://github.com/alexellis/tc-tap-redirect-builder/releases/download/2022-04-01-1337/tc-redirect-tap-arm64
+  chmod +x tmp/tc-redirect-tap
+
+  cp tmp/bridge tmp/host-local tmp/firewall tmp/tc-redirect-tap cni/bin
+  rm -rf tmp
 }
 
 function main()
