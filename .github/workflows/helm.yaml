@@ -3,7 +3,7 @@ name: helm
 on:
   push:
     tags:
-    - '*'
+    - 'helm-*'
 
 jobs:
   release:
