@@ -35,6 +35,10 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
         username: ${{ github.actor }}
 
+    - name: Prepare
+      run: |
+        ./hack/release.sh
+
     - name: Release
       uses: goreleaser/goreleaser-action@v4
       with:

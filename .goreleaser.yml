@@ -25,6 +25,15 @@ archives:
   - fireactions
   name_template: fireactions-{{ .Version }}-{{ .Os }}-{{ .Arch }}
   format: tar.gz
+  files:
+  - src: LICENSE
+    dst: LICENSE
+  - src: README.md
+    dst: README.md
+  - src: docs/configuration.md
+    dst: CONFIGURATION.md
+  - src: release/{{ .Arch }}
+    dst: .
 
 dockers:
 - id: server
