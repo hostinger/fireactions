@@ -31,7 +31,7 @@ type Storer interface {
 // Scheduler is responsible for scheduling Runners onto Nodes.
 type Scheduler struct {
 	queue        *SchedulingQueue
-	cache        Cache
+	cache        cache.Cache
 	store        Storer
 	filters      map[string]filter.Filter
 	scorers      map[string]scorer.Scorer
@@ -186,7 +186,7 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	cache := s.cache.DeepCopy().(Cache)
+	cache := s.cache.DeepCopy().(cache.Cache)
 
 	nodes, err := cache.GetNodes()
 	if err != nil {
