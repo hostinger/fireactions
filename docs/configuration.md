@@ -20,9 +20,11 @@ data-dir: /var/lib/fireactions
 
 # The name of the organisation that the client belongs to.
 organisation: hostinger
-# The name of the group that the client belongs to. This is used to
+# The names of the groups that the client belongs to. This is used to
 # group clients together for scheduling.
-group: group1
+groups:
+  - us-east-2
+  - us-west-1
 
 # Mem overcommit ratio is the ratio of RAM to allocate to the client
 # compared to the total memory available on the host.

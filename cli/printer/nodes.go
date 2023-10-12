@@ -1,6 +1,10 @@
 package printer
 
-import "github.com/hostinger/fireactions/api"
+import (
+	"strings"
+
+	"github.com/hostinger/fireactions/api"
+)
 
 // Node is a Printable for api.Nodes
 type Node struct {
@@ -12,7 +16,7 @@ var _ Printable = &Node{}
 // Cols returns the columns for the Printable
 func (n *Node) Cols() []string {
 	cols := []string{
-		"ID", "Name", "Organisation", "Status", "Group", "CpuTotal", "CpuFree", "MemTotal", "MemFree", "LastSeen",
+		"ID", "Name", "Organisation", "Status", "Groups", "CpuTotal", "CpuFree", "MemTotal", "MemFree", "LastSeen",
 	}
 
 	return cols
@@ -21,7 +25,7 @@ func (n *Node) Cols() []string {
 // ColsMap returns the columns map for the Printable
 func (n *Node) ColsMap() map[string]string {
 	cols := map[string]string{
-		"ID": "ID", "Name": "Name", "Organisation": "Organisation", "Status": "Status", "Group": "Group", "CpuTotal": "CpuTotal", "CpuFree": "CpuFree", "MemTotal": "MemTotal", "MemFree": "MemFree", "LastSeen": "LastSeen",
+		"ID": "ID", "Name": "Name", "Organisation": "Organisation", "Status": "Status", "Groups": "Groups", "CpuTotal": "CpuTotal", "CpuFree": "CpuFree", "MemTotal": "MemTotal", "MemFree": "MemFree", "LastSeen": "LastSeen",
 	}
 
 	return cols
@@ -31,8 +35,9 @@ func (n *Node) ColsMap() map[string]string {
 func (n *Node) KV() []map[string]interface{} {
 	kv := make([]map[string]interface{}, 0, len(n.Nodes))
 	for _, node := range n.Nodes {
+		groups := strings.Join(node.Groups, ", ")
 		kv = append(kv, map[string]interface{}{
-			"ID": node.ID, "Name": node.Name, "Organisation": node.Organisation, "Status": node.Status, "Group": node.Group, "CpuTotal": node.CpuTotal, "CpuFree": node.CpuFree, "MemTotal": node.MemTotal, "MemFree": node.MemFree, "LastSeen": node.LastSeen,
+			"ID": node.ID, "Name": node.Name, "Organisation": node.Organisation, "Status": node.Status, "Groups": groups, "CpuTotal": node.CpuTotal, "CpuFree": node.CpuFree, "MemTotal": node.MemTotal, "MemFree": node.MemFree, "LastSeen": node.LastSeen,
 		})
 	}
 

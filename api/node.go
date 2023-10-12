@@ -16,7 +16,7 @@ type Node struct {
 	Organisation string    `json:"organisation"`
 	Name         string    `json:"name"`
 	Status       string    `json:"status"`
-	Group        *Group    `json:"group"`
+	Groups       []string  `json:"groups"`
 	CpuTotal     int64     `json:"cpu_total"`
 	CpuFree      int64     `json:"cpu_free"`
 	MemTotal     int64     `json:"mem_total"`
@@ -81,14 +81,14 @@ func (c *nodesClient) Get(ctx context.Context, id string) (*Node, *Response, err
 
 // NodeRegisterRequest represents a request to register a Node.
 type NodeRegisterRequest struct {
-	UUID               string  `json:"uuid"`
-	Name               string  `json:"name"`
-	Organisation       string  `json:"organisation"`
-	Group              string  `json:"group"`
-	CpuTotal           int64   `json:"cpu_total"`
-	CpuOvercommitRatio float64 `json:"cpu_overcommit_ratio"`
-	MemTotal           int64   `json:"mem_total"`
-	MemOvercommitRatio float64 `json:"mem_overcommit_ratio"`
+	UUID               string   `json:"uuid"`
+	Name               string   `json:"name"`
+	Organisation       string   `json:"organisation"`
+	Groups             []string `json:"groups"`
+	CpuTotal           int64    `json:"cpu_total"`
+	CpuOvercommitRatio float64  `json:"cpu_overcommit_ratio"`
+	MemTotal           int64    `json:"mem_total"`
+	MemOvercommitRatio float64  `json:"mem_overcommit_ratio"`
 }
 
 // Register registers a Node.

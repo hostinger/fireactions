@@ -56,7 +56,13 @@ func GetNodesHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFu
 				return false
 			}
 
-			if q.Group != "" && node.Group.Name != q.Group {
+			if q.Group != "" {
+				for _, group := range node.Groups {
+					if group.Name == q.Group {
+						return true
+					}
+				}
+
 				return false
 			}
 
@@ -94,10 +100,15 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 			return
 		}
 
-		group, err := storer.GetGroup(ctx, req.Group)
-		if err != nil {
-			httperr.E(ctx, err)
-			return
+		var groups []*structs.Group
+		for _, group := range req.Groups {
+			g, err := storer.GetGroup(ctx, group)
+			if err != nil {
+				httperr.E(ctx, err)
+				return
+			}
+
+			groups = append(groups, g)
 		}
 
 		node, err := storer.GetNode(ctx, req.UUID)
@@ -112,7 +123,7 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 			ID:           req.UUID,
 			Name:         req.Name,
 			Organisation: req.Organisation,
-			Group:        group,
+			Groups:       groups,
 			Status:       structs.NodeStatusUnknown,
 			CPU:          structs.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
 			RAM:          structs.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
@@ -390,11 +401,16 @@ func GetNodeRunnersHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 }
 
 func convertNodeToNodeV1(node *structs.Node) *v1.Node {
+	groups := make([]string, 0, len(node.Groups))
+	for _, group := range node.Groups {
+		groups = append(groups, group.Name)
+	}
+
 	n := &v1.Node{
 		ID:           node.ID,
 		Name:         node.Name,
 		Organisation: node.Organisation,
-		Group:        convertGroupToGroupV1(node.Group),
+		Groups:       groups,
 		Status:       string(node.Status),
 		CpuTotal:     node.CPU.Capacity,
 		CpuFree:      node.CPU.Available(),

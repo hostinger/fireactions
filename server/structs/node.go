@@ -14,7 +14,7 @@ type Node struct {
 	ID           string
 	Name         string
 	Organisation string
-	Group        *Group
+	Groups       []*Group
 	Status       NodeStatus
 	CPU          Resource
 	RAM          Resource

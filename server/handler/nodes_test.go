@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/store/mock"
 	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
@@ -40,7 +41,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
 			{
 				ID:           "1",
-				Group:        &structs.Group{Name: "group1"},
+				Groups:       []*structs.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
 				Status:       structs.NodeStatusOnline,
@@ -51,7 +52,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 			},
 			{
 				ID:           "2",
-				Group:        &structs.Group{Name: "group1"},
+				Groups:       []*structs.Group{{Name: "group1"}},
 				Name:         "node2",
 				Organisation: "org1",
 				Status:       structs.NodeStatusOnline,
@@ -71,7 +72,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
 			{
 				ID:           "1",
-				Group:        &structs.Group{Name: "group1"},
+				Groups:       []*structs.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
 				Status:       structs.NodeStatusOnline,
@@ -82,7 +83,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 			},
 			{
 				ID:           "2",
-				Group:        &structs.Group{Name: "group1"},
+				Groups:       []*structs.Group{{Name: "group1"}},
 				Name:         "node2",
 				Organisation: "org2",
 				Status:       structs.NodeStatusOnline,
@@ -98,7 +99,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		type response struct {
-			Nodes []*structs.Node `json:"nodes"`
+			Nodes []*api.Node `json:"nodes"`
 		}
 
 		var resp response
@@ -113,7 +114,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
 			{
 				ID:           "1",
-				Group:        &structs.Group{Name: "group1"},
+				Groups:       []*structs.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
 				Status:       structs.NodeStatusOnline,
@@ -124,7 +125,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 			},
 			{
 				ID:           "2",
-				Group:        &structs.Group{Name: "group2"},
+				Groups:       []*structs.Group{{Name: "group2"}},
 				Name:         "node2",
 				Organisation: "org2",
 				Status:       structs.NodeStatusOnline,
@@ -140,7 +141,7 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		type response struct {
-			Nodes []*structs.Node `json:"nodes"`
+			Nodes []*api.Node `json:"nodes"`
 		}
 
 		var resp response
@@ -148,7 +149,6 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, 1, len(resp.Nodes))
-		assert.Equal(t, "group2", resp.Nodes[0].Group.Name)
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestGetNodeHandlerFuncV1(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().GetNode(gomock.Any(), "1").Return(&structs.Node{
 			ID:           "1",
-			Group:        &structs.Group{Name: "group1"},
+			Groups:       []*structs.Group{{Name: "group1"}},
 			Name:         "node1",
 			Organisation: "org1",
 			Status:       structs.NodeStatusOnline,

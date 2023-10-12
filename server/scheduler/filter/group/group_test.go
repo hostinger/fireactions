@@ -23,7 +23,7 @@ func TestFilter(t *testing.T) {
 				Group: &structs.Group{Name: "example"},
 			},
 			node: &structs.Node{
-				Group: &structs.Group{Name: "example"},
+				Groups: []*structs.Group{{Name: "example"}, {Name: "example2"}},
 			},
 			want: true,
 		},
@@ -33,7 +33,7 @@ func TestFilter(t *testing.T) {
 				Group: &structs.Group{Name: "example"},
 			},
 			node: &structs.Node{
-				Group: &structs.Group{Name: "example2"},
+				Groups: []*structs.Group{{Name: "example2"}, {Name: "example3"}},
 			},
 			want: false,
 		},

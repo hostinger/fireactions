@@ -21,7 +21,13 @@ func (f *Filter) Name() string {
 
 // Filter filters out nodes that don't belong to the same group as the Runner.
 func (f *Filter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
-	return runner.Group.Equals(node.Group), nil
+	for _, group := range node.Groups {
+		if group.Equals(runner.Group) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // String returns a string representation of the filter.

@@ -182,7 +182,7 @@ func (c *Client) register(ctx context.Context) error {
 		UUID:               c.ID,
 		Name:               name,
 		Organisation:       c.config.Organisation,
-		Group:              c.config.Group,
+		Groups:             c.config.Groups,
 		CpuTotal:           cpu,
 		CpuOvercommitRatio: c.config.CpuOvercommitRatio,
 		MemTotal:           mem,

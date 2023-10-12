@@ -14,7 +14,7 @@ type Config struct {
 	ServerURL          string              `mapstructure:"server-url"`
 	DataDir            string              `mapstructure:"data-dir"`
 	Organisation       string              `mapstructure:"organisation"`
-	Group              string              `mapstructure:"group"`
+	Groups             []string            `mapstructure:"groups"`
 	CpuOvercommitRatio float64             `mapstructure:"cpu-overcommit-ratio"`
 	MemOvercommitRatio float64             `mapstructure:"mem-overcommit-ratio"`
 	ImageSyncer        *imagesyncer.Config `mapstructure:"image-syncer"`
@@ -54,8 +54,8 @@ func (c *Config) Validate() error {
 		errs = multierror.Append(errs, errors.New("organisation is required"))
 	}
 
-	if c.Group == "" {
-		errs = multierror.Append(errs, errors.New("group is required"))
+	if len(c.Groups) == 0 {
+		errs = multierror.Append(errs, errors.New("at least one group is required"))
 	}
 
 	if c.CpuOvercommitRatio < 1 {
