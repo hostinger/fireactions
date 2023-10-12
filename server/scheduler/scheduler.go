@@ -38,12 +38,18 @@ type Scheduler struct {
 	shutdownOnce sync.Once
 	shutdownCh   chan struct{}
 	isShutdown   bool
-	log          *zerolog.Logger
-	cfg          *Config
+	config       *Config
+	logger       *zerolog.Logger
 }
 
 // New creates a new Scheduler.
-func New(log *zerolog.Logger, cfg *Config, store Storer) *Scheduler {
+func New(logger zerolog.Logger, cfg *Config, store Storer) (*Scheduler, error) {
+	err := cfg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	logger = logger.With().Str("subsystem", "scheduler").Logger()
 	s := &Scheduler{
 		queue:        NewSchedulingQueue(),
 		filters:      make(map[string]filter.Filter, 0),
@@ -53,16 +59,14 @@ func New(log *zerolog.Logger, cfg *Config, store Storer) *Scheduler {
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		isShutdown:   false,
-		log:          log,
-		cfg:          cfg,
+		config:       cfg,
+		logger:       &logger,
 	}
-
-	logger := log.With().Str("subsystem", "scheduler").Logger()
-	s.log = &logger
 
 	s.registerFilters()
 	s.registerScorers()
-	return s
+
+	return s, nil
 }
 
 // Start starts the Scheduler and runs until Shutdown() is called.
@@ -108,13 +112,13 @@ func (s *Scheduler) registerFilters() {
 		}
 
 		s.filters[filter.Name()] = filter
-		s.log.Debug().Msgf("registered filter %s", filter)
+		s.logger.Debug().Msgf("registered filter %s", filter)
 	}
 }
 
 func (s *Scheduler) registerScorers() {
 	scorers := []scorer.Scorer{
-		freecpu.New(s.cfg.FreeCpuScorerMultiplier), freeram.New(s.cfg.FreeRamScorerMultiplier),
+		freecpu.New(s.config.FreeCpuScorerMultiplier), freeram.New(s.config.FreeRamScorerMultiplier),
 	}
 
 	for _, scorer := range scorers {
@@ -124,7 +128,7 @@ func (s *Scheduler) registerScorers() {
 		}
 
 		s.scorers[scorer.Name()] = scorer
-		s.log.Debug().Msgf("registered scorer %s", scorer)
+		s.logger.Debug().Msgf("registered scorer %s", scorer)
 	}
 }
 
@@ -140,7 +144,7 @@ func (s *Scheduler) init() error {
 			return err
 		}
 
-		s.log.Debug().Msgf("added existing node %s to internal cache", n)
+		s.logger.Debug().Msgf("added existing node %s to internal cache", n)
 	}
 
 	runners, err := s.store.ListRunners(context.Background())
@@ -158,7 +162,7 @@ func (s *Scheduler) init() error {
 			return err
 		}
 
-		s.log.Debug().Msgf("added existing runner %s to scheduling queue", r)
+		s.logger.Debug().Msgf("added existing runner %s to scheduling queue", r)
 	}
 
 	return nil
@@ -182,7 +186,7 @@ func (s *Scheduler) schedule() {
 	case ErrQueueClosed:
 		return
 	default:
-		s.log.Error().Err(err).Msg("error dequeuing runner")
+		s.logger.Error().Err(err).Msg("error dequeuing runner")
 		return
 	}
 
@@ -190,7 +194,7 @@ func (s *Scheduler) schedule() {
 
 	nodes, err := cache.GetNodes()
 	if err != nil {
-		s.log.Error().Err(err).Msg("error getting nodes from cache")
+		s.logger.Error().Err(err).Msg("error getting nodes from cache")
 		return
 	}
 
@@ -210,17 +214,17 @@ func (s *Scheduler) schedule() {
 	runner.Node = bestNode
 	err = s.store.SaveRunner(context.Background(), runner)
 	if err != nil {
-		s.log.Error().Err(err).Msg("error updating runner")
+		s.logger.Error().Err(err).Msg("error updating runner")
 		return
 	}
 
 	err = s.store.ReserveNodeResources(context.Background(), bestNode.ID, runner.Flavor.VCPUs, runner.Flavor.GetMemorySizeBytes())
 	if err != nil {
-		s.log.Error().Err(err).Msg("error reserving node resources")
+		s.logger.Error().Err(err).Msg("error reserving node resources")
 		return
 	}
 
-	s.log.Info().Msgf("runner %s is assigned to node %s", runner.ID, bestNode.ID)
+	s.logger.Info().Msgf("runner %s is assigned to node %s", runner.ID, bestNode.ID)
 }
 
 func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters map[string]filter.Filter) []*structs.Node {

@@ -30,10 +30,7 @@ func NewDefaultConfig() *Config {
 		GitHub: &GitHubConfig{
 			JobLabelPrefix: "fireactions",
 		},
-		Scheduler: &scheduler.Config{
-			FreeCpuScorerMultiplier: 1.0,
-			FreeRamScorerMultiplier: 1.0,
-		},
+		Scheduler:     scheduler.NewDefaultConfig(),
 		DefaultFlavor: "default",
 		Flavors: []*FlavorConfig{{
 			Name:    "default",

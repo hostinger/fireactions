@@ -10,6 +10,16 @@ type Config struct {
 	FreeRamScorerMultiplier float64 `mapstructure:"free-ram-scorer-multiplier"`
 }
 
+// NewDefaultConfig returns a new default Scheduler configuration.
+func NewDefaultConfig() *Config {
+	cfg := &Config{
+		FreeCpuScorerMultiplier: 1.0,
+		FreeRamScorerMultiplier: 1.0,
+	}
+
+	return cfg
+}
+
 // Validate validates the Scheduler configuration.
 func (c *Config) Validate() error {
 	if c.FreeCpuScorerMultiplier < 0 {
@@ -21,15 +31,4 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
-}
-
-// SetDefaults sets the default values for the Scheduler configuration.
-func (c *Config) SetDefaults() {
-	if c.FreeCpuScorerMultiplier == 0 {
-		c.FreeCpuScorerMultiplier = 1.0
-	}
-
-	if c.FreeRamScorerMultiplier == 0 {
-		c.FreeRamScorerMultiplier = 1.0
-	}
 }

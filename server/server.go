@@ -53,10 +53,15 @@ func New(cfg *Config) (*Server, error) {
 	logger := zerolog.
 		New(os.Stdout).Level(logLevel).With().Timestamp().Str("component", "server").Logger()
 
+	scheduler, err := scheduler.New(logger, cfg.Scheduler, store)
+	if err != nil {
+		return nil, fmt.Errorf("error creating scheduler: %w", err)
+	}
+
 	s := &Server{
 		TLSConfig:    &tls.Config{},
 		config:       cfg,
-		scheduler:    scheduler.New(&logger, cfg.Scheduler, store),
+		scheduler:    scheduler,
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		shutdownMu:   sync.Mutex{},
