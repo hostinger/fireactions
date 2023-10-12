@@ -103,7 +103,6 @@ func runGroupsDisableCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error disabling Group(s): %w", err)
 	}
 
-	cmd.Println("Successfully disabled Group.")
 	return nil
 }
 
@@ -115,7 +114,6 @@ func runGroupsEnableCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error enabling Group(s): %w", err)
 	}
 
-	cmd.Println("Successfully enabled Group.")
 	return nil
 }
 

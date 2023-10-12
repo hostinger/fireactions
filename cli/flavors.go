@@ -100,10 +100,9 @@ func runFlavorsEnableCmd(cmd *cobra.Command, args []string) error {
 
 	_, err := client.Flavors().Enable(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Job(s): %w", err)
+		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
-	cmd.Println("Successfully enabled Flavor.")
 	return nil
 }
 
@@ -115,7 +114,6 @@ func runFlavorsDisableCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error fetching Flavor(s): %w", err)
 	}
 
-	cmd.Println("Successfully disabled Flavor.")
 	return nil
 }
 
