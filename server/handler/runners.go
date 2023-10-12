@@ -93,7 +93,7 @@ func convertRunnerToRunnerV1(runner *structs.Runner) *v1.Runner {
 	r := &v1.Runner{
 		ID:           runner.ID,
 		Organisation: runner.Organisation,
-		Group:        convertGroupToGroupV1(runner.Group),
+		Group:        runner.Group.Name,
 		Name:         runner.Name,
 		Status:       string(runner.Status),
 		Flavor:       convertFlavorToFlavorV1(runner.Flavor),
@@ -103,7 +103,7 @@ func convertRunnerToRunnerV1(runner *structs.Runner) *v1.Runner {
 	}
 
 	if runner.Node != nil {
-		r.Node = convertNodeToNodeV1(runner.Node)
+		r.Node = &runner.Node.Name
 	}
 
 	return r

@@ -7,14 +7,16 @@ import (
 	"time"
 )
 
+// Runners represents a slice of Runner objects.
 type Runners []*Runner
 
+// Runner represents a Runner.
 type Runner struct {
 	ID           string    `json:"id"`
-	Node         *Node     `json:"node,omitempty"`
+	Node         *string   `json:"node,omitempty"`
 	Name         string    `json:"name"`
 	Organisation string    `json:"organisation"`
-	Group        *Group    `json:"group"`
+	Group        string    `json:"group"`
 	Status       string    `json:"status"`
 	Labels       string    `json:"labels"`
 	Flavor       Flavor    `json:"flavor"`

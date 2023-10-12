@@ -31,16 +31,16 @@ func (r *Runner) ColsMap() map[string]string {
 func (r *Runner) KV() []map[string]interface{} {
 	kv := make([]map[string]interface{}, 0, len(r.Runners))
 	for _, runner := range r.Runners {
-		nodeName := "N/A (Unassigned)"
+		node := "N/A (Unassigned)"
 		if runner.Node != nil {
-			nodeName = runner.Node.Name
+			node = *runner.Node
 		}
 
 		createdAt := runner.CreatedAt.Format("2006-01-02 15:04:05")
 		updatedAt := runner.UpdatedAt.Format("2006-01-02 15:04:05")
 
 		kv = append(kv, map[string]interface{}{
-			"Name": runner.Name, "Node": nodeName, "Organisation": runner.Organisation, "Group": runner.Group.Name, "Status": runner.Status, "Flavor": runner.Flavor.Name, "Created At": createdAt, "Updated At": updatedAt,
+			"Name": runner.Name, "Node": node, "Organisation": runner.Organisation, "Group": runner.Group, "Status": runner.Status, "Flavor": runner.Flavor.Name, "Created At": createdAt, "Updated At": updatedAt,
 		})
 	}
 

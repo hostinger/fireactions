@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/store/mock"
 	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
@@ -69,7 +70,7 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Runners []*structs.Runner `json:"runners"`
+			Runners []*api.Runner `json:"runners"`
 		}
 
 		var resp response
@@ -113,7 +114,7 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Runners []*structs.Runner `json:"runners"`
+			Runners []*api.Runner `json:"runners"`
 		}
 
 		var resp response
@@ -157,7 +158,7 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Runners []*structs.Runner `json:"runners"`
+			Runners []*api.Runner `json:"runners"`
 		}
 
 		var resp response
@@ -207,7 +208,7 @@ func TestGetRunnerHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 
-		var runner *structs.Runner
+		var runner *api.Runner
 		err := json.Unmarshal(rec.Body.Bytes(), &runner)
 		assert.NoError(t, err)
 
