@@ -13,6 +13,7 @@ var (
 	BuildDate string
 )
 
+// Info returns the build information.
 func Info() string {
 	return fmt.Sprintf("%s (%s) built on %s", GitTag, GitCommit, BuildDate)
 }
