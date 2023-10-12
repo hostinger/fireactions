@@ -3,8 +3,8 @@ package server
 import (
 	"errors"
 	"fmt"
-	"strings"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/server/scheduler"
 )
@@ -19,52 +19,53 @@ type Config struct {
 	Flavors       []*FlavorConfig   `mapstructure:"flavors"`
 	DefaultGroup  string            `mapstructure:"default-group"`
 	Groups        []*GroupConfig    `mapstructure:"groups"`
+	Images        []*ImageConfig    `mapstructure:"images"`
 	DataDir       string            `mapstructure:"data-dir"`
 }
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
-	var err error
+	var errs error
 
 	if c.ListenAddr == "" {
-		err = multierror.Append(err, errors.New("listen-addr is required"))
+		errs = multierror.Append(errs, errors.New("listen-addr is required"))
 	}
 
 	if c.GitHub == nil {
-		err = multierror.Append(err, errors.New("github config is required"))
+		errs = multierror.Append(errs, errors.New("github config is required"))
 	}
 
 	if err := c.GitHub.Validate(); err != nil {
-		err = multierror.Append(err, fmt.Errorf("github config is invalid: %w", err))
+		errs = multierror.Append(errs, fmt.Errorf("github config is invalid: %w", err))
 	}
 
 	if err := c.Scheduler.Validate(); err != nil {
-		err = multierror.Append(err, fmt.Errorf("scheduler config is invalid: %w", err))
+		errs = multierror.Append(errs, fmt.Errorf("scheduler config is invalid: %w", err))
 	}
 
 	switch c.LogLevel {
 	case "debug", "info", "warn", "error", "fatal", "panic":
 	default:
-		err = multierror.Append(err, fmt.Errorf("log-level (%s) is invalid", c.LogLevel))
+		errs = multierror.Append(errs, fmt.Errorf("log-level (%s) is invalid", c.LogLevel))
 	}
 
 	if c.DataDir == "" {
-		err = multierror.Append(err, errors.New("data-dir is required"))
+		errs = multierror.Append(errs, errors.New("data-dir is required"))
 	}
 
 	if c.DefaultFlavor == "" {
-		err = multierror.Append(err, errors.New("default-flavor is required"))
+		errs = multierror.Append(errs, errors.New("default-flavor is required"))
 	}
 
 	if len(c.Flavors) == 0 {
-		err = multierror.Append(err, errors.New("at least one flavor must be defined"))
+		errs = multierror.Append(errs, errors.New("at least one flavor must be defined"))
 	}
 
 	defaultFlavorExists := false
 	for _, f := range c.Flavors {
 		err := f.Validate()
 		if err != nil {
-			err = multierror.Append(err, fmt.Errorf("flavor (%s) is invalid: %w", f.Name, err))
+			errs = multierror.Append(errs, fmt.Errorf("flavor (%s) is invalid: %w", f.Name, err))
 		}
 
 		if f.Name == c.DefaultFlavor {
@@ -73,22 +74,22 @@ func (c *Config) Validate() error {
 	}
 
 	if !defaultFlavorExists {
-		err = multierror.Append(err, fmt.Errorf("default-flavor (%s) does not exist in flavors", c.DefaultFlavor))
+		errs = multierror.Append(errs, fmt.Errorf("default-flavor (%s) does not exist in flavors", c.DefaultFlavor))
 	}
 
 	if c.DefaultGroup == "" {
-		err = multierror.Append(err, errors.New("default-group is required"))
+		errs = multierror.Append(errs, errors.New("default-group is required"))
 	}
 
 	if len(c.Groups) == 0 {
-		err = multierror.Append(err, errors.New("at least one group must be defined"))
+		errs = multierror.Append(errs, errors.New("at least one group must be defined"))
 	}
 
 	defaultGroupExists := false
 	for _, g := range c.Groups {
 		err := g.Validate()
 		if err != nil {
-			err = multierror.Append(err, fmt.Errorf("group (%s) is invalid: %w", g.Name, err))
+			errs = multierror.Append(errs, fmt.Errorf("group (%s) is invalid: %w", g.Name, err))
 		}
 
 		if g.Name == c.DefaultGroup {
@@ -97,10 +98,21 @@ func (c *Config) Validate() error {
 	}
 
 	if !defaultGroupExists {
-		err = multierror.Append(err, fmt.Errorf("default-group (%s) does not exist in groups", c.DefaultGroup))
+		errs = multierror.Append(errs, fmt.Errorf("default-group (%s) does not exist in groups", c.DefaultGroup))
 	}
 
-	return err
+	if len(c.Images) == 0 {
+		errs = multierror.Append(errs, errors.New("at least one image must be defined"))
+	}
+
+	for _, i := range c.Images {
+		err := i.Validate()
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("image (%s) is invalid: %w", i.Name, err))
+		}
+	}
+
+	return errs
 }
 
 // SetDefaults sets the default values for the configuration.
@@ -123,6 +135,10 @@ func (c *Config) SetDefaults() {
 
 	if c.Scheduler == nil {
 		c.Scheduler = &scheduler.Config{}
+	}
+
+	for _, i := range c.Images {
+		i.SetDefaults()
 	}
 
 	c.Scheduler.SetDefaults()
@@ -225,10 +241,6 @@ func (c *GroupConfig) Validate() error {
 		err = multierror.Append(err, errors.New("name is required"))
 	}
 
-	if strings.Contains(c.Name, "-") {
-		err = multierror.Append(err, errors.New("name cannot contain dashes"))
-	}
-
 	return err
 }
 
@@ -238,4 +250,39 @@ func (c *GroupConfig) SetDefaults() {
 		b := true
 		c.Enabled = &b
 	}
+}
+
+// ImageConfig is the configuration for an Image.
+type ImageConfig struct {
+	ID   string `mapstructure:"id"`
+	Name string `mapstructure:"name"`
+	URL  string `mapstructure:"url"`
+}
+
+// Validate validates the configuration.
+func (c *ImageConfig) Validate() error {
+	var err error
+
+	if c.ID == "" {
+		err = multierror.Append(err, errors.New("id is required"))
+	}
+
+	if c.Name == "" {
+		err = multierror.Append(err, errors.New("name is required"))
+	}
+
+	if c.URL == "" {
+		err = multierror.Append(err, errors.New("url is required"))
+	}
+
+	_, err = uuid.Parse(c.ID)
+	if err != nil {
+		err = multierror.Append(err, fmt.Errorf("id (%s) is invalid", c.ID))
+	}
+
+	return err
+}
+
+// SetDefaults sets the default values for the configuration.
+func (c *ImageConfig) SetDefaults() {
 }

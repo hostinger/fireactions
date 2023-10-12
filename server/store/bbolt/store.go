@@ -13,6 +13,7 @@ var (
 	jobsBucket    = []byte("jobs")
 	groupsBucket  = []byte("groups")
 	flavorsBucket = []byte("flavors")
+	imagesBucket  = []byte("images")
 )
 
 /*
@@ -71,6 +72,11 @@ func New(path string) (*Store, error) {
 		}
 
 		_, err = tx.CreateBucketIfNotExists(flavorsBucket)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists(imagesBucket)
 		if err != nil {
 			return err
 		}

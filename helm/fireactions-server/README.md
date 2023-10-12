@@ -16,17 +16,18 @@ This chart bootstraps a Fireactions server component as deployment/daemonset on 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| config | object | `{"dataDir":"/var/lib/fireactions","defaultFlavor":"1vcpu-1gb","defaultGroup":"us-east-2","flavors":[],"github":{"appId":"","appPrivateKey":"","existingSecret":"","jobLabelPrefix":"fireactions-","webhookSecret":""},"groups":[{"name":"us-east-2"},{"enabled":false,"name":"us-west-1"}],"listenAddr":"0.0.0.0:8080","logLevel":"info","scheduler":""}` | Fireactions server config values. |
+| config | object | `{"dataDir":"/var/lib/fireactions","defaultFlavor":"1vcpu-1gb","defaultGroup":"us-east-2","flavors":[],"github":{"appId":"","appPrivateKey":"","existingSecret":"","jobLabelPrefix":"fireactions","webhookSecret":""},"groups":[{"name":"us-east-2"},{"enabled":false,"name":"us-west-1"}],"images":[],"listenAddr":"0.0.0.0:8080","logLevel":"info","scheduler":""}` | Fireactions server config values. |
 | config.dataDir | string | `"/var/lib/fireactions"` | Data directory for the server. This is where the server will store its state. |
 | config.defaultFlavor | string | `"1vcpu-1gb"` | The default flavor to use for jobs if no flavor is specified. |
 | config.defaultGroup | string | `"us-east-2"` | The default group to use for jobs if no group is specified in GitHub job label. The group must be defined in the 'groups' section. |
 | config.flavors | list | `[]` | Flavors are used to define the resources available to a job. Atleast one flavor must be defined. The name of the flavor must be unique. The disk size is in GB, the memory size is in MB, and the CPU count is the number of vCPUs. |
-| config.github | object | `{"appId":"","appPrivateKey":"","existingSecret":"","jobLabelPrefix":"fireactions-","webhookSecret":""}` | GitHub configuration options. |
+| config.github | object | `{"appId":"","appPrivateKey":"","existingSecret":"","jobLabelPrefix":"fireactions","webhookSecret":""}` | GitHub configuration options. |
 | config.github.appId | string | `""` | The GitHub App ID and PEM-encoded private key. See: https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#generating-a-private-key |
 | config.github.existingSecret | string | `""` | Existing secret name to use. The secret must contain `webhook-secret` (optional), `app-id` and `app-private-key` keys. |
-| config.github.jobLabelPrefix | string | `"fireactions-"` | Job label prefix to search for in received GitHub events. |
+| config.github.jobLabelPrefix | string | `"fireactions"` | Job label prefix to search for in received GitHub events. |
 | config.github.webhookSecret | string | `""` | The secret used to verify GitHub webhook payloads. |
-| config.groups | list | `[{"name":"us-east-2"},{"enabled":false,"name":"us-west-1"}]` | Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined. Group name must be unique and should not contain any hyphens (-). |
+| config.groups | list | `[{"name":"us-east-2"},{"enabled":false,"name":"us-west-1"}]` | Groups are used to separate clients into logical groups, e.g. by region, datacenter, etc. Atleast one group must be defined. |
+| config.images | list | `[]` | Images are virtual machine disk images that can be used to create MicroVMs with Firecracker. The images are synced by the clients. Atleast one image must be defined. The ID of the image must be unique, otherwise it will be overwritten by the next image with the same ID. |
 | config.listenAddr | string | `"0.0.0.0:8080"` | Listen address for the HTTP server. This is where the GitHub webhook should be configured to send events. |
 | config.logLevel | string | `"info"` | Log level must be one of: debug, info, warn, error, fatal, panic, trace. |
 | config.scheduler | string | `""` | Scheduler configuration options (optional). |

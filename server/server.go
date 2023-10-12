@@ -85,6 +85,7 @@ func New(cfg *Config) (*Server, error) {
 		handler.RegisterGroupsV1(v1, &logger, store)
 		handler.RegisterRunnersV1(v1, &logger, store)
 		handler.RegisterNodesV1(v1, &logger, s.scheduler, store)
+		handler.RegisterImagesV1(v1, &logger, store)
 	}
 
 	mux.GET("/healthz", handler.GetHealthzHandlerFunc())
@@ -167,6 +168,11 @@ func (s *Server) init() error {
 		return fmt.Errorf("error initializing preconfigured groups: %w", err)
 	}
 
+	err = s.initPreconfiguredImages()
+	if err != nil {
+		return fmt.Errorf("error initializing preconfigured images: %w", err)
+	}
+
 	return nil
 }
 
@@ -215,6 +221,25 @@ func (s *Server) initPreconfiguredGroups() error {
 		}
 
 		s.logger.Info().Msgf("created preconfigured group (%s)", cfg.Name)
+	}
+
+	return nil
+}
+
+func (s *Server) initPreconfiguredImages() error {
+	s.logger.Info().Msg("creating preconfigured Image(s)")
+
+	for _, cfg := range s.config.Images {
+		err := s.store.SaveImage(context.Background(), &structs.Image{
+			ID:   cfg.ID,
+			Name: cfg.Name,
+			URL:  cfg.URL,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating preconfigured image (%s): %w", cfg.Name, err)
+		}
+
+		s.logger.Info().Msgf("created preconfigured image (%s)", cfg.Name)
 	}
 
 	return nil

@@ -95,6 +95,17 @@ groups:
   - name: us-west-1
     enabled: false # (optional) Whether the group is enabled or not. Defaults to true.
 
+# Images are virtual machine disk images that can be used to create MicroVMs with Firecracker. The images are synced
+# by the clients. Atleast one image must be defined.
+# The ID of the image must be unique, otherwise it will be overwritten by the next image with the same ID.
+images:
+  - id: 48233fc0-8c16-491b-8666-970ba3ce771e
+    name: ubuntu-22.04
+    url: https://storage.googleapis.com/fireactions/images/ubuntu-22.04.ext4
+  - id: aa01e575-4259-48ed-aa24-f9885a67a11a
+    name: ubuntu-20.04
+    url: https://storage.googleapis.com/fireactions/images/ubuntu-20.04.ext4
+
 # Log level. Must be one of: debug, info, warn, error, fatal, panic, trace.
 log-level: debug
 ```

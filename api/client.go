@@ -103,7 +103,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	if rsp.StatusCode >= 400 {
 		errResp := &ErrorResponse{Response: rsp}
 		if err := json.NewDecoder(rsp.Body).Decode(errResp); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%v %v: %d", req.Method, req.URL, rsp.StatusCode)
 		}
 
 		return nil, errResp

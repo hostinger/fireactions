@@ -18,4 +18,5 @@ data:
     flavors: {{ toYaml .Values.config.flavors | nindent 6 }}
     default-group: {{ .Values.config.defaultGroup }}
     groups: {{ toYaml .Values.config.groups | nindent 6 }}
+    images: {{ toYaml .Values.config.images | nindent 6 }}
     log-level: {{ .Values.config.logLevel }}
