@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +14,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	api "github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/client/imagegc"
+	"github.com/hostinger/fireactions/client/imagesyncer"
 	"github.com/hostinger/fireactions/client/preflight"
+	"github.com/hostinger/fireactions/client/store"
+	"github.com/hostinger/fireactions/client/store/bbolt"
 	"github.com/rs/zerolog"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -29,6 +34,9 @@ type Client struct {
 	isDisconnected    bool
 	preflightChecks   map[string]preflight.Check
 	client            *api.Client
+	imageSyncer       *imagesyncer.ImageSyncer
+	imageGC           *imagegc.ImageGC
+	store             store.Store
 	shutdownOnce      sync.Once
 	isShuttingDown    bool
 	shutdownCh        chan struct{}
@@ -40,28 +48,55 @@ type Client struct {
 
 // New creates a new Client.
 func New(cfg *Config) (*Client, error) {
-	c := &Client{
-		preflightChecks:   make(map[string]preflight.Check),
-		shutdownOnce:      sync.Once{},
-		shutdownMu:        sync.Mutex{},
-		shutdownCh:        make(chan struct{}),
-		isShuttingDown:    false,
-		config:            cfg,
-		reconcileInterval: 1 * time.Second,
-		isDisconnected:    true,
-		client:            api.NewClient(nil, api.WithEndpoint(cfg.ServerURL)),
+	err := cfg.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("error validating config: %w", err)
 	}
 
 	logLevel, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing log level: %w", err)
 	}
-	logger := zerolog.
-		New(os.Stdout).Level(logLevel).With().Timestamp().Str("component", "client").Logger()
-	c.logger = &logger
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(logLevel)
+
+	store, err := bbolt.New(filepath.Join(cfg.DataDir, "client.db"))
+	if err != nil {
+		return nil, fmt.Errorf("error creating store: %w", err)
+	}
+
+	client := api.NewClient(nil, api.WithEndpoint(cfg.ServerURL))
+
+	imageSyncer, err := imagesyncer.New(logger, store, client, cfg.DataDir, cfg.ImageSyncer)
+	if err != nil {
+		return nil, fmt.Errorf("error creating image-syncer: %w", err)
+	}
+
+	logger = logger.With().Str("component", "client").Logger()
+	c := &Client{
+		client:            client,
+		isDisconnected:    true,
+		preflightChecks:   make(map[string]preflight.Check),
+		store:             store,
+		imageSyncer:       imageSyncer,
+		shutdownOnce:      sync.Once{},
+		isShuttingDown:    false,
+		shutdownCh:        make(chan struct{}),
+		shutdownMu:        sync.Mutex{},
+		reconcileInterval: 1 * time.Second,
+		logger:            &logger,
+		config:            cfg,
+	}
+
+	if cfg.EnableImageGC {
+		imageGC, err := imagegc.New(logger, store, client, cfg.ImageGC)
+		if err != nil {
+			return nil, fmt.Errorf("error creating image-gc: %w", err)
+		}
+
+		c.imageGC = imageGC
+	}
 
 	c.addPreflightCheck(preflight.NewFirecrackerCheck())
-
 	return c, nil
 }
 
@@ -99,12 +134,24 @@ func (c *Client) shutdown() {
 	defer c.shutdownMu.Unlock()
 
 	c.isShuttingDown = true
-
 	err := retryDo(context.Background(), c.logger, "error disconnecting client", func() error {
 		return c.disconnect(context.Background())
 	})
 	if err != nil {
 		c.logger.Error().Err(err).Msg("error shutting down client")
+	}
+
+	err = c.store.Close()
+	if err != nil {
+		c.logger.Error().Err(err).Msg("error closing store")
+	}
+
+	c.logger.Info().Msgf("stopping image-syncer")
+	c.imageSyncer.Stop()
+
+	if c.config.EnableImageGC {
+		c.logger.Info().Msgf("stopping image-gc")
+		c.imageGC.Stop()
 	}
 
 	close(c.shutdownCh)
@@ -173,6 +220,14 @@ func (c *Client) Start() error {
 	})
 	if err != nil {
 		return err
+	}
+
+	c.logger.Info().Msgf("starting image-syncer")
+	go c.imageSyncer.Run()
+
+	if c.config.EnableImageGC {
+		c.logger.Info().Msgf("starting image-gc")
+		go c.imageGC.Run()
 	}
 
 	c.logger.Info().Str("id", c.ID).Str("version", "v1").Msg("client registered and connected, waiting for runners...")

@@ -15,6 +15,9 @@ Example configuration for a client:
 # The Fireactions server URL to connect to for the client.
 server-url: http://127.0.0.1:8080
 
+# Data directory for the client. This is where the client will store its state, images, etc.
+data-dir: /var/lib/fireactions
+
 # The name of the organisation that the client belongs to.
 organisation: hostinger
 # The name of the group that the client belongs to. This is used to
@@ -27,6 +30,22 @@ group: group1
 # compared to the total CPU available on the host.
 cpu-overcommit-ratio: 3.0
 mem-overcommit-ratio: 1.0
+
+# Image syncer configuration options. (optional)
+image-syncer:
+# The interval at which to sync images. 
+  interval: 1m
+# The maximum number of images to sync concurrently.
+  max-concurrent: 10
+# List of images to sync. Leave empty to sync all images.
+  images:
+  - 48233fc0-8c16-491b-8666-970ba3ce771e
+  - ubuntu-22.04
+
+enable-image-gc: true
+image-gc:
+# The interval at which to garbage collect images.
+  interval: 1m
 
 # Log level for the agent. Must be one of: debug, info, warn, error, fatal, panic, trace.
 log-level: debug

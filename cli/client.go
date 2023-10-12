@@ -35,12 +35,11 @@ func newClientCmd() *cobra.Command {
 }
 
 func runClientCmd(cmd *cobra.Command, args []string) error {
-	var config *client.Config
+	config := client.NewDefaultConfig()
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling configuration: %w", err)
 	}
-	config.SetDefaults()
 
 	err = config.Validate()
 	if err != nil {

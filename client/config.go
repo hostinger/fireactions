@@ -5,30 +5,57 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/hostinger/fireactions/client/imagegc"
+	"github.com/hostinger/fireactions/client/imagesyncer"
 )
 
+// Config is the configuration for the Client.
 type Config struct {
-	ServerURL          string  `mapstructure:"server-url"`
-	Organisation       string  `mapstructure:"organisation"`
-	Group              string  `mapstructure:"group"`
-	CpuOvercommitRatio float64 `mapstructure:"cpu-overcommit-ratio"`
-	MemOvercommitRatio float64 `mapstructure:"mem-overcommit-ratio"`
-	LogLevel           string  `mapstructure:"log-level"`
+	ServerURL          string              `mapstructure:"server-url"`
+	DataDir            string              `mapstructure:"data-dir"`
+	Organisation       string              `mapstructure:"organisation"`
+	Group              string              `mapstructure:"group"`
+	CpuOvercommitRatio float64             `mapstructure:"cpu-overcommit-ratio"`
+	MemOvercommitRatio float64             `mapstructure:"mem-overcommit-ratio"`
+	ImageSyncer        *imagesyncer.Config `mapstructure:"image-syncer"`
+	EnableImageGC      bool                `mapstructure:"enable-image-gc"`
+	ImageGC            *imagegc.Config     `mapstructure:"image-gc"`
+	LogLevel           string              `mapstructure:"log-level"`
 }
 
+// NewDefaultConfig creates a new default Config.
+func NewDefaultConfig() *Config {
+	cfg := &Config{
+		CpuOvercommitRatio: 1.0,
+		MemOvercommitRatio: 1.0,
+		DataDir:            "/var/lib/fireactions",
+		ImageSyncer:        imagesyncer.NewDefaultConfig(),
+		ImageGC:            imagegc.NewDefaultConfig(),
+		EnableImageGC:      true,
+		LogLevel:           "info",
+	}
+
+	return cfg
+}
+
+// Validate validates the Config.
 func (c *Config) Validate() error {
-	var err error
+	var errs error
 
 	if c.ServerURL == "" {
-		err = multierror.Append(err, errors.New("server-url is required"))
+		errs = multierror.Append(errs, errors.New("server-url is required"))
+	}
+
+	if c.DataDir == "" {
+		errs = multierror.Append(errs, errors.New("data-dir is required"))
 	}
 
 	if c.Organisation == "" {
-		err = multierror.Append(err, errors.New("organisation is required"))
+		errs = multierror.Append(errs, errors.New("organisation is required"))
 	}
 
 	if c.Group == "" {
-		err = multierror.Append(err, errors.New("group is required"))
+		errs = multierror.Append(errs, errors.New("group is required"))
 	}
 
 	if c.CpuOvercommitRatio < 1 {
@@ -42,22 +69,20 @@ func (c *Config) Validate() error {
 	switch c.LogLevel {
 	case "debug", "info", "warn", "error", "fatal", "panic":
 	default:
-		err = multierror.Append(err, fmt.Errorf("log-level (%s) is invalid", c.LogLevel))
+		errs = multierror.Append(errs, fmt.Errorf("log-level (%s) is invalid", c.LogLevel))
 	}
 
-	return err
-}
-
-func (c *Config) SetDefaults() {
-	if c.CpuOvercommitRatio == 0 {
-		c.CpuOvercommitRatio = 1.0
+	err := c.ImageSyncer.Validate()
+	if err != nil {
+		errs = multierror.Append(errs, fmt.Errorf("error validating image-syncer config: %w", err))
 	}
 
-	if c.MemOvercommitRatio == 0 {
-		c.MemOvercommitRatio = 1.0
+	if c.EnableImageGC {
+		err = c.ImageGC.Validate()
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("error validating image-gc config: %w", err))
+		}
 	}
 
-	if c.LogLevel == "" {
-		c.LogLevel = "info"
-	}
+	return errs
 }
