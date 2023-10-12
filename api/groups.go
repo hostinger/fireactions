@@ -85,3 +85,13 @@ func (c *groupsClient) Enable(ctx context.Context, name string) (*Response, erro
 
 	return c.client.Do(req, nil)
 }
+
+// Delete deletes a Group by name.
+func (c *groupsClient) Delete(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/groups/%s", name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
+}

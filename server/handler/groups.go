@@ -19,6 +19,8 @@ func RegisterGroupsV1(r gin.IRouter, log *zerolog.Logger, store store.Store) {
 		DisableGroupHandlerFuncV1(log, store))
 	r.PATCH("/groups/:name/enable",
 		EnableGroupHandlerFuncV1(log, store))
+	r.DELETE("/groups/:name",
+		DeleteGroupHandlerFuncV1(log, store))
 }
 
 // GetGroupsHandlerFuncV1 returns a HTTP handler function that returns all Groups. The Groups are returned in the v1
@@ -88,6 +90,27 @@ func EnableGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 
 		group.Enable()
 		err = store.SaveGroup(ctx, group)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		ctx.Status(204)
+	}
+
+	return f
+}
+
+// DeleteGroupHandlerFuncV1 returns a HTTP handler function that deletes a single Group by name.
+func DeleteGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		group, err := store.GetGroup(ctx, ctx.Param("name"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		err = store.DeleteGroup(ctx, group.Name)
 		if err != nil {
 			httperr.E(ctx, err)
 			return

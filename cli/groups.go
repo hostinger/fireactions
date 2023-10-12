@@ -29,7 +29,7 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newGroupsGetCmd(), newGroupsListCmd(), newGroupsEnableCmd(), newGroupsDisableCmd())
+	cmd.AddCommand(newGroupsGetCmd(), newGroupsListCmd(), newGroupsEnableCmd(), newGroupsDisableCmd(), newGroupsRemoveCmd())
 	return cmd
 }
 
@@ -95,6 +95,25 @@ Example:
 	return cmd
 }
 
+func newGroupsRemoveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rm NAME",
+		Short: "Remove a specific Group by name",
+		Long: `Remove a specific Group by name.
+
+This command will remove a Group by name. Once removed, the Group will not be available for use by Jobs. If the Group is enabled in the configuration file,
+it will revert on the next restart of the server.
+
+Example:
+  $ fireactions groups rm group1
+		`,
+		Args: cobra.ExactArgs(1),
+		RunE: runGroupsRemoveCmd,
+	}
+
+	return cmd
+}
+
 func runGroupsDisableCmd(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
@@ -140,5 +159,16 @@ func runGroupsGetCmd(cmd *cobra.Command, args []string) error {
 
 	item := &printer.Group{Groups: api.Groups{*group}}
 	printer.PrintText(item, cmd.OutOrStdout(), nil)
+	return nil
+}
+
+func runGroupsRemoveCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	_, err := client.Groups().Delete(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error removing Group(s): %w", err)
+	}
+
 	return nil
 }

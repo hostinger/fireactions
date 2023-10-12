@@ -22,7 +22,7 @@ func TestRegisterGroupsV1(t *testing.T) {
 	router := gin.New()
 	RegisterGroupsV1(router, &zerolog.Logger{}, store)
 
-	assert.Equal(t, 4, len(router.Routes()))
+	assert.Equal(t, 5, len(router.Routes()))
 }
 
 func TestGetGroupsHandlerFuncV1(t *testing.T) {
@@ -205,6 +205,56 @@ func TestEnableGroupHandlerFuncV1(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("PATCH", "/groups/group1/enable", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
+	})
+}
+
+func TestDeleteGroupHandlerFuncV1(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mock.NewMockStore(ctrl)
+
+	router := gin.New()
+	router.DELETE("/groups/:name", DeleteGroupHandlerFuncV1(&zerolog.Logger{}, store))
+
+	t.Run("success", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		}, nil)
+		store.EXPECT().DeleteGroup(gomock.Any(), "group1").Return(nil)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/groups/group1", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 204, rec.Code)
+	})
+
+	t.Run("error on GetGroup()", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(nil, errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/groups/group1", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
+	})
+
+	t.Run("error on DeleteGroup()", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		}, nil)
+		store.EXPECT().DeleteGroup(gomock.Any(), "group1").Return(errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/groups/group1", nil)
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 500, rec.Code)
