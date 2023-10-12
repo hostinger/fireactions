@@ -192,7 +192,7 @@ func (s *Server) initPreconfiguredFlavors() error {
 	for _, cfg := range s.config.Flavors {
 		err := s.store.SaveFlavor(context.Background(), &structs.Flavor{
 			Name:         cfg.Name,
-			Enabled:      *cfg.Enabled,
+			Enabled:      cfg.Enabled,
 			VCPUs:        cfg.CPU,
 			MemorySizeMB: cfg.Mem,
 			DiskSizeGB:   cfg.Disk,
@@ -214,7 +214,7 @@ func (s *Server) initPreconfiguredGroups() error {
 	for _, cfg := range s.config.Groups {
 		err := s.store.SaveGroup(context.Background(), &structs.Group{
 			Name:    cfg.Name,
-			Enabled: *cfg.Enabled,
+			Enabled: cfg.Enabled,
 		})
 		if err != nil {
 			return fmt.Errorf("error creating preconfigured group (%s): %w", cfg.Name, err)

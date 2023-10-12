@@ -45,12 +45,11 @@ func newServerCmd() *cobra.Command {
 }
 
 func runServerCmd(cmd *cobra.Command, args []string) error {
-	var config *server.Config
+	config := server.NewDefaultConfig()
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling configuration: %w", err)
 	}
-	config.SetDefaults()
 
 	err = config.Validate()
 	if err != nil {

@@ -23,6 +23,38 @@ type Config struct {
 	DataDir       string            `mapstructure:"data-dir"`
 }
 
+// NewDefaultConfig creates a new default Config.
+func NewDefaultConfig() *Config {
+	cfg := &Config{
+		ListenAddr: ":8080",
+		GitHub: &GitHubConfig{
+			JobLabelPrefix: "fireactions",
+		},
+		Scheduler: &scheduler.Config{
+			FreeCpuScorerMultiplier: 1.0,
+			FreeRamScorerMultiplier: 1.0,
+		},
+		DefaultFlavor: "default",
+		Flavors: []*FlavorConfig{{
+			Name:    "default",
+			Image:   "ubuntu-22.04",
+			Enabled: true,
+			Disk:    50,
+			Mem:     1024,
+			CPU:     1,
+		}},
+		DefaultGroup: "default",
+		Groups: []*GroupConfig{{
+			Name:    "default",
+			Enabled: true,
+		}},
+		DataDir:  "/var/lib/fireactions",
+		LogLevel: "info",
+	}
+
+	return cfg
+}
+
 // Validate validates the configuration.
 func (c *Config) Validate() error {
 	var errs error
@@ -115,35 +147,6 @@ func (c *Config) Validate() error {
 	return errs
 }
 
-// SetDefaults sets the default values for the configuration.
-func (c *Config) SetDefaults() {
-	if c.LogLevel == "" {
-		c.LogLevel = "info"
-	}
-
-	if c.DataDir == "" {
-		c.DataDir = "/var/lib/fireactions"
-	}
-
-	c.GitHub.SetDefaults()
-	for _, f := range c.Flavors {
-		f.SetDefaults()
-	}
-	for _, g := range c.Groups {
-		g.SetDefaults()
-	}
-
-	if c.Scheduler == nil {
-		c.Scheduler = &scheduler.Config{}
-	}
-
-	for _, i := range c.Images {
-		i.SetDefaults()
-	}
-
-	c.Scheduler.SetDefaults()
-}
-
 // GitHubConfig is the configuration for the GitHub integration.
 type GitHubConfig struct {
 	JobLabelPrefix string `mapstructure:"job-label-prefix"`
@@ -175,17 +178,10 @@ func (c *GitHubConfig) Validate() error {
 	return err
 }
 
-// SetDefaults sets the default values for the configuration.
-func (c *GitHubConfig) SetDefaults() {
-	if c.JobLabelPrefix == "" {
-		c.JobLabelPrefix = "fireactions"
-	}
-}
-
 // FlavorConfig is the configuration for a Flavor.
 type FlavorConfig struct {
 	Name    string `mapstructure:"name"`
-	Enabled *bool  `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
 	Disk    int64  `mapstructure:"disk"`
 	Mem     int64  `mapstructure:"mem"`
 	CPU     int64  `mapstructure:"cpu"`
@@ -219,18 +215,10 @@ func (c *FlavorConfig) Validate() error {
 	return err
 }
 
-// SetDefaults sets the default values for the configuration.
-func (c *FlavorConfig) SetDefaults() {
-	if c.Enabled == nil {
-		b := true
-		c.Enabled = &b
-	}
-}
-
 // GroupConfig is the configuration for a Group.
 type GroupConfig struct {
 	Name    string `mapstructure:"name"`
-	Enabled *bool  `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
 }
 
 // Validate validates the configuration.
@@ -242,14 +230,6 @@ func (c *GroupConfig) Validate() error {
 	}
 
 	return err
-}
-
-// SetDefaults sets the default values for the configuration.
-func (c *GroupConfig) SetDefaults() {
-	if c.Enabled == nil {
-		b := true
-		c.Enabled = &b
-	}
 }
 
 // ImageConfig is the configuration for an Image.
@@ -281,8 +261,4 @@ func (c *ImageConfig) Validate() error {
 	}
 
 	return err
-}
-
-// SetDefaults sets the default values for the configuration.
-func (c *ImageConfig) SetDefaults() {
 }
