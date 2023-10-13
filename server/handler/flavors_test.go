@@ -260,3 +260,61 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
 	})
 }
+
+func TestDeleteFlavorHandlerFuncV1(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mock.NewMockStore(ctrl)
+
+	router := gin.New()
+	router.DELETE("/flavors/:name", DeleteFlavorHandlerFuncV1(&zerolog.Logger{}, store))
+
+	t.Run("success", func(t *testing.T) {
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+			Name:         "flavor1",
+			Enabled:      false,
+			DiskSizeGB:   10,
+			MemorySizeMB: 1024,
+			VCPUs:        2,
+			Image:        "ubuntu-18.04",
+		}, nil)
+
+		store.EXPECT().DeleteFlavor(gomock.Any(), "flavor1").Return(nil)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/flavors/flavor1", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 204, rec.Code)
+	})
+
+	t.Run("error on GetFlavor()", func(t *testing.T) {
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(nil, errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/flavors/flavor1", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+	})
+
+	t.Run("error on DeleteFlavor()", func(t *testing.T) {
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+			Name:         "flavor1",
+			Enabled:      false,
+			DiskSizeGB:   10,
+			MemorySizeMB: 1024,
+			VCPUs:        2,
+			Image:        "ubuntu-18.04",
+		}, nil)
+
+		store.EXPECT().DeleteFlavor(gomock.Any(), "flavor1").Return(errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/flavors/flavor1", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+	})
+}

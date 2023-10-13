@@ -29,7 +29,8 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newFlavorsGetCmd(), newFlavorsListCmd(), newFlavorsDisableCmd(), newFlavorsEnableCmd())
+	cmd.AddCommand(newFlavorsGetCmd(),
+		newFlavorsListCmd(), newFlavorsDisableCmd(), newFlavorsEnableCmd(), newFlavorsRemoveCmd())
 	return cmd
 }
 
@@ -95,12 +96,31 @@ Example:
 	return cmd
 }
 
+func newFlavorsRemoveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rm NAME",
+		Short: "Remove a specific Flavor by name",
+		Long: `Remove a specific Flavor by name.
+
+This command will remove a Flavor by name. Once removed, the Flavor will not be available for use by Jobs. If the Flavor is enabled in the configuration file,
+it will revert on the next restart of the server.
+
+Example:
+  $ fireactions flavors rm 1vcpu-1gb
+		`,
+		Args: cobra.ExactArgs(1),
+		RunE: runFlavorsRemoveCmd,
+	}
+
+	return cmd
+}
+
 func runFlavorsEnableCmd(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	_, err := client.Flavors().Enable(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Flavor(s): %w", err)
+		return fmt.Errorf("error enabling Flavor(s): %w", err)
 	}
 
 	return nil
@@ -111,7 +131,7 @@ func runFlavorsDisableCmd(cmd *cobra.Command, args []string) error {
 
 	_, err := client.Flavors().Disable(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Flavor(s): %w", err)
+		return fmt.Errorf("error disabling Flavor(s): %w", err)
 	}
 
 	return nil
@@ -140,5 +160,16 @@ func runFlavorsGetCmd(cmd *cobra.Command, args []string) error {
 
 	item := &printer.Flavor{Flavors: api.Flavors{*flavor}}
 	printer.PrintText(item, cmd.OutOrStdout(), nil)
+	return nil
+}
+
+func runFlavorsRemoveCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	_, err := client.Flavors().Delete(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error deleting Flavor(s): %w", err)
+	}
+
 	return nil
 }

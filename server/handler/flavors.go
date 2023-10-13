@@ -19,6 +19,8 @@ func RegisterFlavorsV1(r gin.IRouter, log *zerolog.Logger, store store.Store) {
 		DisableFlavorHandlerFuncV1(log, store))
 	r.PATCH("/flavors/:name/enable",
 		EnableFlavorHandlerFuncV1(log, store))
+	r.DELETE("/flavors/:name",
+		DeleteFlavorHandlerFuncV1(log, store))
 }
 
 // GetFlavorsHandlerFuncV1 returns a HTTP handler function that returns all Flavors. The Flavors are returned in the v1
@@ -86,6 +88,27 @@ func EnableFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handl
 
 		flavor.Enable()
 		err = store.SaveFlavor(ctx, flavor)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		ctx.Status(204)
+	}
+
+	return f
+}
+
+// DeleteFlavorHandlerFuncV1 returns a HTTP handler function that deletes a Flavor by name.
+func DeleteFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		flavor, err := store.GetFlavor(ctx, ctx.Param("name"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		err = store.DeleteFlavor(ctx, flavor.Name)
 		if err != nil {
 			httperr.E(ctx, err)
 			return

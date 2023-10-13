@@ -93,3 +93,13 @@ func (c *flavorsClient) Enable(ctx context.Context, name string) (*Response, err
 
 	return c.client.Do(req, nil)
 }
+
+// Delete deletes a Flavor by name.
+func (c *flavorsClient) Delete(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/flavors/%s", name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
+}
