@@ -22,7 +22,7 @@ func TestRegisterFlavorsV1(t *testing.T) {
 	router := gin.New()
 	RegisterFlavorsV1(router, &zerolog.Logger{}, store)
 
-	assert.Equal(t, 4, len(router.Routes()))
+	assert.Equal(t, 5, len(router.Routes()))
 }
 
 func TestGetFlavorsHandlerFuncV1(t *testing.T) {
