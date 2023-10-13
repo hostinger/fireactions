@@ -3,29 +3,22 @@ package client
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/avast/retry-go"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
-	api "github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/client/hostinfo"
 	"github.com/hostinger/fireactions/client/imagegc"
 	"github.com/hostinger/fireactions/client/imagesyncer"
 	"github.com/hostinger/fireactions/client/preflight"
 	"github.com/hostinger/fireactions/client/store"
 	"github.com/hostinger/fireactions/client/store/bbolt"
 	"github.com/rs/zerolog"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
-)
-
-const (
-	machineIDPath = "/var/lib/dbus/machine-id"
 )
 
 // Client is a client that connects to the server and registers itself as a Node.
@@ -36,6 +29,7 @@ type Client struct {
 	client            *api.Client
 	imageSyncer       *imagesyncer.ImageSyncer
 	imageGC           *imagegc.ImageGC
+	hostInfoCollector hostinfo.Collector
 	store             store.Store
 	shutdownOnce      sync.Once
 	isShuttingDown    bool
@@ -78,6 +72,7 @@ func New(cfg *Config) (*Client, error) {
 		preflightChecks:   make(map[string]preflight.Check),
 		store:             store,
 		imageSyncer:       imageSyncer,
+		hostInfoCollector: hostinfo.NewCollector(logger),
 		shutdownOnce:      sync.Once{},
 		isShuttingDown:    false,
 		shutdownCh:        make(chan struct{}),
@@ -158,40 +153,26 @@ func (c *Client) shutdown() {
 }
 
 func (c *Client) register(ctx context.Context) error {
-	_, err := c.GetID()
+	hostinfo, err := c.hostInfoCollector.Collect(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting client ID: %w", err)
-	}
-
-	name, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("error getting hostname: %w", err)
-	}
-
-	cpu, err := c.getTotalCpu()
-	if err != nil {
-		return fmt.Errorf("error getting total CPU: %w", err)
-	}
-
-	mem, err := c.getTotalMem()
-	if err != nil {
-		return fmt.Errorf("error getting total memory: %w", err)
+		return fmt.Errorf("error collecting host info: %w", err)
 	}
 
 	_, err = c.client.Nodes().Register(ctx, &api.NodeRegisterRequest{
-		UUID:               c.ID,
-		Name:               name,
+		UUID:               hostinfo.MachineID,
+		Name:               hostinfo.Hostname,
 		Organisation:       c.config.Organisation,
 		Groups:             c.config.Groups,
-		CpuTotal:           cpu,
+		CpuTotal:           int64(hostinfo.CpuInfo.NumCores),
 		CpuOvercommitRatio: c.config.CpuOvercommitRatio,
-		MemTotal:           mem,
+		MemTotal:           int64(hostinfo.MemInfo.Total),
 		MemOvercommitRatio: c.config.MemOvercommitRatio,
 	})
 	if err != nil {
 		return err
 	}
 
+	c.ID = hostinfo.MachineID
 	return nil
 }
 
@@ -230,54 +211,10 @@ func (c *Client) Start() error {
 		go c.imageGC.Run()
 	}
 
-	c.logger.Info().Str("id", c.ID).Str("version", "v1").Msg("client registered and connected, waiting for runners...")
+	c.logger.Info().Msg("client registered and connected, waiting for runners...")
 	c.runReconcileLoop()
 
 	return nil
-}
-
-// GetID returns the client ID. If the client ID is not set, it will be read from the machine ID (/var/lib/dbus/machine-id) file.
-func (c *Client) GetID() (string, error) {
-	if c.ID != "" {
-		return c.ID, nil
-	}
-
-	f, err := os.OpenFile(machineIDPath, os.O_RDONLY, 0)
-	if err != nil {
-		return "", fmt.Errorf("error opening %s: %w", machineIDPath, err)
-	}
-	defer f.Close()
-
-	uuid, err := io.ReadAll(f)
-	if err != nil {
-		return "", fmt.Errorf("error reading %s: %w", machineIDPath, err)
-	}
-	c.ID = strings.TrimSpace(string(uuid))
-
-	return string(uuid), nil
-}
-
-func (c *Client) getTotalCpu() (int64, error) {
-	cpu, err := cpu.Info()
-	if err != nil {
-		return 0, err
-	}
-
-	var total int64
-	for _, c := range cpu {
-		total = total + int64(c.Cores)
-	}
-
-	return total, nil
-}
-
-func (c *Client) getTotalMem() (int64, error) {
-	mem, err := mem.VirtualMemory()
-	if err != nil {
-		return 0, err
-	}
-
-	return int64(mem.Total), nil
 }
 
 func (c *Client) connect(ctx context.Context) error {
