@@ -313,7 +313,7 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
 	})
 
-	t.Run("invalid body", func(t *testing.T) {
+	t.Run("error on BindJSON()", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("POST", "/groups", bytes.NewReader([]byte("invalid")))
 		router.ServeHTTP(rec, req)
