@@ -10,12 +10,10 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/client/hostinfo"
 	"github.com/hostinger/fireactions/client/imagegc"
 	"github.com/hostinger/fireactions/client/imagesyncer"
-	"github.com/hostinger/fireactions/client/preflight"
 	"github.com/hostinger/fireactions/client/store"
 	"github.com/hostinger/fireactions/client/structs"
 	"github.com/rs/zerolog"
@@ -27,7 +25,6 @@ type Client struct {
 
 	config            *Config
 	isConnected       bool
-	preflightChecks   map[string]preflight.Check
 	client            *api.Client
 	imageSyncer       *imagesyncer.ImageSyncer
 	imageGC           *imagegc.ImageGC
@@ -70,7 +67,6 @@ func New(cfg *Config) (*Client, error) {
 	c := &Client{
 		client:            client,
 		isConnected:       false,
-		preflightChecks:   make(map[string]preflight.Check),
 		store:             store,
 		imageSyncer:       imageSyncer,
 		hostInfoCollector: hostinfo.NewCollector(logger),
@@ -92,7 +88,6 @@ func New(cfg *Config) (*Client, error) {
 		c.imageGC = imageGC
 	}
 
-	c.addPreflightCheck(preflight.NewFirecrackerCheck())
 	return c, nil
 }
 
@@ -101,15 +96,10 @@ func New(cfg *Config) (*Client, error) {
 func (c *Client) Start() error {
 	c.logger.Info().Msg("starting client")
 
-	err := c.RunPreflightChecks()
-	if err != nil {
-		return fmt.Errorf("error running preflight checks: %w", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	err = retryDo(ctx, c.logger, "error registering client", func() error {
+	err := retryDo(ctx, c.logger, "error registering client", func() error {
 		return c.register(ctx)
 	})
 	if err != nil {
@@ -135,30 +125,6 @@ func (c *Client) Start() error {
 	c.runReconcileLoop()
 
 	return nil
-}
-
-func (c *Client) addPreflightCheck(check preflight.Check) {
-	_, ok := c.preflightChecks[check.Name()]
-	if ok {
-		panic(fmt.Errorf("preflight check %s already registered", check.Name()))
-	}
-
-	c.preflightChecks[check.Name()] = check
-}
-
-func (c *Client) RunPreflightChecks() error {
-	var errs *multierror.Error
-
-	for _, check := range c.preflightChecks {
-		if err := check.Check(); err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("preflight check %s failed: %w", check.Name(), err))
-			continue
-		}
-
-		c.logger.Info().Msgf("preflight check %s passed", check.Name())
-	}
-
-	return errs.ErrorOrNil()
 }
 
 // Shutdown shuts down the client.
