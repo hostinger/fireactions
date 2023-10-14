@@ -81,8 +81,7 @@ func (c *nodesClient) Get(ctx context.Context, id string) (*Node, *Response, err
 
 // NodeRegisterRequest represents a request to register a Node.
 type NodeRegisterRequest struct {
-	UUID               string   `json:"uuid"`
-	Name               string   `json:"name"`
+	Hostname           string   `json:"hostname"`
 	Organisation       string   `json:"organisation"`
 	Groups             []string `json:"groups"`
 	CpuTotal           int64    `json:"cpu_total"`
@@ -91,14 +90,26 @@ type NodeRegisterRequest struct {
 	MemOvercommitRatio float64  `json:"mem_overcommit_ratio"`
 }
 
+// NodeRegistrationInfo represents information about a registered Node. This
+// information is returned when registering a Node.
+type NodeRegistrationInfo struct {
+	ID string `json:"id"`
+}
+
 // Register registers a Node.
-func (c *nodesClient) Register(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*Response, error) {
+func (c *nodesClient) Register(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*NodeRegistrationInfo, *Response, error) {
 	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/nodes", nodeRegisterRequest)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return c.client.Do(req, nil)
+	var nodeRegistrationInfo NodeRegistrationInfo
+	response, err := c.client.Do(req, &nodeRegistrationInfo)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &nodeRegistrationInfo, response, nil
 }
 
 // Deregister deregisters a Node by ID.

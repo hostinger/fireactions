@@ -267,6 +267,21 @@ func (mr *MockStoreMockRecorder) GetNode(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNode", reflect.TypeOf((*MockStore)(nil).GetNode), ctx, id)
 }
 
+// GetNodeByName mocks base method.
+func (m *MockStore) GetNodeByName(ctx context.Context, name string) (*structs.Node, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNodeByName", ctx, name)
+	ret0, _ := ret[0].(*structs.Node)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNodeByName indicates an expected call of GetNodeByName.
+func (mr *MockStoreMockRecorder) GetNodeByName(ctx, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeByName", reflect.TypeOf((*MockStore)(nil).GetNodeByName), ctx, name)
+}
+
 // GetRunner mocks base method.
 func (m *MockStore) GetRunner(ctx context.Context, id string) (*structs.Runner, error) {
 	m.ctrl.T.Helper()

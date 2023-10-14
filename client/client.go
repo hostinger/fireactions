@@ -17,14 +17,16 @@ import (
 	"github.com/hostinger/fireactions/client/imagesyncer"
 	"github.com/hostinger/fireactions/client/preflight"
 	"github.com/hostinger/fireactions/client/store"
-	"github.com/hostinger/fireactions/client/store/bbolt"
+	"github.com/hostinger/fireactions/client/structs"
 	"github.com/rs/zerolog"
 )
 
 // Client is a client that connects to the server and registers itself as a Node.
 type Client struct {
-	ID                string
-	isDisconnected    bool
+	ID string
+
+	config            *Config
+	isConnected       bool
 	preflightChecks   map[string]preflight.Check
 	client            *api.Client
 	imageSyncer       *imagesyncer.ImageSyncer
@@ -37,7 +39,6 @@ type Client struct {
 	shutdownMu        sync.Mutex
 	reconcileInterval time.Duration
 	logger            *zerolog.Logger
-	config            *Config
 }
 
 // New creates a new Client.
@@ -53,7 +54,7 @@ func New(cfg *Config) (*Client, error) {
 	}
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(logLevel)
 
-	store, err := bbolt.New(filepath.Join(cfg.DataDir, "client.db"))
+	store, err := store.New(filepath.Join(cfg.DataDir, "client.db"))
 	if err != nil {
 		return nil, fmt.Errorf("error creating store: %w", err)
 	}
@@ -68,7 +69,7 @@ func New(cfg *Config) (*Client, error) {
 	logger = logger.With().Str("component", "client").Logger()
 	c := &Client{
 		client:            client,
-		isDisconnected:    true,
+		isConnected:       false,
 		preflightChecks:   make(map[string]preflight.Check),
 		store:             store,
 		imageSyncer:       imageSyncer,
@@ -93,6 +94,47 @@ func New(cfg *Config) (*Client, error) {
 
 	c.addPreflightCheck(preflight.NewFirecrackerCheck())
 	return c, nil
+}
+
+// Start starts the client, registering it with the server and connecting to it. It also starts the reconcile loop.
+// The client will keep running until Shutdown() is called.
+func (c *Client) Start() error {
+	c.logger.Info().Msg("starting client")
+
+	err := c.RunPreflightChecks()
+	if err != nil {
+		return fmt.Errorf("error running preflight checks: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	err = retryDo(ctx, c.logger, "error registering client", func() error {
+		return c.register(ctx)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = retryDo(ctx, c.logger, "error connecting client", func() error {
+		return c.connect(ctx)
+	})
+	if err != nil {
+		return err
+	}
+
+	c.logger.Info().Msgf("starting image-syncer")
+	go c.imageSyncer.Run()
+
+	if c.config.EnableImageGC {
+		c.logger.Info().Msgf("starting image-gc")
+		go c.imageGC.Run()
+	}
+
+	c.logger.Info().Msg("client registered and connected, waiting for runners...")
+	c.runReconcileLoop()
+
+	return nil
 }
 
 func (c *Client) addPreflightCheck(check preflight.Check) {
@@ -153,14 +195,23 @@ func (c *Client) shutdown() {
 }
 
 func (c *Client) register(ctx context.Context) error {
-	hostinfo, err := c.hostInfoCollector.Collect(ctx)
+	nodeinfo, err := c.store.GetNodeRegistrationInfo(ctx)
 	if err != nil {
-		return fmt.Errorf("error collecting host info: %w", err)
+		if err != store.ErrNotFound {
+			return fmt.Errorf("error getting node registration info: %w", err)
+		}
+	} else {
+		c.ID = nodeinfo.ID
+		return nil
 	}
 
-	_, err = c.client.Nodes().Register(ctx, &api.NodeRegisterRequest{
-		UUID:               hostinfo.MachineID,
-		Name:               hostinfo.Hostname,
+	hostinfo, err := c.hostInfoCollector.Collect(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting host info: %w", err)
+	}
+
+	result, _, err := c.client.Nodes().Register(ctx, &api.NodeRegisterRequest{
+		Hostname:           hostinfo.Hostname,
 		Organisation:       c.config.Organisation,
 		Groups:             c.config.Groups,
 		CpuTotal:           int64(hostinfo.CpuInfo.NumCores),
@@ -172,53 +223,19 @@ func (c *Client) register(ctx context.Context) error {
 		return err
 	}
 
-	c.ID = hostinfo.MachineID
-	return nil
-}
-
-// Start starts the client, registering it with the server and connecting to it. It also starts the reconcile loop.
-// The client will keep running until Shutdown() is called.
-func (c *Client) Start() error {
-	c.logger.Info().Msg("starting client")
-
-	err := c.RunPreflightChecks()
-	if err != nil {
-		return fmt.Errorf("error running preflight checks: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	err = retryDo(ctx, c.logger, "error registering client", func() error {
-		return c.register(ctx)
+	err = c.store.SaveNodeRegistrationInfo(ctx, &structs.NodeRegistrationInfo{
+		ID: result.ID,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error saving node registration info: %w", err)
 	}
 
-	err = retryDo(ctx, c.logger, "error connecting client", func() error {
-		return c.connect(ctx)
-	})
-	if err != nil {
-		return err
-	}
-
-	c.logger.Info().Msgf("starting image-syncer")
-	go c.imageSyncer.Run()
-
-	if c.config.EnableImageGC {
-		c.logger.Info().Msgf("starting image-gc")
-		go c.imageGC.Run()
-	}
-
-	c.logger.Info().Msg("client registered and connected, waiting for runners...")
-	c.runReconcileLoop()
-
+	c.ID = result.ID
 	return nil
 }
 
 func (c *Client) connect(ctx context.Context) error {
-	if !c.isDisconnected {
+	if c.isConnected {
 		return nil
 	}
 
@@ -227,12 +244,12 @@ func (c *Client) connect(ctx context.Context) error {
 		return err
 	}
 
-	c.isDisconnected = false
+	c.isConnected = true
 	return nil
 }
 
 func (c *Client) disconnect(ctx context.Context) error {
-	if c.isDisconnected {
+	if !c.isConnected {
 		return nil
 	}
 
@@ -241,7 +258,7 @@ func (c *Client) disconnect(ctx context.Context) error {
 		return err
 	}
 
-	c.isDisconnected = true
+	c.isConnected = false
 	return nil
 }
 
@@ -262,7 +279,7 @@ func (c *Client) runReconcileLoop() {
 }
 
 func (c *Client) reconcileOnce() {
-	if c.isDisconnected {
+	if !c.isConnected {
 		return
 	}
 

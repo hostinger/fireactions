@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
 	"github.com/hostinger/fireactions/server/store"
@@ -103,39 +104,43 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 		var groups []*structs.Group
 		for _, group := range req.Groups {
 			g, err := storer.GetGroup(ctx, group)
-			if err != nil {
-				httperr.E(ctx, err)
+			switch err.(type) {
+			case nil:
+				break
+			case *store.ErrNotFound:
+				ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("group %s doesn't exist", group)})
+				return
+			default:
+				ctx.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 				return
 			}
 
 			groups = append(groups, g)
 		}
 
-		node, err := storer.GetNode(ctx, req.UUID)
-		if err != nil && !errors.As(err, &store.ErrNotFound{}) {
-			httperr.E(ctx, err)
+		_, err = storer.GetNodeByName(ctx, req.Hostname)
+		switch err.(type) {
+		case nil:
+			ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("node %s already exists", req.Hostname)})
+			return
+		case *store.ErrNotFound:
+			break
+		default:
+			ctx.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		nodeExists := node != nil
-
+		uuid := uuid.New().String()
 		n := &structs.Node{
-			ID:           req.UUID,
-			Name:         req.Name,
+			ID:           uuid,
+			Name:         req.Hostname,
 			Organisation: req.Organisation,
 			Groups:       groups,
 			Status:       structs.NodeStatusUnknown,
 			CPU:          structs.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
 			RAM:          structs.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
-		}
-
-		switch nodeExists {
-		case true:
-			n.CreatedAt = node.CreatedAt
-			n.UpdatedAt = time.Now()
-		case false:
-			n.CreatedAt = time.Now()
-			n.UpdatedAt = time.Now()
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
 		}
 
 		err = storer.SaveNode(ctx, n)
@@ -144,12 +149,10 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 			return
 		}
 
-		if !nodeExists {
-			log.Info().Msgf("registered new Node: %s", n)
-		}
-
+		log.Info().Msgf("registered new Node: %s", n)
 		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeCreated, n))
-		ctx.Status(204)
+
+		ctx.JSON(200, &v1.NodeRegistrationInfo{ID: uuid})
 	}
 
 	return f

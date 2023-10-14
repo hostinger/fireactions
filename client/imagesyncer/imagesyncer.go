@@ -145,7 +145,7 @@ func (s *ImageSyncer) syncImage(ctx context.Context, image api.Image) error {
 			s.logger.Debug().Msgf("skipping sync, image %s already exists at path %s", image.ID, localImage.Path)
 			return nil
 		}
-	} else if err != store.ErrImageNotFound {
+	} else if err != store.ErrNotFound {
 		return fmt.Errorf("error getting image: %w", err)
 	}
 
@@ -156,7 +156,7 @@ func (s *ImageSyncer) syncImage(ctx context.Context, image api.Image) error {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}}
-	err = s.store.PutImage(ctx, i)
+	err = s.store.SaveImage(ctx, i)
 	if err != nil {
 		return fmt.Errorf("error saving image: %w", err)
 	}

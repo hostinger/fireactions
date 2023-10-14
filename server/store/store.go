@@ -13,6 +13,7 @@ type Store interface {
 
 	ListNodes(ctx context.Context) ([]*structs.Node, error)
 	GetNode(ctx context.Context, id string) (*structs.Node, error)
+	GetNodeByName(ctx context.Context, name string) (*structs.Node, error)
 	SaveNode(ctx context.Context, node *structs.Node) error
 	DeleteNode(ctx context.Context, id string) error
 	ReserveNodeResources(ctx context.Context, id string, cpu, mem int64) error
