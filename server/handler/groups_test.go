@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +24,7 @@ func TestRegisterGroupsV1(t *testing.T) {
 	router := gin.New()
 	RegisterGroupsV1(router, &zerolog.Logger{}, store)
 
-	assert.Equal(t, 5, len(router.Routes()))
+	assert.Equal(t, 6, len(router.Routes()))
 }
 
 func TestGetGroupsHandlerFuncV1(t *testing.T) {
@@ -259,6 +261,65 @@ func TestDeleteGroupHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 500, rec.Code)
 		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
+	})
+}
+
+func TestCreateGroupHandlerFuncV1(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mock.NewMockStore(ctrl)
+
+	router := gin.New()
+	router.POST("/groups", CreateGroupHandlerFuncV1(&zerolog.Logger{}, store))
+
+	t.Run("success", func(t *testing.T) {
+		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		}).Return(nil)
+
+		body, err := json.Marshal(&structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		})
+		assert.NoError(t, err)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/groups", bytes.NewReader(body))
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 201, rec.Code)
+		assert.JSONEq(t, `{"name":"group1","enabled":false}`, rec.Body.String())
+	})
+
+	t.Run("error on SaveGroup()", func(t *testing.T) {
+		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		}).Return(errors.New("error"))
+
+		body, err := json.Marshal(&structs.Group{
+			Name:    "group1",
+			Enabled: false,
+		})
+		assert.NoError(t, err)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/groups", bytes.NewReader(body))
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/groups", bytes.NewReader([]byte("invalid")))
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 400, rec.Code)
+		assert.JSONEq(t, `{"error":"invalid character 'i' looking for beginning of value"}`, rec.Body.String())
 	})
 }
 

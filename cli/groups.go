@@ -29,7 +29,8 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newGroupsGetCmd(), newGroupsListCmd(), newGroupsEnableCmd(), newGroupsDisableCmd(), newGroupsRemoveCmd())
+	cmd.AddCommand(newGroupsGetCmd(), newGroupsCreateCmd(),
+		newGroupsListCmd(), newGroupsEnableCmd(), newGroupsDisableCmd(), newGroupsRemoveCmd())
 	return cmd
 }
 
@@ -112,6 +113,44 @@ Example:
 	}
 
 	return cmd
+}
+
+func newGroupsCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create NAME",
+		Short: "Create a new Group",
+		Long: `Create a new Group.
+
+This command will create a new Group. Once created, the Group will be available for use by Jobs.
+
+Example:
+  $ fireactions groups create group1 --enabled=false
+		`,
+		Args: cobra.ExactArgs(1),
+		RunE: runGroupsCreateCmd,
+	}
+
+	cmd.Flags().Bool("enabled", true, "Sets the Group as enabled")
+	return cmd
+}
+
+func runGroupsCreateCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	enabled, err := cmd.Flags().GetBool("enabled")
+	if err != nil {
+		return fmt.Errorf("error parsing flag: %w", err)
+	}
+
+	_, _, err = client.Groups().Create(cmd.Context(), &api.GroupCreateRequest{
+		Name:    args[0],
+		Enabled: enabled,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating Group(s): %w", err)
+	}
+
+	return nil
 }
 
 func runGroupsDisableCmd(cmd *cobra.Command, args []string) error {

@@ -95,3 +95,25 @@ func (c *groupsClient) Delete(ctx context.Context, name string) (*Response, erro
 
 	return c.client.Do(req, nil)
 }
+
+// GroupCreateRequest represents a request to create a Group.
+type GroupCreateRequest struct {
+	Name    string `json:"name" validate:"required"`
+	Enabled bool   `json:"enabled"`
+}
+
+// Create creates a Group.
+func (c *groupsClient) Create(ctx context.Context, req *GroupCreateRequest) (*Group, *Response, error) {
+	r, err := c.client.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/groups", req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var group Group
+	response, err := c.client.Do(r, &group)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &group, response, nil
+}
