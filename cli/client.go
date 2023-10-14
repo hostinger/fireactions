@@ -28,7 +28,13 @@ func newClientCmd() *cobra.Command {
 		return viper.ReadInConfig()
 	}
 
-	cmd.PersistentFlags().StringP("config", "c", "", "Sets the configuration file path.")
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/etc/fireactions")
+	viper.AddConfigPath("$HOME/.fireactions")
+	viper.AddConfigPath(".")
+
+	cmd.PersistentFlags().StringP("config", "c", "config.yaml", "Sets the configuration file path.")
 	viper.BindPFlag("config", cmd.PersistentFlags().Lookup("config"))
 
 	return cmd
