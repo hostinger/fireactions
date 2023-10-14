@@ -85,3 +85,26 @@ func (c *imagesClient) Delete(ctx context.Context, id string) (*Response, error)
 
 	return response, nil
 }
+
+// ImageCreateRequest represents a request to create a Image.
+type ImageCreateRequest struct {
+	ID   string `json:"id" validate:"required"`
+	Name string `json:"name" validate:"required"`
+	URL  string `json:"url" validate:"required"`
+}
+
+// Create creates a new Image.
+func (c *imagesClient) Create(ctx context.Context, req *ImageCreateRequest) (*Image, *Response, error) {
+	request, err := c.client.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/images", req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var image Image
+	response, err := c.client.Do(request, &image)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &image, response, nil
+}

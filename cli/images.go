@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/cli/printer"
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newImagesGetCmd(), newImagesListCmd(), newImagesRemoveCmd())
+	cmd.AddCommand(newImagesGetCmd(), newImagesListCmd(), newImagesRemoveCmd(), newImagesCreateCmd())
 	return cmd
 }
 
@@ -67,6 +68,40 @@ func newImagesRemoveCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func newImagesCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create NAME",
+		Short: "Create a new Image",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runImagesCreateCmd,
+	}
+
+	cmd.Flags().String("url", "", "Sets the Image URL (required)")
+	cmd.MarkFlagRequired("url")
+
+	return cmd
+}
+
+func runImagesCreateCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	url, err := cmd.Flags().GetString("url")
+	if err != nil {
+		return fmt.Errorf("error parsing flag --url: %w", err)
+	}
+
+	_, _, err = client.Images().Create(cmd.Context(), &api.ImageCreateRequest{
+		ID:   uuid.New().String(),
+		Name: args[0],
+		URL:  url,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating Image(s): %w", err)
+	}
+
+	return nil
 }
 
 func runImagesListCmd(cmd *cobra.Command, args []string) error {

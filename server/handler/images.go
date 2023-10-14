@@ -14,6 +14,7 @@ func RegisterImagesV1(r gin.IRouter, log *zerolog.Logger, store store.Store) {
 	r.GET("/images", GetImagesHandlerFuncV1(log, store))
 	r.GET("/images/:id", GetImageHandlerFuncV1(log, store))
 	r.DELETE("/images/:id", DeleteImageHandlerFuncV1(log, store))
+	r.POST("/images", CreateImageHandlerFuncV1(log, store))
 }
 
 // GetImagesHandlerFuncV1 returns a HTTP handler function that returns all Images. The Images are returned in the v1
@@ -64,6 +65,33 @@ func DeleteImageHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 		}
 
 		ctx.Status(204)
+	}
+
+	return f
+}
+
+// CreateImageHandlerFuncV1 returns a HTTP handler function that creates a single Image.
+func CreateImageHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		var req v1.ImageCreateRequest
+		err := ctx.BindJSON(&req)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		image := &structs.Image{
+			ID:   req.ID,
+			Name: req.Name,
+			URL:  req.URL,
+		}
+		err = store.SaveImage(ctx, image)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		ctx.JSON(201, convertImageToImageV1(image))
 	}
 
 	return f
