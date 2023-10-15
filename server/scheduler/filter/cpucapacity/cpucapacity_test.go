@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,32 +13,32 @@ func TestFilter(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		runner *structs.Runner
-		node   *structs.Node
+		runner *models.Runner
+		node   *models.Node
 		want   bool
 	}{
 		{
 			name: "node has enough CPU capacity",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{VCPUs: 1},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{VCPUs: 1},
 			},
-			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 1.0}},
+			node: &models.Node{CPU: models.Resource{Capacity: 1, OvercommitRatio: 1.0}},
 			want: true,
 		},
 		{
 			name: "node doesn't have enough CPU capacity",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{VCPUs: 2},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{VCPUs: 2},
 			},
-			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 1.0}},
+			node: &models.Node{CPU: models.Resource{Capacity: 1, OvercommitRatio: 1.0}},
 			want: false,
 		},
 		{
 			name: "node has enough CPU capacity with overcommit",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{VCPUs: 2},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{VCPUs: 2},
 			},
-			node: &structs.Node{CPU: structs.Resource{Capacity: 1, OvercommitRatio: 2.0}},
+			node: &models.Node{CPU: models.Resource{Capacity: 1, OvercommitRatio: 2.0}},
 			want: true,
 		},
 	}

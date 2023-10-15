@@ -4,19 +4,19 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
 // ListFlavors returns all Flavors.
-func (s *Store) ListFlavors(ctx context.Context) ([]*structs.Flavor, error) {
-	var flavors []*structs.Flavor
+func (s *Store) ListFlavors(ctx context.Context) ([]*models.Flavor, error) {
+	var flavors []*models.Flavor
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("flavors")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			flavor := &structs.Flavor{}
+			flavor := &models.Flavor{}
 			err := json.Unmarshal(v, flavor)
 			if err != nil {
 				return err
@@ -35,8 +35,8 @@ func (s *Store) ListFlavors(ctx context.Context) ([]*structs.Flavor, error) {
 }
 
 // GetFlavor returns a Flavor by name.
-func (s *Store) GetFlavor(ctx context.Context, name string) (*structs.Flavor, error) {
-	flavor := &structs.Flavor{}
+func (s *Store) GetFlavor(ctx context.Context, name string) (*models.Flavor, error) {
+	flavor := &models.Flavor{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte("flavors")).Get([]byte(name))
@@ -71,7 +71,7 @@ func (s *Store) DeleteFlavor(ctx context.Context, name string) error {
 }
 
 // SaveFlavor saves a Flavor.
-func (s *Store) SaveFlavor(ctx context.Context, flavor *structs.Flavor) error {
+func (s *Store) SaveFlavor(ctx context.Context, flavor *models.Flavor) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("flavors"))
 		v, err := json.Marshal(flavor)

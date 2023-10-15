@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,20 +14,20 @@ func TestFilter(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		runner *structs.Runner
-		node   *structs.Node
+		runner *models.Runner
+		node   *models.Node
 		want   bool
 	}{
 		{
 			name:   "node has been updated in the last 60 seconds",
-			runner: &structs.Runner{},
-			node:   &structs.Node{UpdatedAt: time.Now()},
+			runner: &models.Runner{},
+			node:   &models.Node{UpdatedAt: time.Now()},
 			want:   true,
 		},
 		{
 			name:   "node hasn't been updated in the last 60 seconds",
-			runner: &structs.Runner{},
-			node:   &structs.Node{UpdatedAt: time.Now().Add(-61 * time.Second)},
+			runner: &models.Runner{},
+			node:   &models.Node{UpdatedAt: time.Now().Add(-61 * time.Second)},
 			want:   false,
 		},
 	}

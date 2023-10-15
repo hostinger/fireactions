@@ -3,8 +3,8 @@ package group
 import (
 	"context"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
-	"github.com/hostinger/fireactions/server/structs"
 )
 
 // Filter is a filter that filters out nodes that don't belong to the same group
@@ -20,7 +20,7 @@ func (f *Filter) Name() string {
 }
 
 // Filter filters out nodes that don't belong to the same group as the Runner.
-func (f *Filter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+func (f *Filter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
 	for _, group := range node.Groups {
 		if group.Equals(runner.Group) {
 			return true, nil

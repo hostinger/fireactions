@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
 // GetNode returns a Node by ID.
-func (s *Store) GetNode(ctx context.Context, id string) (*structs.Node, error) {
-	var node structs.Node
+func (s *Store) GetNode(ctx context.Context, id string) (*models.Node, error) {
+	var node models.Node
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte("nodes")).Get([]byte(id))
 		if v == nil {
@@ -33,8 +33,8 @@ func (s *Store) GetNode(ctx context.Context, id string) (*structs.Node, error) {
 }
 
 // GetNodeByName returns a Node by name.
-func (s *Store) GetNodeByName(ctx context.Context, name string) (*structs.Node, error) {
-	var node structs.Node
+func (s *Store) GetNodeByName(ctx context.Context, name string) (*models.Node, error) {
+	var node models.Node
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("nodes")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -60,7 +60,7 @@ func (s *Store) GetNodeByName(ctx context.Context, name string) (*structs.Node, 
 }
 
 // SaveNode saves a Node.
-func (s *Store) SaveNode(ctx context.Context, node *structs.Node) error {
+func (s *Store) SaveNode(ctx context.Context, node *models.Node) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(node)
 		if err != nil {
@@ -89,13 +89,13 @@ func (s *Store) DeleteNode(ctx context.Context, id string) error {
 }
 
 // ListNodes returns a list of Nodes.
-func (s *Store) ListNodes(ctx context.Context) ([]*structs.Node, error) {
-	nodes := []*structs.Node{}
+func (s *Store) ListNodes(ctx context.Context) ([]*models.Node, error) {
+	nodes := []*models.Node{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("nodes")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			node := &structs.Node{}
+			node := &models.Node{}
 			err := json.Unmarshal(v, node)
 			if err != nil {
 				return err
@@ -115,7 +115,7 @@ func (s *Store) ListNodes(ctx context.Context) ([]*structs.Node, error) {
 // ReserveNodeResources reserves resources on a Node.
 func (s *Store) ReserveNodeResources(ctx context.Context, id string, cpu, mem int64) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		node := &structs.Node{}
+		node := &models.Node{}
 
 		v := tx.Bucket([]byte("nodes")).Get([]byte(id))
 		if v == nil {
@@ -147,7 +147,7 @@ func (s *Store) ReserveNodeResources(ctx context.Context, id string, cpu, mem in
 // ReleaseNodeResources releases resources on a Node.
 func (s *Store) ReleaseNodeResources(ctx context.Context, id string, cpu, mem int64) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		node := &structs.Node{}
+		node := &models.Node{}
 
 		v := tx.Bucket([]byte("nodes")).Get([]byte(id))
 		if v == nil {

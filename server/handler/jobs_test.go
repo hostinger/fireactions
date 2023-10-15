@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -36,7 +36,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 	router.GET("/jobs", GetJobsHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListJobs(gomock.Any()).Return([]*structs.Job{
+		store.EXPECT().ListJobs(gomock.Any()).Return([]*models.Job{
 			{
 				ID:           "1",
 				Name:         "job1",
@@ -57,7 +57,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Jobs []*structs.Job `storeon:"jobs"`
+			Jobs []*models.Job `storeon:"jobs"`
 		}
 
 		var resp response
@@ -68,7 +68,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with organisation query", func(t *testing.T) {
-		store.EXPECT().ListJobs(gomock.Any()).Return([]*structs.Job{
+		store.EXPECT().ListJobs(gomock.Any()).Return([]*models.Job{
 			{
 				ID:           "1",
 				Name:         "job1",
@@ -89,7 +89,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Jobs []*structs.Job `storeon:"jobs"`
+			Jobs []*models.Job `storeon:"jobs"`
 		}
 
 		var resp response
@@ -100,7 +100,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with repository query", func(t *testing.T) {
-		store.EXPECT().ListJobs(gomock.Any()).Return([]*structs.Job{
+		store.EXPECT().ListJobs(gomock.Any()).Return([]*models.Job{
 			{
 				ID:           "1",
 				Name:         "job1",
@@ -121,7 +121,7 @@ func TestGetJobsHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type response struct {
-			Jobs []*structs.Job `storeon:"jobs"`
+			Jobs []*models.Job `storeon:"jobs"`
 		}
 
 		var resp response
@@ -153,7 +153,7 @@ func TestGetJobHandlerFuncV1(t *testing.T) {
 	router.GET("/jobs/:id", GetJobHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetJob(gomock.Any(), "1").Return(&structs.Job{
+		store.EXPECT().GetJob(gomock.Any(), "1").Return(&models.Job{
 			ID:           "1",
 			Name:         "job1",
 			Organisation: "org1",
@@ -166,7 +166,7 @@ func TestGetJobHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 
-		var job structs.Job
+		var job models.Job
 		err := json.Unmarshal(rec.Body.Bytes(), &job)
 		assert.NoError(t, err)
 

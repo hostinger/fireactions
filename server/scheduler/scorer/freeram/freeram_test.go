@@ -4,32 +4,32 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestScorer(t *testing.T) {
 	testCases := []struct {
 		name       string
-		runner     *structs.Runner
-		node       *structs.Node
+		runner     *models.Runner
+		node       *models.Node
 		multiplier float64
 		want       float64
 	}{
 		{
 			name: "score is correct with multiplier 1.0",
-			node: &structs.Node{RAM: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{MemorySizeMB: 1024},
+			node: &models.Node{RAM: models.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{MemorySizeMB: 1024},
 			},
 			want:       1000,
 			multiplier: 1.0,
 		},
 		{
 			name: "score is correct with multiplier 2.0",
-			node: &structs.Node{RAM: structs.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{MemorySizeMB: 1024},
+			node: &models.Node{RAM: models.Resource{Capacity: 1000, OvercommitRatio: 1.0}},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{MemorySizeMB: 1024},
 			},
 			want:       2000,
 			multiplier: 2.0,

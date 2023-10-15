@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) GetRunner(ctx context.Context, id string) (*structs.Runner, error) {
-	runner := &structs.Runner{}
+func (s *Store) GetRunner(ctx context.Context, id string) (*models.Runner, error) {
+	runner := &models.Runner{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte("runners")).Get([]byte(id))
@@ -43,13 +43,13 @@ func (s *Store) DeleteRunner(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) ListRunners(ctx context.Context) ([]*structs.Runner, error) {
-	runners := []*structs.Runner{}
+func (s *Store) ListRunners(ctx context.Context) ([]*models.Runner, error) {
+	runners := []*models.Runner{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("runners")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			runner := &structs.Runner{}
+			runner := &models.Runner{}
 			err := json.Unmarshal(v, runner)
 			if err != nil {
 				return err
@@ -67,7 +67,7 @@ func (s *Store) ListRunners(ctx context.Context) ([]*structs.Runner, error) {
 	return runners, nil
 }
 
-func (s *Store) SaveRunner(ctx context.Context, runner *structs.Runner) error {
+func (s *Store) SaveRunner(ctx context.Context, runner *models.Runner) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(runner)
 		if err != nil {

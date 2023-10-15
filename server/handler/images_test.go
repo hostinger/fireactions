@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -38,7 +38,7 @@ func TestGetImagesHandlerFuncV1(t *testing.T) {
 	router.GET("/images", GetImagesHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListImages(gomock.Any()).Return([]*structs.Image{
+		store.EXPECT().ListImages(gomock.Any()).Return([]*models.Image{
 			{
 				ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 				Name: "image-1",
@@ -58,7 +58,7 @@ func TestGetImagesHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 200, rec.Code)
 		type Root struct {
-			Images []*structs.Image `json:"images"`
+			Images []*models.Image `json:"images"`
 		}
 
 		var root Root
@@ -97,7 +97,7 @@ func TestGetImageHandlerFuncV1(t *testing.T) {
 	router.GET("/images/:id", GetImageHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetImage(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&structs.Image{
+		store.EXPECT().GetImage(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&models.Image{
 			ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 			Name: "image-1",
 			URL:  "https://example.com/image-1",
@@ -109,7 +109,7 @@ func TestGetImageHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 200, rec.Code)
-		var image structs.Image
+		var image models.Image
 		err := json.Unmarshal(rec.Body.Bytes(), &image)
 
 		assert.NoError(t, err)
@@ -141,7 +141,7 @@ func TestDeleteImageHandlerFuncV1(t *testing.T) {
 	router.DELETE("/images/:id", DeleteImageHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetImageByID(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&structs.Image{
+		store.EXPECT().GetImageByID(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&models.Image{
 			ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 			Name: "image-1",
 			URL:  "https://example.com/image-1",
@@ -170,7 +170,7 @@ func TestDeleteImageHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on DeleteImage", func(t *testing.T) {
-		store.EXPECT().GetImageByID(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&structs.Image{
+		store.EXPECT().GetImageByID(gomock.Any(), "48233fc0-8c16-491b-8666-970ba3ce771e").Return(&models.Image{
 			ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 			Name: "image-1",
 			URL:  "https://example.com/image-1",
@@ -198,7 +198,7 @@ func TestCreateImageHandlerFuncV1(t *testing.T) {
 	router.POST("/images", CreateImageHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().SaveImage(gomock.Any(), &structs.Image{
+		store.EXPECT().SaveImage(gomock.Any(), &models.Image{
 			ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 			Name: "image-1",
 			URL:  "https://example.com/image-1",
@@ -217,7 +217,7 @@ func TestCreateImageHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 201, rec.Code)
-		var image structs.Image
+		var image models.Image
 		err = json.Unmarshal(rec.Body.Bytes(), &image)
 
 		assert.NoError(t, err)
@@ -227,7 +227,7 @@ func TestCreateImageHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveImage()", func(t *testing.T) {
-		store.EXPECT().SaveImage(gomock.Any(), &structs.Image{
+		store.EXPECT().SaveImage(gomock.Any(), &models.Image{
 			ID:   "48233fc0-8c16-491b-8666-970ba3ce771e",
 			Name: "image-1",
 			URL:  "https://example.com/image-1",

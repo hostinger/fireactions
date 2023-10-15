@@ -14,10 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/server/ghclient"
 	"github.com/hostinger/fireactions/server/handler"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/server/store/bbolt"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
@@ -195,7 +195,7 @@ func (s *Server) initPreconfiguredFlavors() error {
 	s.logger.Info().Msg("creating preconfigured Flavor(s)")
 
 	for _, cfg := range s.config.Flavors {
-		err := s.store.SaveFlavor(context.Background(), &structs.Flavor{
+		err := s.store.SaveFlavor(context.Background(), &models.Flavor{
 			Name:         cfg.Name,
 			Enabled:      cfg.Enabled,
 			VCPUs:        cfg.CPU,
@@ -217,7 +217,7 @@ func (s *Server) initPreconfiguredGroups() error {
 	s.logger.Info().Msg("creating preconfigured Group(s)")
 
 	for _, cfg := range s.config.Groups {
-		err := s.store.SaveGroup(context.Background(), &structs.Group{
+		err := s.store.SaveGroup(context.Background(), &models.Group{
 			Name:    cfg.Name,
 			Enabled: cfg.Enabled,
 		})
@@ -235,7 +235,7 @@ func (s *Server) initPreconfiguredImages() error {
 	s.logger.Info().Msg("creating preconfigured Image(s)")
 
 	for _, cfg := range s.config.Images {
-		err := s.store.SaveImage(context.Background(), &structs.Image{
+		err := s.store.SaveImage(context.Background(), &models.Image{
 			ID:   cfg.ID,
 			Name: cfg.Name,
 			URL:  cfg.URL,

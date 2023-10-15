@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -35,7 +35,7 @@ func TestGetFlavorsHandlerFuncV1(t *testing.T) {
 	router.GET("/flavors", GetFlavorsHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListFlavors(gomock.Any()).Return([]*structs.Flavor{
+		store.EXPECT().ListFlavors(gomock.Any()).Return([]*models.Flavor{
 			{
 				Name:         "flavor1",
 				Enabled:      true,
@@ -84,7 +84,7 @@ func TestGetFlavorHandlerFuncV1(t *testing.T) {
 	router.GET("/flavors/:name", GetFlavorHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      true,
 			DiskSizeGB:   10,
@@ -123,7 +123,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 	router.DELETE("/flavors/:name", DisableFlavorHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      true,
 			DiskSizeGB:   10,
@@ -132,7 +132,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			Image:        "ubuntu-18.04",
 		}, nil)
 
-		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
+		store.EXPECT().SaveFlavor(gomock.Any(), &models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,
@@ -160,7 +160,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveFlavor()", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      true,
 			DiskSizeGB:   10,
@@ -169,7 +169,7 @@ func TestDisableFlavorHandlerFuncV1(t *testing.T) {
 			Image:        "ubuntu-18.04",
 		}, nil)
 
-		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
+		store.EXPECT().SaveFlavor(gomock.Any(), &models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,
@@ -197,7 +197,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 	router.PATCH("/flavors/:name/enable", EnableFlavorHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,
@@ -206,7 +206,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			Image:        "ubuntu-18.04",
 		}, nil)
 
-		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
+		store.EXPECT().SaveFlavor(gomock.Any(), &models.Flavor{
 			Name:         "flavor1",
 			Enabled:      true,
 			DiskSizeGB:   10,
@@ -234,7 +234,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveFlavor()", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,
@@ -243,7 +243,7 @@ func TestEnableFlavorHandlerFuncV1(t *testing.T) {
 			Image:        "ubuntu-18.04",
 		}, nil)
 
-		store.EXPECT().SaveFlavor(gomock.Any(), &structs.Flavor{
+		store.EXPECT().SaveFlavor(gomock.Any(), &models.Flavor{
 			Name:         "flavor1",
 			Enabled:      true,
 			DiskSizeGB:   10,
@@ -271,7 +271,7 @@ func TestDeleteFlavorHandlerFuncV1(t *testing.T) {
 	router.DELETE("/flavors/:name", DeleteFlavorHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,
@@ -300,7 +300,7 @@ func TestDeleteFlavorHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on DeleteFlavor()", func(t *testing.T) {
-		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&structs.Flavor{
+		store.EXPECT().GetFlavor(gomock.Any(), "flavor1").Return(&models.Flavor{
 			Name:         "flavor1",
 			Enabled:      false,
 			DiskSizeGB:   10,

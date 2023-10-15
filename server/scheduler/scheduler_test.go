@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ func (f *successFilter) Name() string {
 	return "mock"
 }
 
-func (f *successFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+func (f *successFilter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
 	return true, nil
 }
 
@@ -31,7 +31,7 @@ func (f *failureFilter) Name() string {
 	return "mock"
 }
 
-func (f *failureFilter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+func (f *failureFilter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
 	return false, nil
 }
 
@@ -40,7 +40,7 @@ func (f *failureFilter) String() string {
 }
 
 func TestFindFeasibleNodesSuccess(t *testing.T) {
-	nodes := []*structs.Node{
+	nodes := []*models.Node{
 		{
 			ID: "1",
 		},
@@ -52,7 +52,7 @@ func TestFindFeasibleNodesSuccess(t *testing.T) {
 		},
 	}
 
-	runner := &structs.Runner{
+	runner := &models.Runner{
 		ID: "1",
 	}
 
@@ -66,7 +66,7 @@ func TestFindFeasibleNodesSuccess(t *testing.T) {
 }
 
 func TestFindFeasibleNodesFailure(t *testing.T) {
-	nodes := []*structs.Node{
+	nodes := []*models.Node{
 		{
 			ID: "1",
 		},
@@ -78,7 +78,7 @@ func TestFindFeasibleNodesFailure(t *testing.T) {
 		},
 	}
 
-	runner := &structs.Runner{
+	runner := &models.Runner{
 		ID: "1",
 	}
 

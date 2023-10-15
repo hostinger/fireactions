@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,27 +13,27 @@ func TestFilter(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		runner *structs.Runner
-		node   *structs.Node
+		runner *models.Runner
+		node   *models.Node
 		want   bool
 	}{
 		{
 			name: "node belongs to the same group",
-			runner: &structs.Runner{
-				Group: &structs.Group{Name: "example"},
+			runner: &models.Runner{
+				Group: &models.Group{Name: "example"},
 			},
-			node: &structs.Node{
-				Groups: []*structs.Group{{Name: "example"}, {Name: "example2"}},
+			node: &models.Node{
+				Groups: []*models.Group{{Name: "example"}, {Name: "example2"}},
 			},
 			want: true,
 		},
 		{
 			name: "node doesn't belong to the same group",
-			runner: &structs.Runner{
-				Group: &structs.Group{Name: "example"},
+			runner: &models.Runner{
+				Group: &models.Group{Name: "example"},
 			},
-			node: &structs.Node{
-				Groups: []*structs.Group{{Name: "example2"}, {Name: "example3"}},
+			node: &models.Node{
+				Groups: []*models.Group{{Name: "example2"}, {Name: "example3"}},
 			},
 			want: false,
 		},

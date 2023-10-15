@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -134,7 +134,7 @@ func CreateGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 			return
 		}
 
-		group := &structs.Group{Name: req.Name, Enabled: req.Enabled}
+		group := &models.Group{Name: req.Name, Enabled: req.Enabled}
 		err = store.SaveGroup(ctx, group)
 		if err != nil {
 			httperr.E(ctx, err)
@@ -147,7 +147,7 @@ func CreateGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 	return f
 }
 
-func convertGroupToGroupV1(group *structs.Group) *v1.Group {
+func convertGroupToGroupV1(group *models.Group) *v1.Group {
 	g := &v1.Group{
 		Name:    group.Name,
 		Enabled: group.Enabled,
@@ -156,7 +156,7 @@ func convertGroupToGroupV1(group *structs.Group) *v1.Group {
 	return g
 }
 
-func convertGroupsToGroupsV1(groups ...*structs.Group) []*v1.Group {
+func convertGroupsToGroupsV1(groups ...*models.Group) []*v1.Group {
 	groupsV1 := make([]*v1.Group, 0, len(groups))
 	for _, g := range groups {
 		groupsV1 = append(groupsV1, convertGroupToGroupV1(g))

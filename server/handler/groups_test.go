@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -37,7 +37,7 @@ func TestGetGroupsHandlerFuncV1(t *testing.T) {
 	router.GET("/groups", GetGroupsHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListGroups(gomock.Any()).Return([]*structs.Group{
+		store.EXPECT().ListGroups(gomock.Any()).Return([]*models.Group{
 			{
 				Name:    "group1",
 				Enabled: true,
@@ -77,7 +77,7 @@ func TestGetGroupHandlerFuncV1(t *testing.T) {
 	router.GET("/groups/:name", GetGroupHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: true,
 		}, nil)
@@ -112,11 +112,11 @@ func TestDisableGroupHandlerFuncV1(t *testing.T) {
 	router.PATCH("/groups/:name/disable", DisableGroupHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: true,
 		}, nil)
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}).Return(nil)
@@ -140,11 +140,11 @@ func TestDisableGroupHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: true,
 		}, nil)
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}).Return(errors.New("error"))
@@ -168,11 +168,11 @@ func TestEnableGroupHandlerFuncV1(t *testing.T) {
 	router.PATCH("/groups/:name/enable", EnableGroupHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}, nil)
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: true,
 		}).Return(nil)
@@ -196,11 +196,11 @@ func TestEnableGroupHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}, nil)
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: true,
 		}).Return(errors.New("error"))
@@ -224,7 +224,7 @@ func TestDeleteGroupHandlerFuncV1(t *testing.T) {
 	router.DELETE("/groups/:name", DeleteGroupHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}, nil)
@@ -249,7 +249,7 @@ func TestDeleteGroupHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on DeleteGroup()", func(t *testing.T) {
-		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&structs.Group{
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}, nil)
@@ -274,12 +274,12 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 	router.POST("/groups", CreateGroupHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}).Return(nil)
 
-		body, err := json.Marshal(&structs.Group{
+		body, err := json.Marshal(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		})
@@ -294,12 +294,12 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
-		store.EXPECT().SaveGroup(gomock.Any(), &structs.Group{
+		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
 			Name:    "group1",
 			Enabled: false,
 		}).Return(errors.New("error"))
 
-		body, err := json.Marshal(&structs.Group{
+		body, err := json.Marshal(&models.Group{
 			Name:    "group1",
 			Enabled: false,
 		})

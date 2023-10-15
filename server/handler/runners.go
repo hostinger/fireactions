@@ -6,15 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/rs/zerolog"
 )
 
 // RunnerStorer is an interface for storing and retrieving Runners.
 type RunnerStorer interface {
-	ListRunners(ctx context.Context) ([]*structs.Runner, error)
-	GetRunner(ctx context.Context, id string) (*structs.Runner, error)
-	SaveRunner(ctx context.Context, runner *structs.Runner) error
+	ListRunners(ctx context.Context) ([]*models.Runner, error)
+	GetRunner(ctx context.Context, id string) (*models.Runner, error)
+	SaveRunner(ctx context.Context, runner *models.Runner) error
 	DeleteRunner(ctx context.Context, id string) error
 }
 
@@ -44,7 +44,7 @@ func GetRunnersHandlerFuncV1(log *zerolog.Logger, rs RunnerStorer) gin.HandlerFu
 			return
 		}
 
-		runners = structs.FilterRunners(runners, func(runner *structs.Runner) bool {
+		runners = models.FilterRunners(runners, func(runner *models.Runner) bool {
 			if q.Organisation != "" && runner.Organisation != q.Organisation {
 				return false
 			}
@@ -80,7 +80,7 @@ func GetRunnerHandlerFuncV1(log *zerolog.Logger, rs RunnerStorer) gin.HandlerFun
 	return f
 }
 
-func convertRunnersToRunnersV1(runner ...*structs.Runner) v1.Runners {
+func convertRunnersToRunnersV1(runner ...*models.Runner) v1.Runners {
 	runners := make([]*v1.Runner, 0, len(runner))
 	for _, r := range runner {
 		runners = append(runners, convertRunnerToRunnerV1(r))
@@ -89,7 +89,7 @@ func convertRunnersToRunnersV1(runner ...*structs.Runner) v1.Runners {
 	return runners
 }
 
-func convertRunnerToRunnerV1(runner *structs.Runner) *v1.Runner {
+func convertRunnerToRunnerV1(runner *models.Runner) *v1.Runner {
 	r := &v1.Runner{
 		ID:           runner.ID,
 		Organisation: runner.Organisation,

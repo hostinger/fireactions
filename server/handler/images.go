@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -80,7 +80,7 @@ func CreateImageHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 			return
 		}
 
-		image := &structs.Image{
+		image := &models.Image{
 			ID:   req.ID,
 			Name: req.Name,
 			URL:  req.URL,
@@ -97,7 +97,7 @@ func CreateImageHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 	return f
 }
 
-func convertImageToImageV1(image *structs.Image) *v1.Image {
+func convertImageToImageV1(image *models.Image) *v1.Image {
 	i := &v1.Image{
 		ID:   image.ID,
 		Name: image.Name,
@@ -107,7 +107,7 @@ func convertImageToImageV1(image *structs.Image) *v1.Image {
 	return i
 }
 
-func convertImagesToImagesV1(images ...*structs.Image) []*v1.Image {
+func convertImagesToImagesV1(images ...*models.Image) []*v1.Image {
 	var is []*v1.Image
 	for _, image := range images {
 		is = append(is, convertImageToImageV1(image))

@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -37,7 +37,7 @@ func GetJobsHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFun
 			return
 		}
 
-		jobs = structs.FilterJobs(jobs, func(job *structs.Job) bool {
+		jobs = models.FilterJobs(jobs, func(job *models.Job) bool {
 			if q.Organisation != "" && job.Organisation != q.Organisation {
 				return false
 			}
@@ -89,7 +89,7 @@ func DeleteJobHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerF
 	return f
 }
 
-func convertJobtoJobV1(job *structs.Job) *v1.Job {
+func convertJobtoJobV1(job *models.Job) *v1.Job {
 	j := &v1.Job{
 		ID:           job.ID,
 		Name:         job.Name,
@@ -102,7 +102,7 @@ func convertJobtoJobV1(job *structs.Job) *v1.Job {
 	return j
 }
 
-func convertJobsToJobsV1(jobs ...*structs.Job) []*v1.Job {
+func convertJobsToJobsV1(jobs ...*models.Job) []*v1.Job {
 	j := make([]*v1.Job, 0, len(jobs))
 	for _, job := range jobs {
 		j = append(j, convertJobtoJobV1(job))

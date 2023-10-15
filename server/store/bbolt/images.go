@@ -5,17 +5,17 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) ListImages(ctx context.Context) ([]*structs.Image, error) {
-	var images []*structs.Image
+func (s *Store) ListImages(ctx context.Context) ([]*models.Image, error) {
+	var images []*models.Image
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(imagesBucket))
 		err := b.ForEach(func(k, v []byte) error {
-			var image structs.Image
+			var image models.Image
 			if err := json.Unmarshal(v, &image); err != nil {
 				return err
 			}
@@ -34,8 +34,8 @@ func (s *Store) ListImages(ctx context.Context) ([]*structs.Image, error) {
 	return images, nil
 }
 
-func (s *Store) GetImageByID(ctx context.Context, id string) (*structs.Image, error) {
-	var image *structs.Image
+func (s *Store) GetImageByID(ctx context.Context, id string) (*models.Image, error) {
+	var image *models.Image
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(imagesBucket))
 		v := b.Get([]byte(id))
@@ -56,12 +56,12 @@ func (s *Store) GetImageByID(ctx context.Context, id string) (*structs.Image, er
 	return image, nil
 }
 
-func (s *Store) GetImageByName(ctx context.Context, name string) (*structs.Image, error) {
-	var image *structs.Image
+func (s *Store) GetImageByName(ctx context.Context, name string) (*models.Image, error) {
+	var image *models.Image
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(imagesBucket))
 		err := b.ForEach(func(k, v []byte) error {
-			var i structs.Image
+			var i models.Image
 			if err := json.Unmarshal(v, &i); err != nil {
 				return err
 			}
@@ -88,7 +88,7 @@ func (s *Store) GetImageByName(ctx context.Context, name string) (*structs.Image
 	return image, nil
 }
 
-func (s *Store) SaveImage(ctx context.Context, image *structs.Image) error {
+func (s *Store) SaveImage(ctx context.Context, image *models.Image) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(imagesBucket))
 		v, err := json.Marshal(image)
@@ -117,7 +117,7 @@ func (s *Store) DeleteImage(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) GetImage(ctx context.Context, id string) (*structs.Image, error) {
+func (s *Store) GetImage(ctx context.Context, id string) (*models.Image, error) {
 	var isUUID bool
 	if _, err := uuid.Parse(id); err == nil {
 		isUUID = true

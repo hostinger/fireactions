@@ -1,4 +1,4 @@
-package structs
+package models
 
 // EventTopic is a string type that represents a topic for an event.
 type EventTopic string

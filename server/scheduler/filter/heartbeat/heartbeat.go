@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
-	"github.com/hostinger/fireactions/server/structs"
 )
 
 // Filter is a filter that filters out nodes that haven't been updated
@@ -21,7 +21,7 @@ func (f *Filter) Name() string {
 }
 
 // Filter filters out nodes that haven't been updated in the last 60 seconds.
-func (f *Filter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+func (f *Filter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
 	return node.UpdatedAt.After(time.Now().Add(-60 * time.Second)), nil
 }
 

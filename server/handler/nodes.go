@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/httperr"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -52,7 +52,7 @@ func GetNodesHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFu
 			return
 		}
 
-		nodes = structs.FilterNodes(nodes, func(node *structs.Node) bool {
+		nodes = models.FilterNodes(nodes, func(node *models.Node) bool {
 			if q.Organisation != "" && node.Organisation != q.Organisation {
 				return false
 			}
@@ -101,7 +101,7 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 			return
 		}
 
-		var groups []*structs.Group
+		var groups []*models.Group
 		for _, group := range req.Groups {
 			g, err := storer.GetGroup(ctx, group)
 			switch err.(type) {
@@ -131,14 +131,14 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 		}
 
 		uuid := uuid.New().String()
-		n := &structs.Node{
+		n := &models.Node{
 			ID:           uuid,
 			Name:         req.Hostname,
 			Organisation: req.Organisation,
 			Groups:       groups,
-			Status:       structs.NodeStatusUnknown,
-			CPU:          structs.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
-			RAM:          structs.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
+			Status:       models.NodeStatusUnknown,
+			CPU:          models.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
+			RAM:          models.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}
@@ -150,7 +150,7 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 		}
 
 		log.Info().Msgf("registered new Node: %s", n)
-		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeCreated, n))
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeCreated, n))
 
 		ctx.JSON(200, &v1.NodeRegistrationInfo{ID: uuid})
 	}
@@ -174,7 +174,7 @@ func DeregisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			return
 		}
 
-		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeDeleted, n))
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeDeleted, n))
 		log.Info().Msgf("deregistered Node: %s", n)
 		ctx.Status(204)
 	}
@@ -192,7 +192,7 @@ func ConnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store st
 			return
 		}
 
-		n.Status = structs.NodeStatusOnline
+		n.Status = models.NodeStatusOnline
 		err = store.SaveNode(ctx, n)
 		if err != nil {
 			httperr.E(ctx, err)
@@ -205,7 +205,7 @@ func ConnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store st
 			return
 		}
 
-		runners = structs.FilterRunners(runners, func(runner *structs.Runner) bool {
+		runners = models.FilterRunners(runners, func(runner *models.Runner) bool {
 			if runner.Node == nil {
 				return false
 			}
@@ -224,7 +224,7 @@ func ConnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store st
 			log.Info().Msgf("deleted runner %s due to node %s reconnecting", runner.Name, n.Name)
 		}
 
-		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, n))
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeUpdated, n))
 		log.Info().Msgf("updated Node status: %s", n)
 		ctx.Status(204)
 	}
@@ -242,7 +242,7 @@ func DisconnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			return
 		}
 
-		n.Status = structs.NodeStatusOffline
+		n.Status = models.NodeStatusOffline
 		err = store.SaveNode(ctx, n)
 		if err != nil {
 			httperr.E(ctx, err)
@@ -255,7 +255,7 @@ func DisconnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			return
 		}
 
-		runners = structs.FilterRunners(runners, func(runner *structs.Runner) bool {
+		runners = models.FilterRunners(runners, func(runner *models.Runner) bool {
 			if runner.Node == nil {
 				return false
 			}
@@ -274,7 +274,7 @@ func DisconnectNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			log.Info().Msgf("deleted runner %s due to node %s disconnecting", runner.Name, n.Name)
 		}
 
-		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, n))
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeUpdated, n))
 		log.Info().Msgf("updated Node status: %s", n)
 		ctx.Status(204)
 	}
@@ -296,7 +296,7 @@ func AcceptNodeRunnerHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.H
 			return
 		}
 
-		r.Status = structs.RunnerStatusAccepted
+		r.Status = models.RunnerStatusAccepted
 		err = store.SaveRunner(ctx, r)
 		if err != nil {
 			httperr.E(ctx, err)
@@ -324,7 +324,7 @@ func RejectNodeRunnerHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.H
 			return
 		}
 
-		r.Status = structs.RunnerStatusRejected
+		r.Status = models.RunnerStatusRejected
 		err = store.SaveRunner(ctx, r)
 		if err != nil {
 			httperr.E(ctx, err)
@@ -381,8 +381,8 @@ func GetNodeRunnersHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			return
 		}
 
-		runners = structs.FilterRunners(runners, func(runner *structs.Runner) bool {
-			if runner.Node == nil || runner.Status != structs.RunnerStatusAssigned {
+		runners = models.FilterRunners(runners, func(runner *models.Runner) bool {
+			if runner.Node == nil || runner.Status != models.RunnerStatusAssigned {
 				return false
 			}
 
@@ -395,7 +395,7 @@ func GetNodeRunnersHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 			httperr.E(ctx, err)
 			return
 		}
-		scheduler.HandleEvent(structs.NewNodeEvent(structs.EventTypeNodeUpdated, node))
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeUpdated, node))
 
 		ctx.JSON(200, gin.H{"runners": convertRunnersToRunnersV1(runners...)})
 	}
@@ -403,7 +403,7 @@ func GetNodeRunnersHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 	return f
 }
 
-func convertNodeToNodeV1(node *structs.Node) *v1.Node {
+func convertNodeToNodeV1(node *models.Node) *v1.Node {
 	groups := make([]string, 0, len(node.Groups))
 	for _, group := range node.Groups {
 		groups = append(groups, group.Name)
@@ -425,7 +425,7 @@ func convertNodeToNodeV1(node *structs.Node) *v1.Node {
 	return n
 }
 
-func convertNodesToNodesV1(nodes ...*structs.Node) v1.Nodes {
+func convertNodesToNodesV1(nodes ...*models.Node) v1.Nodes {
 	n := make([]*v1.Node, 0, len(nodes))
 	for _, node := range nodes {
 		n = append(n, convertNodeToNodeV1(node))

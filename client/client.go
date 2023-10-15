@@ -14,8 +14,8 @@ import (
 	"github.com/hostinger/fireactions/client/hostinfo"
 	"github.com/hostinger/fireactions/client/imagegc"
 	"github.com/hostinger/fireactions/client/imagesyncer"
+	"github.com/hostinger/fireactions/client/models"
 	"github.com/hostinger/fireactions/client/store"
-	"github.com/hostinger/fireactions/client/structs"
 	"github.com/rs/zerolog"
 )
 
@@ -189,7 +189,7 @@ func (c *Client) register(ctx context.Context) error {
 		return err
 	}
 
-	err = c.store.SaveNodeRegistrationInfo(ctx, &structs.NodeRegistrationInfo{
+	err = c.store.SaveNodeRegistrationInfo(ctx, &models.NodeRegistrationInfo{
 		ID: result.ID,
 	})
 	if err != nil {

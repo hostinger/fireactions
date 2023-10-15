@@ -10,8 +10,8 @@ import (
 
 	"github.com/hashicorp/go-getter"
 	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/client/models"
 	"github.com/hostinger/fireactions/client/store"
-	"github.com/hostinger/fireactions/client/structs"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 )
@@ -149,7 +149,7 @@ func (s *ImageSyncer) syncImage(ctx context.Context, image api.Image) error {
 		return fmt.Errorf("error getting image: %w", err)
 	}
 
-	i := &structs.Image{Path: filepath.Join(s.imagesDir, fmt.Sprintf("%s.ext4", image.ID)), Info: &structs.ImageInfo{
+	i := &models.Image{Path: filepath.Join(s.imagesDir, fmt.Sprintf("%s.ext4", image.ID)), Info: &models.ImageInfo{
 		ID:        image.ID,
 		Name:      image.Name,
 		URL:       image.URL,

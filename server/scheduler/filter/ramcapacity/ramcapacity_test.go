@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,32 +13,32 @@ func TestFilter(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		runner *structs.Runner
-		node   *structs.Node
+		runner *models.Runner
+		node   *models.Node
 		want   bool
 	}{
 		{
 			name: "node has enough RAM capacity",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{MemorySizeMB: 1024},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{MemorySizeMB: 1024},
 			},
-			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
+			node: &models.Node{RAM: models.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
 			want: true,
 		},
 		{
 			name: "node doesn't have enough RAM capacity",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{MemorySizeMB: 2048},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{MemorySizeMB: 2048},
 			},
-			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
+			node: &models.Node{RAM: models.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 1.0}},
 			want: false,
 		},
 		{
 			name: "node has enough RAM capacity with overcommit",
-			runner: &structs.Runner{
-				Flavor: &structs.Flavor{MemorySizeMB: 2048},
+			runner: &models.Runner{
+				Flavor: &models.Flavor{MemorySizeMB: 2048},
 			},
-			node: &structs.Node{RAM: structs.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 2.0}},
+			node: &models.Node{RAM: models.Resource{Capacity: 1024 * 1024 * 1024, OvercommitRatio: 2.0}},
 			want: true,
 		},
 	}

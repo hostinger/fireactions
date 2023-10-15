@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/cache"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
 	"github.com/hostinger/fireactions/server/scheduler/filter/cpucapacity"
@@ -16,15 +17,14 @@ import (
 	"github.com/hostinger/fireactions/server/scheduler/scorer"
 	"github.com/hostinger/fireactions/server/scheduler/scorer/freecpu"
 	"github.com/hostinger/fireactions/server/scheduler/scorer/freeram"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 )
 
 // Storer is an interface that stores and retrieves Runners and Nodes.
 type Storer interface {
-	ListRunners(ctx context.Context) ([]*structs.Runner, error)
-	SaveRunner(ctx context.Context, runner *structs.Runner) error
-	ListNodes(ctx context.Context) ([]*structs.Node, error)
+	ListRunners(ctx context.Context) ([]*models.Runner, error)
+	SaveRunner(ctx context.Context, runner *models.Runner) error
+	ListNodes(ctx context.Context) ([]*models.Node, error)
 	ReserveNodeResources(ctx context.Context, nodeID string, vcpus int64, ram int64) error
 }
 
@@ -87,7 +87,7 @@ func (s *Scheduler) Shutdown() {
 
 // Schedule places a Runner into the scheduling queue. If the Runner is already
 // in the queue, an error is returned.
-func (s *Scheduler) Schedule(r *structs.Runner) error {
+func (s *Scheduler) Schedule(r *models.Runner) error {
 	if s.isShutdown {
 		return nil
 	}
@@ -152,8 +152,8 @@ func (s *Scheduler) init() error {
 		return err
 	}
 
-	runners = structs.FilterRunners(runners, func(r *structs.Runner) bool {
-		return r.Status == structs.RunnerStatusPending
+	runners = models.FilterRunners(runners, func(r *models.Runner) bool {
+		return r.Status == models.RunnerStatusPending
 	})
 
 	for _, r := range runners {
@@ -210,7 +210,7 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	runner.Status = structs.RunnerStatusAssigned
+	runner.Status = models.RunnerStatusAssigned
 	runner.Node = bestNode
 	err = s.store.SaveRunner(context.Background(), runner)
 	if err != nil {
@@ -227,8 +227,8 @@ func (s *Scheduler) schedule() {
 	s.logger.Info().Msgf("runner %s is assigned to node %s", runner.ID, bestNode.ID)
 }
 
-func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters map[string]filter.Filter) []*structs.Node {
-	feasible := make([]*structs.Node, 0, len(nodes))
+func findFeasibleNodes(runner *models.Runner, nodes []*models.Node, filters map[string]filter.Filter) []*models.Node {
+	feasible := make([]*models.Node, 0, len(nodes))
 	for _, n := range nodes {
 		if !runFilters(runner, n, filters) {
 			continue
@@ -239,12 +239,12 @@ func findFeasibleNodes(runner *structs.Runner, nodes []*structs.Node, filters ma
 	return feasible
 }
 
-func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[string]scorer.Scorer) *structs.Node {
+func findBestNode(runner *models.Runner, nodes []*models.Node, scorers map[string]scorer.Scorer) *models.Node {
 	if len(nodes) == 0 {
 		return nil
 	}
 
-	nodesMap := make(map[string]*structs.Node, len(nodes))
+	nodesMap := make(map[string]*models.Node, len(nodes))
 	for _, n := range nodes {
 		nodesMap[n.ID] = n
 	}
@@ -259,7 +259,7 @@ func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[str
 		scores[n.ID] = result
 	}
 
-	var bestNode *structs.Node
+	var bestNode *models.Node
 	var bestScore float64
 
 	for nodeID, score := range scores {
@@ -273,7 +273,7 @@ func findBestNode(runner *structs.Runner, nodes []*structs.Node, scorers map[str
 	return bestNode
 }
 
-func runScorers(runner *structs.Runner, node *structs.Node, scorers map[string]scorer.Scorer) (float64, error) {
+func runScorers(runner *models.Runner, node *models.Node, scorers map[string]scorer.Scorer) (float64, error) {
 	var score float64
 	for _, scorer := range scorers {
 		result, err := scorer.Score(runner, node)
@@ -287,7 +287,7 @@ func runScorers(runner *structs.Runner, node *structs.Node, scorers map[string]s
 	return score, nil
 }
 
-func runFilters(runner *structs.Runner, node *structs.Node, filters map[string]filter.Filter) bool {
+func runFilters(runner *models.Runner, node *models.Node, filters map[string]filter.Filter) bool {
 	for _, filter := range filters {
 		ok, err := filter.Filter(context.Background(), runner, node)
 		if err != nil {

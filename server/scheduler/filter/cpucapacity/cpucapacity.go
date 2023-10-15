@@ -3,8 +3,8 @@ package cpucapacity
 import (
 	"context"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
-	"github.com/hostinger/fireactions/server/structs"
 )
 
 // Filter is a filter that filters out nodes that don't have enough CPU capacity
@@ -21,7 +21,7 @@ func (f *Filter) Name() string {
 
 // Filter filters out nodes that don't have enough CPU capacity to run a
 // workload.
-func (f *Filter) Filter(ctx context.Context, runner *structs.Runner, node *structs.Node) (bool, error) {
+func (f *Filter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
 	return node.CPU.IsAvailable(runner.Flavor.VCPUs), nil
 }
 

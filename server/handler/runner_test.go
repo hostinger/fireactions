@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -37,16 +37,16 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 	router.GET("/runners", GetRunnersHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListRunners(gomock.Any()).Return([]*structs.Runner{
+		store.EXPECT().ListRunners(gomock.Any()).Return([]*models.Runner{
 			{
 				ID:           "1",
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org1",
-				Group:        &structs.Group{Name: "group1", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group1", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Unix(0, 0),
 				UpdatedAt:    time.Unix(0, 0),
 			},
@@ -55,10 +55,10 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org1",
-				Group:        &structs.Group{Name: "group1", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group1", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -81,16 +81,16 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with query organisation", func(t *testing.T) {
-		store.EXPECT().ListRunners(gomock.Any()).Return([]*structs.Runner{
+		store.EXPECT().ListRunners(gomock.Any()).Return([]*models.Runner{
 			{
 				ID:           "1",
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org1",
-				Group:        &structs.Group{Name: "group1", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group1", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Unix(0, 0),
 				UpdatedAt:    time.Unix(0, 0),
 			},
@@ -99,10 +99,10 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org2",
-				Group:        &structs.Group{Name: "group1", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group1", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -125,16 +125,16 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with query group", func(t *testing.T) {
-		store.EXPECT().ListRunners(gomock.Any()).Return([]*structs.Runner{
+		store.EXPECT().ListRunners(gomock.Any()).Return([]*models.Runner{
 			{
 				ID:           "1",
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org1",
-				Group:        &structs.Group{Name: "group1", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group1", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Unix(0, 0),
 				UpdatedAt:    time.Unix(0, 0),
 			},
@@ -143,10 +143,10 @@ func TestGetRunnersHandlerFuncV1(t *testing.T) {
 				Node:         nil,
 				Name:         "runner1",
 				Organisation: "org2",
-				Group:        &structs.Group{Name: "group2", Enabled: true},
-				Status:       structs.RunnerStatusPending,
+				Group:        &models.Group{Name: "group2", Enabled: true},
+				Status:       models.RunnerStatusPending,
 				Labels:       "label1,label2",
-				Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+				Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -189,15 +189,15 @@ func TestGetRunnerHandlerFuncV1(t *testing.T) {
 	router.GET("/runnestore/:id", GetRunnerHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetRunner(gomock.Any(), "1").Return(&structs.Runner{
+		store.EXPECT().GetRunner(gomock.Any(), "1").Return(&models.Runner{
 			ID:           "1",
 			Node:         nil,
 			Name:         "runner1",
 			Organisation: "org1",
-			Group:        &structs.Group{Name: "group1", Enabled: true},
-			Status:       structs.RunnerStatusPending,
+			Group:        &models.Group{Name: "group1", Enabled: true},
+			Status:       models.RunnerStatusPending,
 			Labels:       "label1,label2",
-			Flavor:       &structs.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
+			Flavor:       &models.Flavor{Name: "flavor1", Enabled: true, DiskSizeGB: 10, MemorySizeMB: 1024, VCPUs: 2, Image: "ubuntu-18.04"},
 			CreatedAt:    time.Unix(0, 0),
 			UpdatedAt:    time.Unix(0, 0),
 		}, nil)

@@ -88,8 +88,11 @@ func NewRunner(log *zerolog.Logger, config *RunnerConfig, opts ...RunnerOpt) (*R
 		IsReadOnly:   firecracker.Bool(false),
 	})
 	fc.NetworkInterfaces = append(fc.NetworkInterfaces, firecracker.NetworkInterface{
-		AllowMMDS:        true,
-		CNIConfiguration: &firecracker.CNIConfiguration{NetworkName: "fireactions", IfName: "veth0"},
+		AllowMMDS: true,
+		CNIConfiguration: &firecracker.CNIConfiguration{
+			NetworkName: "fireactions",
+			IfName:      "veth0",
+		},
 	})
 
 	logf, err := os.OpenFile(fc.LogPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)

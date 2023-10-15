@@ -12,7 +12,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	structs "github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -163,10 +163,10 @@ func (mr *MockStoreMockRecorder) Describe(arg0 any) *gomock.Call {
 }
 
 // GetFlavor mocks base method.
-func (m *MockStore) GetFlavor(ctx context.Context, name string) (*structs.Flavor, error) {
+func (m *MockStore) GetFlavor(ctx context.Context, name string) (*models.Flavor, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFlavor", ctx, name)
-	ret0, _ := ret[0].(*structs.Flavor)
+	ret0, _ := ret[0].(*models.Flavor)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -178,10 +178,10 @@ func (mr *MockStoreMockRecorder) GetFlavor(ctx, name any) *gomock.Call {
 }
 
 // GetGroup mocks base method.
-func (m *MockStore) GetGroup(ctx context.Context, name string) (*structs.Group, error) {
+func (m *MockStore) GetGroup(ctx context.Context, name string) (*models.Group, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGroup", ctx, name)
-	ret0, _ := ret[0].(*structs.Group)
+	ret0, _ := ret[0].(*models.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -193,10 +193,10 @@ func (mr *MockStoreMockRecorder) GetGroup(ctx, name any) *gomock.Call {
 }
 
 // GetImage mocks base method.
-func (m *MockStore) GetImage(ctx context.Context, id string) (*structs.Image, error) {
+func (m *MockStore) GetImage(ctx context.Context, id string) (*models.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImage", ctx, id)
-	ret0, _ := ret[0].(*structs.Image)
+	ret0, _ := ret[0].(*models.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -208,10 +208,10 @@ func (mr *MockStoreMockRecorder) GetImage(ctx, id any) *gomock.Call {
 }
 
 // GetImageByID mocks base method.
-func (m *MockStore) GetImageByID(ctx context.Context, id string) (*structs.Image, error) {
+func (m *MockStore) GetImageByID(ctx context.Context, id string) (*models.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImageByID", ctx, id)
-	ret0, _ := ret[0].(*structs.Image)
+	ret0, _ := ret[0].(*models.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -223,10 +223,10 @@ func (mr *MockStoreMockRecorder) GetImageByID(ctx, id any) *gomock.Call {
 }
 
 // GetImageByName mocks base method.
-func (m *MockStore) GetImageByName(ctx context.Context, name string) (*structs.Image, error) {
+func (m *MockStore) GetImageByName(ctx context.Context, name string) (*models.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImageByName", ctx, name)
-	ret0, _ := ret[0].(*structs.Image)
+	ret0, _ := ret[0].(*models.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -238,10 +238,10 @@ func (mr *MockStoreMockRecorder) GetImageByName(ctx, name any) *gomock.Call {
 }
 
 // GetJob mocks base method.
-func (m *MockStore) GetJob(ctx context.Context, id string) (*structs.Job, error) {
+func (m *MockStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetJob", ctx, id)
-	ret0, _ := ret[0].(*structs.Job)
+	ret0, _ := ret[0].(*models.Job)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -253,10 +253,10 @@ func (mr *MockStoreMockRecorder) GetJob(ctx, id any) *gomock.Call {
 }
 
 // GetNode mocks base method.
-func (m *MockStore) GetNode(ctx context.Context, id string) (*structs.Node, error) {
+func (m *MockStore) GetNode(ctx context.Context, id string) (*models.Node, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNode", ctx, id)
-	ret0, _ := ret[0].(*structs.Node)
+	ret0, _ := ret[0].(*models.Node)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -268,10 +268,10 @@ func (mr *MockStoreMockRecorder) GetNode(ctx, id any) *gomock.Call {
 }
 
 // GetNodeByName mocks base method.
-func (m *MockStore) GetNodeByName(ctx context.Context, name string) (*structs.Node, error) {
+func (m *MockStore) GetNodeByName(ctx context.Context, name string) (*models.Node, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNodeByName", ctx, name)
-	ret0, _ := ret[0].(*structs.Node)
+	ret0, _ := ret[0].(*models.Node)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -283,10 +283,10 @@ func (mr *MockStoreMockRecorder) GetNodeByName(ctx, name any) *gomock.Call {
 }
 
 // GetRunner mocks base method.
-func (m *MockStore) GetRunner(ctx context.Context, id string) (*structs.Runner, error) {
+func (m *MockStore) GetRunner(ctx context.Context, id string) (*models.Runner, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRunner", ctx, id)
-	ret0, _ := ret[0].(*structs.Runner)
+	ret0, _ := ret[0].(*models.Runner)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -298,10 +298,10 @@ func (mr *MockStoreMockRecorder) GetRunner(ctx, id any) *gomock.Call {
 }
 
 // ListFlavors mocks base method.
-func (m *MockStore) ListFlavors(ctx context.Context) ([]*structs.Flavor, error) {
+func (m *MockStore) ListFlavors(ctx context.Context) ([]*models.Flavor, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListFlavors", ctx)
-	ret0, _ := ret[0].([]*structs.Flavor)
+	ret0, _ := ret[0].([]*models.Flavor)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -313,10 +313,10 @@ func (mr *MockStoreMockRecorder) ListFlavors(ctx any) *gomock.Call {
 }
 
 // ListGroups mocks base method.
-func (m *MockStore) ListGroups(ctx context.Context) ([]*structs.Group, error) {
+func (m *MockStore) ListGroups(ctx context.Context) ([]*models.Group, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListGroups", ctx)
-	ret0, _ := ret[0].([]*structs.Group)
+	ret0, _ := ret[0].([]*models.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -328,10 +328,10 @@ func (mr *MockStoreMockRecorder) ListGroups(ctx any) *gomock.Call {
 }
 
 // ListImages mocks base method.
-func (m *MockStore) ListImages(ctx context.Context) ([]*structs.Image, error) {
+func (m *MockStore) ListImages(ctx context.Context) ([]*models.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListImages", ctx)
-	ret0, _ := ret[0].([]*structs.Image)
+	ret0, _ := ret[0].([]*models.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -343,10 +343,10 @@ func (mr *MockStoreMockRecorder) ListImages(ctx any) *gomock.Call {
 }
 
 // ListJobs mocks base method.
-func (m *MockStore) ListJobs(ctx context.Context) ([]*structs.Job, error) {
+func (m *MockStore) ListJobs(ctx context.Context) ([]*models.Job, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListJobs", ctx)
-	ret0, _ := ret[0].([]*structs.Job)
+	ret0, _ := ret[0].([]*models.Job)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -358,10 +358,10 @@ func (mr *MockStoreMockRecorder) ListJobs(ctx any) *gomock.Call {
 }
 
 // ListNodes mocks base method.
-func (m *MockStore) ListNodes(ctx context.Context) ([]*structs.Node, error) {
+func (m *MockStore) ListNodes(ctx context.Context) ([]*models.Node, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListNodes", ctx)
-	ret0, _ := ret[0].([]*structs.Node)
+	ret0, _ := ret[0].([]*models.Node)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -373,10 +373,10 @@ func (mr *MockStoreMockRecorder) ListNodes(ctx any) *gomock.Call {
 }
 
 // ListRunners mocks base method.
-func (m *MockStore) ListRunners(ctx context.Context) ([]*structs.Runner, error) {
+func (m *MockStore) ListRunners(ctx context.Context) ([]*models.Runner, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRunners", ctx)
-	ret0, _ := ret[0].([]*structs.Runner)
+	ret0, _ := ret[0].([]*models.Runner)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -416,7 +416,7 @@ func (mr *MockStoreMockRecorder) ReserveNodeResources(ctx, id, cpu, mem any) *go
 }
 
 // SaveFlavor mocks base method.
-func (m *MockStore) SaveFlavor(ctx context.Context, flavor *structs.Flavor) error {
+func (m *MockStore) SaveFlavor(ctx context.Context, flavor *models.Flavor) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveFlavor", ctx, flavor)
 	ret0, _ := ret[0].(error)
@@ -430,7 +430,7 @@ func (mr *MockStoreMockRecorder) SaveFlavor(ctx, flavor any) *gomock.Call {
 }
 
 // SaveGroup mocks base method.
-func (m *MockStore) SaveGroup(ctx context.Context, group *structs.Group) error {
+func (m *MockStore) SaveGroup(ctx context.Context, group *models.Group) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveGroup", ctx, group)
 	ret0, _ := ret[0].(error)
@@ -444,7 +444,7 @@ func (mr *MockStoreMockRecorder) SaveGroup(ctx, group any) *gomock.Call {
 }
 
 // SaveImage mocks base method.
-func (m *MockStore) SaveImage(ctx context.Context, image *structs.Image) error {
+func (m *MockStore) SaveImage(ctx context.Context, image *models.Image) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveImage", ctx, image)
 	ret0, _ := ret[0].(error)
@@ -458,7 +458,7 @@ func (mr *MockStoreMockRecorder) SaveImage(ctx, image any) *gomock.Call {
 }
 
 // SaveJob mocks base method.
-func (m *MockStore) SaveJob(ctx context.Context, job *structs.Job) error {
+func (m *MockStore) SaveJob(ctx context.Context, job *models.Job) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveJob", ctx, job)
 	ret0, _ := ret[0].(error)
@@ -472,7 +472,7 @@ func (mr *MockStoreMockRecorder) SaveJob(ctx, job any) *gomock.Call {
 }
 
 // SaveNode mocks base method.
-func (m *MockStore) SaveNode(ctx context.Context, node *structs.Node) error {
+func (m *MockStore) SaveNode(ctx context.Context, node *models.Node) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveNode", ctx, node)
 	ret0, _ := ret[0].(error)
@@ -486,7 +486,7 @@ func (mr *MockStoreMockRecorder) SaveNode(ctx, node any) *gomock.Call {
 }
 
 // SaveRunner mocks base method.
-func (m *MockStore) SaveRunner(ctx context.Context, runner *structs.Runner) error {
+func (m *MockStore) SaveRunner(ctx context.Context, runner *models.Runner) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveRunner", ctx, runner)
 	ret0, _ := ret[0].(error)

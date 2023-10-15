@@ -21,15 +21,17 @@ Store is a bbolt implementation of the Store interface using BoltDB.
 
 Current BoltDB schema:
 |-- nodes
-|   |-- <ID>   -> structs.Node
+|   |-- <ID>       -> models.Node
 |-- jobs
-|   |-- <ID>   -> structs.Job
+|   |-- <ID>       -> models.Job
 |-- runners
-|   |-- <ID>   -> structs.Runner
+|   |-- <ID>       -> models.Runner
+|-- default-group  -> models.Group
 |-- groups
-|   |-- <name> -> structs.Group
+|   |-- <name>     -> models.Group
+|-- default-flavor -> models.Flavor
 |-- flavors
-|   |-- <name> -> structs.Flavor
+|   |-- <name>     -> models.Flavor
 */
 type Store struct {
 	db *bbolt.DB

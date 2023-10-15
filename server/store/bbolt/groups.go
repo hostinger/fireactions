@@ -4,18 +4,18 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) ListGroups(ctx context.Context) ([]*structs.Group, error) {
-	var groups []*structs.Group
+func (s *Store) ListGroups(ctx context.Context) ([]*models.Group, error) {
+	var groups []*models.Group
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("groups")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			group := &structs.Group{}
+			group := &models.Group{}
 			err := json.Unmarshal(v, group)
 			if err != nil {
 				return err
@@ -33,8 +33,8 @@ func (s *Store) ListGroups(ctx context.Context) ([]*structs.Group, error) {
 	return groups, nil
 }
 
-func (s *Store) GetGroup(ctx context.Context, name string) (*structs.Group, error) {
-	group := &structs.Group{}
+func (s *Store) GetGroup(ctx context.Context, name string) (*models.Group, error) {
+	group := &models.Group{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte("groups")).Get([]byte(name))
@@ -67,7 +67,7 @@ func (s *Store) DeleteGroup(ctx context.Context, name string) error {
 	return nil
 }
 
-func (s *Store) SaveGroup(ctx context.Context, group *structs.Group) error {
+func (s *Store) SaveGroup(ctx context.Context, group *models.Group) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("groups"))
 

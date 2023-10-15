@@ -3,8 +3,8 @@ package freecpu
 import (
 	"fmt"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/scorer"
-	"github.com/hostinger/fireactions/server/structs"
 )
 
 // Scorer is a Scorer that scores Nodes based on their free CPU.
@@ -20,7 +20,7 @@ func (s *Scorer) Name() string {
 }
 
 // Score returns the score of the Node.
-func (s *Scorer) Score(runner *structs.Runner, node *structs.Node) (float64, error) {
+func (s *Scorer) Score(runner *models.Runner, node *models.Node) (float64, error) {
 	return float64(node.CPU.Available()) * s.Multiplier, nil
 }
 

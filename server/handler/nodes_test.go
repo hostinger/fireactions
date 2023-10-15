@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -38,26 +38,26 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 	router.GET("/nodes", GetNodesHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
+		store.EXPECT().ListNodes(gomock.Any()).Return([]*models.Node{
 			{
 				ID:           "1",
-				Groups:       []*structs.Group{{Name: "group1"}},
+				Groups:       []*models.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
 			{
 				ID:           "2",
-				Groups:       []*structs.Group{{Name: "group1"}},
+				Groups:       []*models.Group{{Name: "group1"}},
 				Name:         "node2",
 				Organisation: "org1",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -69,26 +69,26 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with organisation query", func(t *testing.T) {
-		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
+		store.EXPECT().ListNodes(gomock.Any()).Return([]*models.Node{
 			{
 				ID:           "1",
-				Groups:       []*structs.Group{{Name: "group1"}},
+				Groups:       []*models.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
 			{
 				ID:           "2",
-				Groups:       []*structs.Group{{Name: "group1"}},
+				Groups:       []*models.Group{{Name: "group1"}},
 				Name:         "node2",
 				Organisation: "org2",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -111,26 +111,26 @@ func TestGetNodesHandlerFuncV1(t *testing.T) {
 	})
 
 	t.Run("success with group query", func(t *testing.T) {
-		store.EXPECT().ListNodes(gomock.Any()).Return([]*structs.Node{
+		store.EXPECT().ListNodes(gomock.Any()).Return([]*models.Node{
 			{
 				ID:           "1",
-				Groups:       []*structs.Group{{Name: "group1"}},
+				Groups:       []*models.Group{{Name: "group1"}},
 				Name:         "node1",
 				Organisation: "org1",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
 			{
 				ID:           "2",
-				Groups:       []*structs.Group{{Name: "group2"}},
+				Groups:       []*models.Group{{Name: "group2"}},
 				Name:         "node2",
 				Organisation: "org2",
-				Status:       structs.NodeStatusOnline,
-				CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-				RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+				Status:       models.NodeStatusOnline,
+				CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+				RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			},
@@ -170,14 +170,14 @@ func TestGetNodeHandlerFuncV1(t *testing.T) {
 	router.GET("/nodes/:id", GetNodeHandlerFuncV1(&zerolog.Logger{}, store))
 
 	t.Run("success", func(t *testing.T) {
-		store.EXPECT().GetNode(gomock.Any(), "1").Return(&structs.Node{
+		store.EXPECT().GetNode(gomock.Any(), "1").Return(&models.Node{
 			ID:           "1",
-			Groups:       []*structs.Group{{Name: "group1"}},
+			Groups:       []*models.Group{{Name: "group1"}},
 			Name:         "node1",
 			Organisation: "org1",
-			Status:       structs.NodeStatusOnline,
-			CPU:          structs.Resource{Capacity: 1, OvercommitRatio: 1.0},
-			RAM:          structs.Resource{Capacity: 1024, OvercommitRatio: 1.0},
+			Status:       models.NodeStatusOnline,
+			CPU:          models.Resource{Capacity: 1, OvercommitRatio: 1.0},
+			RAM:          models.Resource{Capacity: 1024, OvercommitRatio: 1.0},
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}, nil)

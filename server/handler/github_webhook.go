@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hostinger/fireactions/server/ghlabel"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
@@ -18,8 +18,8 @@ import (
 
 // Scheduler is an interface that enqueues a Runner for scheduling to the best-fitting Node.
 type Scheduler interface {
-	Schedule(runner *structs.Runner) error
-	HandleEvent(event *structs.Event)
+	Schedule(runner *models.Runner) error
+	HandleEvent(event *models.Event)
 }
 
 func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
@@ -123,10 +123,10 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 
 		switch event.WorkflowJob.Status {
 		case "queued":
-			err := storer.SaveJob(ctx, &structs.Job{
+			err := storer.SaveJob(ctx, &models.Job{
 				ID:           jobID,
 				Organisation: event.Organization.Login,
-				Status:       structs.JobStatusQueued,
+				Status:       models.JobStatusQueued,
 				Name:         event.WorkflowJob.Name,
 				Repository:   event.Repository.FullName,
 				CreatedAt:    time.Now(),
@@ -141,11 +141,11 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 			log.Debug().Msgf("created job %s", jobID)
 
 			id := uuid.New().String()
-			r := &structs.Runner{
+			r := &models.Runner{
 				ID:           id,
 				Name:         fmt.Sprintf("runner-%s", id),
 				Organisation: event.Organization.Login,
-				Status:       structs.RunnerStatusPending,
+				Status:       models.RunnerStatusPending,
 				Labels:       strings.Join(event.WorkflowJob.Labels, ","),
 				Flavor:       flavor,
 				Group:        group,
@@ -178,7 +178,7 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 				return
 			}
 
-			job.Status = structs.JobStatusInProgress
+			job.Status = models.JobStatusInProgress
 			err = storer.SaveJob(ctx, job)
 			if err != nil {
 				log.Err(err).Msgf("error updating job %s", jobID)

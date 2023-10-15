@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/hostinger/fireactions/client/structs"
+	"github.com/hostinger/fireactions/client/models"
 	"go.etcd.io/bbolt"
 )
 
@@ -19,13 +19,13 @@ var (
 
 // Store is the interface for a Client state store.
 type Store interface {
-	GetImages(ctx context.Context) ([]*structs.Image, error)
-	GetImage(ctx context.Context, id string) (*structs.Image, error)
-	SaveImage(ctx context.Context, image *structs.Image) error
+	GetImages(ctx context.Context) ([]*models.Image, error)
+	GetImage(ctx context.Context, id string) (*models.Image, error)
+	SaveImage(ctx context.Context, image *models.Image) error
 	DeleteImage(ctx context.Context, id string) error
 
-	GetNodeRegistrationInfo(ctx context.Context) (*structs.NodeRegistrationInfo, error)
-	SaveNodeRegistrationInfo(ctx context.Context, nodeRegistrationInfo *structs.NodeRegistrationInfo) error
+	GetNodeRegistrationInfo(ctx context.Context) (*models.NodeRegistrationInfo, error)
+	SaveNodeRegistrationInfo(ctx context.Context, nodeRegistrationInfo *models.NodeRegistrationInfo) error
 
 	Close() error
 }
@@ -74,7 +74,7 @@ func (s *storeImpl) Close() error {
 	return s.db.Close()
 }
 
-func (s *storeImpl) SaveImage(ctx context.Context, image *structs.Image) error {
+func (s *storeImpl) SaveImage(ctx context.Context, image *models.Image) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(imagesBucket)
 		if b == nil {
@@ -95,8 +95,8 @@ func (s *storeImpl) SaveImage(ctx context.Context, image *structs.Image) error {
 	return nil
 }
 
-func (s *storeImpl) GetImage(ctx context.Context, id string) (*structs.Image, error) {
-	var image structs.Image
+func (s *storeImpl) GetImage(ctx context.Context, id string) (*models.Image, error) {
+	var image models.Image
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(imagesBucket)
 		if b == nil {
@@ -117,8 +117,8 @@ func (s *storeImpl) GetImage(ctx context.Context, id string) (*structs.Image, er
 	return &image, nil
 }
 
-func (s *storeImpl) GetImages(ctx context.Context) ([]*structs.Image, error) {
-	var images []*structs.Image
+func (s *storeImpl) GetImages(ctx context.Context) ([]*models.Image, error) {
+	var images []*models.Image
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(imagesBucket)
 		if b == nil {
@@ -126,7 +126,7 @@ func (s *storeImpl) GetImages(ctx context.Context) ([]*structs.Image, error) {
 		}
 
 		err := b.ForEach(func(k, v []byte) error {
-			var image structs.Image
+			var image models.Image
 			err := json.Unmarshal(v, &image)
 			if err != nil {
 				return err
@@ -165,7 +165,7 @@ func (s *storeImpl) DeleteImage(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *storeImpl) SaveNodeRegistrationInfo(ctx context.Context, nodeInfo *structs.NodeRegistrationInfo) error {
+func (s *storeImpl) SaveNodeRegistrationInfo(ctx context.Context, nodeInfo *models.NodeRegistrationInfo) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(nodeBucket)
 		if b == nil {
@@ -186,8 +186,8 @@ func (s *storeImpl) SaveNodeRegistrationInfo(ctx context.Context, nodeInfo *stru
 	return nil
 }
 
-func (s *storeImpl) GetNodeRegistrationInfo(ctx context.Context) (*structs.NodeRegistrationInfo, error) {
-	var nodeInfo structs.NodeRegistrationInfo
+func (s *storeImpl) GetNodeRegistrationInfo(ctx context.Context) (*models.NodeRegistrationInfo, error) {
+	var nodeInfo models.NodeRegistrationInfo
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(nodeBucket)
 		if b == nil {

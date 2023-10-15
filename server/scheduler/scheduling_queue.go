@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/queue"
-	"github.com/hostinger/fireactions/server/structs"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -26,7 +26,7 @@ var (
 )
 
 type QueuedRunnerInfo struct {
-	*structs.Runner
+	*models.Runner
 
 	// EnqueueTime is the time at which the Runner was enqueued.
 	EnqueueTime time.Time
@@ -75,7 +75,7 @@ The state label indicates whether the Runner is waiting to be scheduled or is bl
 
 // Enqueue enqueues a Runner into the queue. If the Runner is already in the
 // queue, it is ignored.
-func (q *SchedulingQueue) Enqueue(r *structs.Runner) error {
+func (q *SchedulingQueue) Enqueue(r *models.Runner) error {
 	q.l.Lock()
 	defer q.l.Unlock()
 
@@ -96,7 +96,7 @@ func (q *SchedulingQueue) Enqueue(r *structs.Runner) error {
 
 // Dequeue dequeues a Runner from the queue. If the queue is empty, it blocks
 // until a Runner is enqueued.
-func (q *SchedulingQueue) Dequeue() (*structs.Runner, error) {
+func (q *SchedulingQueue) Dequeue() (*models.Runner, error) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 

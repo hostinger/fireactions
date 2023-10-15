@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/structs"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) GetJob(ctx context.Context, id string) (*structs.Job, error) {
-	job := &structs.Job{}
+func (s *Store) GetJob(ctx context.Context, id string) (*models.Job, error) {
+	job := &models.Job{}
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		v := tx.Bucket([]byte("jobs")).Get([]byte(id))
@@ -43,13 +43,13 @@ func (s *Store) DeleteJob(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) ListJobs(ctx context.Context) ([]*structs.Job, error) {
-	var jobs []*structs.Job
+func (s *Store) ListJobs(ctx context.Context) ([]*models.Job, error) {
+	var jobs []*models.Job
 
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		c := tx.Bucket([]byte("jobs")).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			job := &structs.Job{}
+			job := &models.Job{}
 			err := json.Unmarshal(v, job)
 			if err != nil {
 				return err
@@ -67,7 +67,7 @@ func (s *Store) ListJobs(ctx context.Context) ([]*structs.Job, error) {
 	return jobs, nil
 }
 
-func (s *Store) SaveJob(ctx context.Context, job *structs.Job) error {
+func (s *Store) SaveJob(ctx context.Context, job *models.Job) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		data, err := json.Marshal(job)
 		if err != nil {

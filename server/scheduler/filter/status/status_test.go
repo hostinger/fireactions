@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hostinger/fireactions/server/structs"
+	"github.com/hostinger/fireactions/server/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,20 +13,20 @@ func TestFilter(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		runner *structs.Runner
-		node   *structs.Node
+		runner *models.Runner
+		node   *models.Node
 		want   bool
 	}{
 		{
 			name:   "node is online",
-			runner: &structs.Runner{},
-			node:   &structs.Node{Status: structs.NodeStatusOnline},
+			runner: &models.Runner{},
+			node:   &models.Node{Status: models.NodeStatusOnline},
 			want:   true,
 		},
 		{
 			name:   "node is offline",
-			runner: &structs.Runner{},
-			node:   &structs.Node{Status: structs.NodeStatusOffline},
+			runner: &models.Runner{},
+			node:   &models.Node{Status: models.NodeStatusOffline},
 			want:   false,
 		},
 	}
