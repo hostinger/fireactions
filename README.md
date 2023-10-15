@@ -2,21 +2,23 @@
 
 ![Banner](docs/banner.png)
 
-BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure [Firecracker](https://firecracker-microvm.github.io/) based virtual machines.
+Fireactions is an orchestrator for GitHub runners. BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure [Firecracker](https://firecracker-microvm.github.io/) based virtual machines.
 
-![Architecture](docs/architecture.png)
+Several key features:
 
-## Features
+- **Autoscaling**
 
-- Autoscaling based on received GitHub webhooks for `workflow_job` events.
-- Support for multiple GitHub organisations
-- Fast startup time of 15-30 seconds (from webhook received event to job running).
-- Security by design: ephemeral virtual machines, no persistent storage. No need to worry about secrets left on the virtual machine.
-- Support for `x86_64`, `arm64` architectures and multiple Linux kernel (LTS) versions.
-- Support for multiple Linux distributions (Ubuntu 20.04 and Ubuntu 22.04).
-- VM resource allocation (vCPUs, RAM) based on GitHub job labels.
+  Robust autoscaling based on GitHub webhooks for `workflow_job` events, cost-effective with fast GitHub runner startup time of 20s~.
 
-## Usage
+- **Ephemeral**
+
+  Each virtual machine is created from scratch and destroyed after the job is finished, no state is preserved between jobs, just like with GitHub hosted runners.
+
+- **Customizable**
+
+  Define Your own virtual machine Flavors, Groups, Images and more to match Your needs. See [Configuration](./docs/configuration.md) for more information.
+
+## Quickstart
 
 To start using self-hosted GitHub runners, add the label to your workflow jobs:
 
@@ -24,17 +26,16 @@ To start using self-hosted GitHub runners, add the label to your workflow jobs:
 <...>
 runs-on:
 - self-hosted
-- <PREFIX>[.GROUP][.FLAVOR] # e.g. fireactions.group1.1vcpu-1gb, fireactions.group1, fireactions
+# e.g. fireactions.group1.1vcpu-1gb, fireactions.group1, fireactions
+- <PREFIX>[.GROUP][.FLAVOR]
 ```
-
-Job labels identify the type of virtual machine to create for the Job. Label must begin with prefix and must be followed by the group and flavor name, separated by a dot. If neither group nor flavor is specified, the default group and flavor will be used.
 
 See [Configuration](./docs//configuration.md) for more information on how to configure the default job label prefix, groups and flavors.
 
-## Roadmap
+## Contributing
 
-- Support for right-sizing virtual machines based on actual (historical) GitHub job resource usage via [Prometheus](https://prometheus.io/)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute to Fireactions.
 
 ## License
 
-[Apache License, Version 2.0](LICENSE)
+See [LICENSE](LICENSE)
