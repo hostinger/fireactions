@@ -1,3 +1,4 @@
+//go:generate mockgen -source=store.go -destination=mock/store.go -package=mock
 package store
 
 import (
@@ -33,11 +34,15 @@ type Store interface {
 	GetGroup(ctx context.Context, name string) (*models.Group, error)
 	SaveGroup(ctx context.Context, group *models.Group) error
 	DeleteGroup(ctx context.Context, name string) error
+	SetDefaultGroup(ctx context.Context, name string) error
+	GetDefaultGroup(ctx context.Context) (*models.Group, error)
 
 	ListFlavors(ctx context.Context) ([]*models.Flavor, error)
 	GetFlavor(ctx context.Context, name string) (*models.Flavor, error)
 	SaveFlavor(ctx context.Context, flavor *models.Flavor) error
 	DeleteFlavor(ctx context.Context, name string) error
+	SetDefaultFlavor(ctx context.Context, name string) error
+	GetDefaultFlavor(ctx context.Context) (*models.Flavor, error)
 
 	ListImages(ctx context.Context) ([]*models.Image, error)
 	GetImage(ctx context.Context, id string) (*models.Image, error)

@@ -7,31 +7,23 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-var (
-	nodesBucket   = []byte("nodes")
-	runnersBucket = []byte("runners")
-	jobsBucket    = []byte("jobs")
-	groupsBucket  = []byte("groups")
-	flavorsBucket = []byte("flavors")
-	imagesBucket  = []byte("images")
-)
-
 /*
 Store is a bbolt implementation of the Store interface using BoltDB.
 
 Current BoltDB schema:
+|-- settings
+|   |-- default-flavor -> models.Flavor
+|   |-- default-group  -> models.Group
 |-- nodes
-|   |-- <ID>       -> models.Node
+|   |-- <ID>           -> models.Node
 |-- jobs
-|   |-- <ID>       -> models.Job
+|   |-- <ID>           -> models.Job
 |-- runners
-|   |-- <ID>       -> models.Runner
-|-- default-group  -> models.Group
+|   |-- <ID>           -> models.Runner
 |-- groups
-|   |-- <name>     -> models.Group
-|-- default-flavor -> models.Flavor
+|   |-- <name>         -> models.Group
 |-- flavors
-|   |-- <name>     -> models.Flavor
+|   |-- <name>         -> models.Flavor
 */
 type Store struct {
 	db *bbolt.DB
@@ -53,34 +45,12 @@ func New(path string) (*Store, error) {
 	}
 
 	err = db.Update(func(tx *bbolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists(nodesBucket)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.CreateBucketIfNotExists(jobsBucket)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.CreateBucketIfNotExists(runnersBucket)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.CreateBucketIfNotExists(groupsBucket)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.CreateBucketIfNotExists(flavorsBucket)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.CreateBucketIfNotExists(imagesBucket)
-		if err != nil {
-			return err
+		buckets := []string{"settings", "nodes", "jobs", "runners", "groups", "flavors", "images"}
+		for _, bucket := range buckets {
+			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil

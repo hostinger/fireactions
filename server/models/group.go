@@ -4,8 +4,9 @@ import "fmt"
 
 // Group struct.
 type Group struct {
-	Name    string
-	Enabled bool
+	Name      string
+	IsDefault bool
+	Enabled   bool
 }
 
 // String returns the string representation of a Group.

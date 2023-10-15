@@ -11,8 +11,9 @@ type Groups []Group
 
 // Group represents a Group.
 type Group struct {
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
+	Enabled   bool   `json:"enabled"`
 }
 
 type groupsClient struct {
@@ -116,4 +117,14 @@ func (c *groupsClient) Create(ctx context.Context, req *GroupCreateRequest) (*Gr
 	}
 
 	return &group, response, nil
+}
+
+// SetDefault sets the default Group.
+func (c *groupsClient) SetDefault(ctx context.Context, name string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/groups/%s/default", name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
 }

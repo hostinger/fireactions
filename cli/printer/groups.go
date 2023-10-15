@@ -16,7 +16,7 @@ var _ Printable = &Group{}
 // Cols returns the columns for the Printable
 func (g *Group) Cols() []string {
 	cols := []string{
-		"Name", "Enabled",
+		"Name", "Enabled", "Is Default",
 	}
 
 	return cols
@@ -25,7 +25,7 @@ func (g *Group) Cols() []string {
 // ColsMap returns the columns map for the Printable
 func (g *Group) ColsMap() map[string]string {
 	cols := map[string]string{
-		"Name": "Name", "Enabled": "Enabled",
+		"Name": "Name", "Enabled": "Enabled", "Is Default": "IsDefault",
 	}
 
 	return cols
@@ -36,7 +36,7 @@ func (g *Group) KV() []map[string]interface{} {
 	kv := make([]map[string]interface{}, 0, len(g.Groups))
 	for _, group := range g.Groups {
 		kv = append(kv, map[string]interface{}{
-			"Name": group.Name, "Enabled": fmt.Sprintf("%t", group.Enabled),
+			"Name": group.Name, "Enabled": fmt.Sprintf("%t", group.Enabled), "Is Default": fmt.Sprintf("%t", group.IsDefault),
 		})
 	}
 

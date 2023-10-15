@@ -86,7 +86,7 @@ func (s *Store) SaveRunner(ctx context.Context, runner *models.Runner) error {
 func (s *Store) GetRunnersCount(ctx context.Context) (int, error) {
 	var count int
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket(runnersBucket)
+		b := tx.Bucket([]byte("runners"))
 		if b == nil {
 			return nil
 		}

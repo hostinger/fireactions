@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,7 +25,7 @@ type Scheduler interface {
 }
 
 func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
-	secretKey string, jobLabelPrefix string, defaultFlavor, defaultGroup string, scheduler Scheduler, storer store.Store) gin.HandlerFunc {
+	secretKey string, jobLabelPrefix string, scheduler Scheduler, storer store.Store) gin.HandlerFunc {
 	hook, err := webhooks.New(webhooks.Options.Secret(secretKey))
 	if err != nil {
 		log.Err(err).Msg("error creating GitHub webhook handlers")
@@ -80,43 +82,20 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 			return
 		}
 
-		if label.FlavorIsEmpty() {
-			label.Flavor = defaultFlavor
-		}
-		if label.GroupIsEmpty() {
-			label.Group = defaultGroup
-		}
-
-		flavor, err := storer.GetFlavor(ctx, label.Flavor)
+		group, err := findGroupByLabel(ctx, storer, label)
 		if err != nil {
-			log.Debug().Msgf("skipped job %s: error getting Flavor %s: %s", jobID, label.Flavor, err.Error())
+			log.Debug().Msgf("skipped job %s: error getting group %s: %s", jobID, label.Group, err.Error())
 			ctx.JSON(200, gin.H{
-				"message": fmt.Sprintf("Skipped job due to error getting Flavor: %s", err.Error()),
+				"message": fmt.Sprintf("Skipped job due to error getting group: %s", err.Error()),
 			})
 			return
 		}
 
-		if !flavor.Enabled {
-			log.Debug().Msgf("skipped job %s: Flavor %s is disabled", jobID, label.Flavor)
-			ctx.JSON(200, gin.H{
-				"message": fmt.Sprintf("Skipped job due to Flavor %s being disabled", label.Flavor),
-			})
-			return
-		}
-
-		group, err := storer.GetGroup(ctx, label.Group)
+		flavor, err := findFlavorByLabel(ctx, storer, label)
 		if err != nil {
-			log.Debug().Msgf("skipped job %s: error getting Group %s: %s", jobID, label.Group, err.Error())
+			log.Debug().Msgf("skipped job %s: error getting flavor %s: %s", jobID, label.Flavor, err.Error())
 			ctx.JSON(200, gin.H{
-				"message": fmt.Sprintf("Skipped job due to error getting Group: %s", err.Error()),
-			})
-			return
-		}
-
-		if !group.Enabled {
-			log.Debug().Msgf("skipped job %s: Group %s is disabled", jobID, label.Group)
-			ctx.JSON(200, gin.H{
-				"message": fmt.Sprintf("Skipped job due to Group %s being disabled", label.Group),
+				"message": fmt.Sprintf("Skipped job due to error getting flavor: %s", err.Error()),
 			})
 			return
 		}
@@ -214,4 +193,48 @@ func GetGitHubWebhookHandlerFuncV1(log *zerolog.Logger,
 	}
 
 	return f
+}
+
+func findFlavorByLabel(ctx context.Context, store store.Store, label *ghlabel.Label) (*models.Flavor, error) {
+	var flavor *models.Flavor
+	var err error
+	if label.Flavor == "" {
+		flavor, err = store.GetDefaultFlavor(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		flavor, err = store.GetFlavor(ctx, label.Flavor)
+		if err != nil {
+			return nil, err
+		}
+
+		if !flavor.Enabled {
+			return nil, errors.New("flavor is disabled")
+		}
+	}
+
+	return flavor, nil
+}
+
+func findGroupByLabel(ctx context.Context, store store.Store, label *ghlabel.Label) (*models.Group, error) {
+	var group *models.Group
+	var err error
+	if label.Group == "" {
+		group, err = store.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		group, err = store.GetGroup(ctx, label.Group)
+		if err != nil {
+			return nil, err
+		}
+
+		if !group.Enabled {
+			return nil, errors.New("group is disabled")
+		}
+	}
+
+	return group, nil
 }

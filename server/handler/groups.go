@@ -23,6 +23,8 @@ func RegisterGroupsV1(r gin.IRouter, log *zerolog.Logger, store store.Store) {
 		DeleteGroupHandlerFuncV1(log, store))
 	r.POST("/groups",
 		CreateGroupHandlerFuncV1(log, store))
+	r.PATCH("/groups/:name/default",
+		SetDefaultGroupHandlerFuncV1(log, store))
 }
 
 // GetGroupsHandlerFuncV1 returns a HTTP handler function that returns all Groups. The Groups are returned in the v1
@@ -147,10 +149,32 @@ func CreateGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handle
 	return f
 }
 
+// SetDefaultGroupHandlerFuncV1 returns a HTTP handler function that sets a Group as the default Group.
+func SetDefaultGroupHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		group, err := store.GetGroup(ctx, ctx.Param("name"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		err = store.SetDefaultGroup(ctx, group.Name)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		ctx.Status(204)
+	}
+
+	return f
+}
+
 func convertGroupToGroupV1(group *models.Group) *v1.Group {
 	g := &v1.Group{
-		Name:    group.Name,
-		Enabled: group.Enabled,
+		Name:      group.Name,
+		IsDefault: group.IsDefault,
+		Enabled:   group.Enabled,
 	}
 
 	return g

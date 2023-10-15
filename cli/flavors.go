@@ -29,7 +29,7 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newFlavorsGetCmd(),
+	cmd.AddCommand(newFlavorsGetCmd(), newFlavorsSetDefaultCmd(),
 		newFlavorsListCmd(), newFlavorsDisableCmd(), newFlavorsEnableCmd(), newFlavorsRemoveCmd())
 	return cmd
 }
@@ -113,6 +113,35 @@ Example:
 	}
 
 	return cmd
+}
+
+func newFlavorsSetDefaultCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-default NAME",
+		Short: "Set a specific Flavor as default",
+		Long: `Set a specific Flavor as default.
+
+This command will set a Flavor as default. Once set, the Flavor will be used by Jobs that do not specify a Flavor.
+
+Example:
+  $ fireactions flavors set-default 1vcpu-1gb
+		`,
+		Args: cobra.ExactArgs(1),
+		RunE: runFlavorsSetDefaultCmd,
+	}
+
+	return cmd
+}
+
+func runFlavorsSetDefaultCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	_, err := client.Flavors().SetDefault(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error setting Flavor(s) as default: %w", err)
+	}
+
+	return nil
 }
 
 func runFlavorsEnableCmd(cmd *cobra.Command, args []string) error {

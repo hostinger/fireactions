@@ -21,6 +21,8 @@ func RegisterFlavorsV1(r gin.IRouter, log *zerolog.Logger, store store.Store) {
 		EnableFlavorHandlerFuncV1(log, store))
 	r.DELETE("/flavors/:name",
 		DeleteFlavorHandlerFuncV1(log, store))
+	r.PATCH("/flavors/:name/default",
+		SetDefaultFlavorHandlerFuncV1(log, store))
 }
 
 // GetFlavorsHandlerFuncV1 returns a HTTP handler function that returns all Flavors. The Flavors are returned in the v1
@@ -120,9 +122,31 @@ func DeleteFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.Handl
 	return f
 }
 
+// SetDefaultFlavorHandlerFuncV1 returns a HTTP handler function that sets a Flavor as the default Flavor.
+func SetDefaultFlavorHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		flavor, err := store.GetFlavor(ctx, ctx.Param("name"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		err = store.SetDefaultFlavor(ctx, flavor.Name)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		ctx.Status(204)
+	}
+
+	return f
+}
+
 func convertFlavorToFlavorV1(flavor *models.Flavor) v1.Flavor {
 	f := v1.Flavor{
 		Name:         flavor.Name,
+		IsDefault:    flavor.IsDefault,
 		DiskSizeGB:   flavor.DiskSizeGB,
 		MemorySizeMB: flavor.MemorySizeMB,
 		VCPUs:        flavor.VCPUs,

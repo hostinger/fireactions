@@ -22,6 +22,12 @@ func (s *Store) ListFlavors(ctx context.Context) ([]*models.Flavor, error) {
 				return err
 			}
 
+			b := tx.Bucket([]byte("settings"))
+			v = b.Get([]byte("default-flavor"))
+			if v != nil && string(v) == flavor.Name {
+				flavor.IsDefault = true
+			}
+
 			flavors = append(flavors, flavor)
 		}
 
@@ -47,6 +53,12 @@ func (s *Store) GetFlavor(ctx context.Context, name string) (*models.Flavor, err
 		err := json.Unmarshal(v, flavor)
 		if err != nil {
 			return err
+		}
+
+		b := tx.Bucket([]byte("settings"))
+		v = b.Get([]byte("default-flavor"))
+		if v != nil && string(v) == name {
+			flavor.IsDefault = true
 		}
 
 		return nil
@@ -92,7 +104,7 @@ func (s *Store) SaveFlavor(ctx context.Context, flavor *models.Flavor) error {
 func (s *Store) GetFlavorsCount(ctx context.Context) (int, error) {
 	var count int
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket(flavorsBucket)
+		b := tx.Bucket([]byte("flavors"))
 		if b == nil {
 			return nil
 		}
@@ -105,4 +117,47 @@ func (s *Store) GetFlavorsCount(ctx context.Context) (int, error) {
 	}
 
 	return count, nil
+}
+
+func (s *Store) SetDefaultFlavor(ctx context.Context, name string) error {
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("settings"))
+		return b.Put([]byte("default-flavor"), []byte(name))
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) GetDefaultFlavor(ctx context.Context) (*models.Flavor, error) {
+	flavor := &models.Flavor{}
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("settings"))
+
+		v := b.Get([]byte("default-flavor"))
+		if v == nil {
+			return store.ErrNotFound{Type: "Flavor", ID: "default"}
+		}
+
+		b = tx.Bucket([]byte("flavors"))
+		v = b.Get(v)
+		if v == nil {
+			return store.ErrNotFound{Type: "Flavor", ID: string(v)}
+		}
+
+		err := json.Unmarshal(v, flavor)
+		if err != nil {
+			return err
+		}
+
+		flavor.IsDefault = true
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return flavor, nil
 }

@@ -96,7 +96,7 @@ func New(cfg *Config) (*Server, error) {
 	mux.GET("/healthz", handler.GetHealthzHandlerFunc())
 	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
 	mux.POST("/webhook", handler.GetGitHubWebhookHandlerFuncV1(
-		&logger, cfg.GitHub.WebhookSecret, cfg.GitHub.JobLabelPrefix, cfg.DefaultFlavor, cfg.DefaultGroup, s.scheduler, store))
+		&logger, cfg.GitHub.WebhookSecret, cfg.GitHub.JobLabelPrefix, s.scheduler, store))
 
 	s.server = &http.Server{
 		Addr:         cfg.ListenAddr,
@@ -210,6 +210,17 @@ func (s *Server) initPreconfiguredFlavors() error {
 		s.logger.Info().Msgf("created preconfigured flavor (%s)", cfg.Name)
 	}
 
+	defaultFlavor, err := s.store.GetFlavor(context.Background(), s.config.DefaultFlavor)
+	if err != nil {
+		return fmt.Errorf("error fetching default flavor: %w", err)
+	}
+
+	err = s.store.SetDefaultFlavor(context.Background(), defaultFlavor.Name)
+	if err != nil {
+		return fmt.Errorf("error setting default flavor: %w", err)
+	}
+
+	s.logger.Info().Msgf("set default flavor to %s", defaultFlavor.Name)
 	return nil
 }
 
@@ -228,6 +239,17 @@ func (s *Server) initPreconfiguredGroups() error {
 		s.logger.Info().Msgf("created preconfigured group (%s)", cfg.Name)
 	}
 
+	defaultGroup, err := s.store.GetGroup(context.Background(), s.config.DefaultGroup)
+	if err != nil {
+		return fmt.Errorf("error fetching default group: %w", err)
+	}
+
+	err = s.store.SetDefaultGroup(context.Background(), defaultGroup.Name)
+	if err != nil {
+		return fmt.Errorf("error setting default group: %w", err)
+	}
+
+	s.logger.Info().Msgf("set default group to %s", defaultGroup.Name)
 	return nil
 }
 

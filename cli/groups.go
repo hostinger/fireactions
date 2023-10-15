@@ -29,7 +29,7 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newGroupsGetCmd(), newGroupsCreateCmd(),
+	cmd.AddCommand(newGroupsGetCmd(), newGroupsCreateCmd(), newGroupsSetDefaultCmd(),
 		newGroupsListCmd(), newGroupsEnableCmd(), newGroupsDisableCmd(), newGroupsRemoveCmd())
 	return cmd
 }
@@ -132,6 +132,35 @@ Example:
 
 	cmd.Flags().Bool("enabled", true, "Sets the Group as enabled")
 	return cmd
+}
+
+func newGroupsSetDefaultCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-default NAME",
+		Short: "Set a specific Group as default",
+		Long: `Set a specific Group as default.
+
+This command will set a Group as default. Once set, the Group will be used by Jobs that do not specify a Group.
+
+Example:
+  $ fireactions groups set-default group1
+		`,
+		Args: cobra.ExactArgs(1),
+		RunE: runGroupsSetDefaultCmd,
+	}
+
+	return cmd
+}
+
+func runGroupsSetDefaultCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	_, err := client.Groups().SetDefault(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error setting default Group: %w", err)
+	}
+
+	return nil
 }
 
 func runGroupsCreateCmd(cmd *cobra.Command, args []string) error {

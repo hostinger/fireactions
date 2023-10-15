@@ -86,7 +86,7 @@ func (s *Store) SaveJob(ctx context.Context, job *models.Job) error {
 func (s *Store) GetJobsCount(ctx context.Context) (int, error) {
 	var count int
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket(jobsBucket)
+		b := tx.Bucket([]byte("jobs"))
 		if b == nil {
 			return nil
 		}

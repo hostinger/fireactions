@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/api"
 	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/store/mock"
 	"github.com/rs/zerolog"
@@ -24,7 +25,7 @@ func TestRegisterGroupsV1(t *testing.T) {
 	router := gin.New()
 	RegisterGroupsV1(router, &zerolog.Logger{}, store)
 
-	assert.Equal(t, 6, len(router.Routes()))
+	assert.Equal(t, 7, len(router.Routes()))
 }
 
 func TestGetGroupsHandlerFuncV1(t *testing.T) {
@@ -39,12 +40,14 @@ func TestGetGroupsHandlerFuncV1(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().ListGroups(gomock.Any()).Return([]*models.Group{
 			{
-				Name:    "group1",
-				Enabled: true,
+				Name:      "group1",
+				Enabled:   true,
+				IsDefault: true,
 			},
 			{
-				Name:    "group2",
-				Enabled: false,
+				Name:      "group2",
+				Enabled:   false,
+				IsDefault: false,
 			},
 		}, nil)
 
@@ -53,7 +56,16 @@ func TestGetGroupsHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 200, rec.Code)
-		assert.JSONEq(t, `{"groups":[{"name":"group1","enabled":true},{"name":"group2","enabled":false}]}`, rec.Body.String())
+
+		type Root struct {
+			Groups []*api.Group `json:"groups"`
+		}
+
+		var root Root
+		err := json.Unmarshal(rec.Body.Bytes(), &root)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 2, len(root.Groups))
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -78,8 +90,9 @@ func TestGetGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: true,
+			Name:      "group1",
+			Enabled:   true,
+			IsDefault: true,
 		}, nil)
 
 		rec := httptest.NewRecorder()
@@ -87,7 +100,12 @@ func TestGetGroupHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 200, rec.Code)
-		assert.JSONEq(t, `{"name":"group1","enabled":true}`, rec.Body.String())
+
+		var group api.Group
+		err := json.Unmarshal(rec.Body.Bytes(), &group)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "group1", group.Name)
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -113,12 +131,14 @@ func TestDisableGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: true,
+			Name:      "group1",
+			Enabled:   true,
+			IsDefault: true,
 		}, nil)
 		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: true,
 		}).Return(nil)
 
 		rec := httptest.NewRecorder()
@@ -141,12 +161,14 @@ func TestDisableGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: true,
+			Name:      "group1",
+			Enabled:   true,
+			IsDefault: true,
 		}, nil)
 		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: true,
 		}).Return(errors.New("error"))
 
 		rec := httptest.NewRecorder()
@@ -197,12 +219,14 @@ func TestEnableGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		}, nil)
 		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
-			Name:    "group1",
-			Enabled: true,
+			Name:      "group1",
+			Enabled:   true,
+			IsDefault: false,
 		}).Return(errors.New("error"))
 
 		rec := httptest.NewRecorder()
@@ -225,8 +249,9 @@ func TestDeleteGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		}, nil)
 		store.EXPECT().DeleteGroup(gomock.Any(), "group1").Return(nil)
 
@@ -250,8 +275,9 @@ func TestDeleteGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("error on DeleteGroup()", func(t *testing.T) {
 		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		}, nil)
 		store.EXPECT().DeleteGroup(gomock.Any(), "group1").Return(errors.New("error"))
 
@@ -275,13 +301,15 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		}).Return(nil)
 
 		body, err := json.Marshal(&models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		})
 		assert.NoError(t, err)
 
@@ -290,18 +318,25 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 		router.ServeHTTP(rec, req)
 
 		assert.Equal(t, 201, rec.Code)
-		assert.JSONEq(t, `{"name":"group1","enabled":false}`, rec.Body.String())
+
+		var group api.Group
+		err = json.Unmarshal(rec.Body.Bytes(), &group)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "group1", group.Name)
 	})
 
 	t.Run("error on SaveGroup()", func(t *testing.T) {
 		store.EXPECT().SaveGroup(gomock.Any(), &models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		}).Return(errors.New("error"))
 
 		body, err := json.Marshal(&models.Group{
-			Name:    "group1",
-			Enabled: false,
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
 		})
 		assert.NoError(t, err)
 
@@ -320,6 +355,58 @@ func TestCreateGroupHandlerFuncV1(t *testing.T) {
 
 		assert.Equal(t, 400, rec.Code)
 		assert.JSONEq(t, `{"error":"invalid character 'i' looking for beginning of value"}`, rec.Body.String())
+	})
+}
+
+func TestSetDefaultGroupHandlerFuncV1(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	store := mock.NewMockStore(ctrl)
+
+	router := gin.New()
+	router.PATCH("/groups/:name/default", SetDefaultGroupHandlerFuncV1(&zerolog.Logger{}, store))
+
+	t.Run("success", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
+		}, nil)
+		store.EXPECT().SetDefaultGroup(gomock.Any(), "group1").Return(nil)
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("PATCH", "/groups/group1/default", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 204, rec.Code)
+	})
+
+	t.Run("error on GetGroup()", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(nil, errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("PATCH", "/groups/group1/default", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
+	})
+
+	t.Run("error on SetDefaultGroup()", func(t *testing.T) {
+		store.EXPECT().GetGroup(gomock.Any(), "group1").Return(&models.Group{
+			Name:      "group1",
+			Enabled:   false,
+			IsDefault: false,
+		}, nil)
+		store.EXPECT().SetDefaultGroup(gomock.Any(), "group1").Return(errors.New("error"))
+
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("PATCH", "/groups/group1/default", nil)
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, 500, rec.Code)
+		assert.JSONEq(t, `{"error":"error"}`, rec.Body.String())
 	})
 }
 

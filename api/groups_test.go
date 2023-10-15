@@ -11,7 +11,7 @@ import (
 
 func TestGroupsClient_Get(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"name":"group1","enabled":true}`))
+		w.Write([]byte(`{"name":"group1","enabled":true, "is_default": true}`))
 
 		assert.Equal(t, "/api/v1/groups/group1", r.URL.Path)
 	}))
@@ -28,7 +28,7 @@ func TestGroupsClient_Get(t *testing.T) {
 
 func TestGroupsClient_List(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"groups":[{"name":"group1","enabled":true}]}`))
+		w.Write([]byte(`{"groups":[{"name":"group1","enabled":true, "is_default": true}]}`))
 
 		assert.Equal(t, "/api/v1/groups", r.URL.Path)
 	}))
@@ -45,7 +45,7 @@ func TestGroupsClient_List(t *testing.T) {
 
 func TestGroupsClient_Disable(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"name":"group1","enabled":false}`))
+		w.Write([]byte(`{"name":"group1","enabled":true, "is_default": true}`))
 
 		assert.Equal(t, "/api/v1/groups/group1/disable", r.URL.Path)
 	}))
@@ -60,7 +60,7 @@ func TestGroupsClient_Disable(t *testing.T) {
 
 func TestGroupsClient_Enable(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"name":"group1","enabled":true}`))
+		w.Write([]byte(`{"name":"group1","enabled":true, "is_default": true}`))
 
 		assert.Equal(t, "/api/v1/groups/group1/enable", r.URL.Path)
 	}))
@@ -90,7 +90,7 @@ func TestGroupsClient_Delete(t *testing.T) {
 
 func TestGroupsClient_Create(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"name":"group1","enabled":true}`))
+		w.Write([]byte(`{"name":"group1","enabled":true, "is_default": true}`))
 
 		assert.Equal(t, "/api/v1/groups", r.URL.Path)
 	}))
@@ -103,4 +103,19 @@ func TestGroupsClient_Create(t *testing.T) {
 	}
 
 	assert.Equal(t, "group1", group.Name)
+}
+
+func TestGroupsClient_SetDefault(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+
+		assert.Equal(t, "/api/v1/groups/group1/default", r.URL.Path)
+	}))
+	defer server.Close()
+
+	client := NewClient(nil, WithEndpoint(server.URL))
+	_, err := client.Groups().SetDefault(context.Background(), "group1")
+	if err != nil {
+		t.Fatal(err)
+	}
 }

@@ -56,11 +56,3 @@ func (l *Label) String() string {
 
 	return s
 }
-
-func (l *Label) FlavorIsEmpty() bool {
-	return l.Flavor == ""
-}
-
-func (l *Label) GroupIsEmpty() bool {
-	return l.Group == ""
-}

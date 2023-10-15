@@ -35,8 +35,6 @@ func TestLabel(t *testing.T) {
 		assert.Equal(t, "", label.Group)
 		assert.Equal(t, "", label.Flavor)
 		assert.Equal(t, "fireactions", label.String())
-		assert.True(t, label.FlavorIsEmpty())
-		assert.True(t, label.GroupIsEmpty())
 	})
 
 	t.Run("invalid", func(t *testing.T) {
