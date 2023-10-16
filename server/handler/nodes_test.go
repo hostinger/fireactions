@@ -25,7 +25,7 @@ func TestRegisterNodesV1(t *testing.T) {
 	router := gin.New()
 	RegisterNodesV1(router, &zerolog.Logger{}, nil, store)
 
-	assert.Equal(t, 10, len(router.Routes()))
+	assert.Equal(t, 12, len(router.Routes()))
 }
 
 func TestGetNodesHandlerFuncV1(t *testing.T) {

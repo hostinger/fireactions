@@ -29,7 +29,8 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newNodesListCmd(), newNodesGetCmd(), newNodesDeregisterCmd())
+	cmd.AddCommand(newNodesListCmd(), newNodesCordonCmd(), newNodesUncordonCmd(),
+		newNodesGetCmd(), newNodesDeregisterCmd())
 	return cmd
 }
 
@@ -67,6 +68,62 @@ func newNodesDeregisterCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func newNodesCordonCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cordon ID",
+		Short:   "Cordon a specific Node by ID",
+		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"lock"},
+		RunE:    runNodesCordonCmd,
+	}
+
+	return cmd
+}
+
+func newNodesUncordonCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "uncordon ID",
+		Short:   "Uncordon a specific Node by ID",
+		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"unlock"},
+		RunE:    runNodesUncordonCmd,
+	}
+
+	return cmd
+}
+
+func runNodesUncordonCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error fetching Node(s): %w", err)
+	}
+
+	_, err = client.Nodes().Uncordon(cmd.Context(), node.ID)
+	if err != nil {
+		return fmt.Errorf("error uncordoning Node: %w", err)
+	}
+
+	return nil
+}
+
+func runNodesCordonCmd(cmd *cobra.Command, args []string) error {
+	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	if err != nil {
+		return fmt.Errorf("error fetching Node(s): %w", err)
+	}
+
+	_, err = client.Nodes().Cordon(cmd.Context(), node.ID)
+	if err != nil {
+		return fmt.Errorf("error cordoning Node: %w", err)
+	}
+
+	return nil
 }
 
 func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {

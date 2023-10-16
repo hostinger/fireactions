@@ -18,6 +18,7 @@ type Node struct {
 	Status       NodeStatus
 	CPU          Resource
 	RAM          Resource
+	IsCordoned   bool
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

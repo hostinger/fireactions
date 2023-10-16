@@ -17,7 +17,7 @@ var _ Printable = &Node{}
 // Cols returns the columns for the Printable
 func (n *Node) Cols() []string {
 	cols := []string{
-		"ID", "Name", "Organisation", "Status", "Groups", "Cpu Usage", "Mem Usage", "Last Seen",
+		"ID", "Name", "Is Cordoned", "Organisation", "Status", "Groups", "Cpu Usage", "Mem Usage", "Last Seen",
 	}
 
 	return cols
@@ -26,7 +26,7 @@ func (n *Node) Cols() []string {
 // ColsMap returns the columns map for the Printable
 func (n *Node) ColsMap() map[string]string {
 	cols := map[string]string{
-		"ID": "ID", "Name": "Name", "Organisation": "Organisation", "Status": "Status", "Groups": "Groups", "Cpu Usage": "CpuUsage", "Mem Usage": "MemUsage", "Last Seen": "LastSeen",
+		"ID": "ID", "Name": "Name", "Is Cordoned": "IsCordoned", "Organisation": "Organisation", "Status": "Status", "Groups": "Groups", "Cpu Usage": "CpuUsage", "Mem Usage": "MemUsage", "Last Seen": "LastSeen",
 	}
 
 	return cols
@@ -41,7 +41,7 @@ func (n *Node) KV() []map[string]interface{} {
 			float64(node.MemTotal)/1024/1024/1024, float64(node.MemTotal-node.MemFree)/float64(node.MemTotal)*100)
 
 		kv = append(kv, map[string]interface{}{
-			"ID": node.ID, "Name": node.Name, "Organisation": node.Organisation, "Status": node.Status,
+			"ID": node.ID, "Name": node.Name, "Is Cordoned": fmt.Sprintf("%t", node.IsCordoned), "Organisation": node.Organisation, "Status": node.Status,
 			"Groups": strings.Join(node.Groups, ","), "Cpu Usage": cpuUsage, "Mem Usage": memUsage, "Last Seen": node.LastSeen.Format("2006-01-02 15:04:05"),
 		})
 	}

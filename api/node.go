@@ -21,6 +21,7 @@ type Node struct {
 	CpuFree      int64     `json:"cpu_free"`
 	MemTotal     int64     `json:"mem_total"`
 	MemFree      int64     `json:"mem_free"`
+	IsCordoned   bool      `json:"is_cordoned"`
 	LastSeen     time.Time `json:"last_seen"`
 }
 
@@ -185,6 +186,26 @@ func (c *nodesClient) Reject(ctx context.Context, nodeID, runnerID string) (*Res
 // Complete completes a Runner by ID.
 func (c *nodesClient) Complete(ctx context.Context, nodeID, runnerID string) (*Response, error) {
 	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/runners/%s/complete", nodeID, runnerID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
+}
+
+// Cordon cordon a Node by ID.
+func (c *nodesClient) Cordon(ctx context.Context, id string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/cordon", id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
+}
+
+// Uncordon uncordon a Node by ID.
+func (c *nodesClient) Uncordon(ctx context.Context, id string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/uncordon", id), nil)
 	if err != nil {
 		return nil, err
 	}

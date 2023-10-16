@@ -8,6 +8,7 @@ import (
 	"github.com/hostinger/fireactions/server/models"
 	"github.com/hostinger/fireactions/server/scheduler/cache"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
+	"github.com/hostinger/fireactions/server/scheduler/filter/cordon"
 	"github.com/hostinger/fireactions/server/scheduler/filter/cpucapacity"
 	"github.com/hostinger/fireactions/server/scheduler/filter/group"
 	"github.com/hostinger/fireactions/server/scheduler/filter/heartbeat"
@@ -102,7 +103,8 @@ func (s *Scheduler) Schedule(r *models.Runner) error {
 
 func (s *Scheduler) registerFilters() {
 	filters := []filter.Filter{
-		organisation.New(), cpucapacity.New(), ramcapacity.New(), group.New(), heartbeat.New(), status.New(),
+		cordon.New(), organisation.New(),
+		cpucapacity.New(), ramcapacity.New(), group.New(), heartbeat.New(), status.New(),
 	}
 
 	for _, filter := range filters {

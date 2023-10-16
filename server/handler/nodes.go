@@ -34,6 +34,10 @@ func RegisterNodesV1(r gin.IRouter, log *zerolog.Logger, scheduler Scheduler, st
 		AcceptNodeRunnerHandlerFuncV1(log, store))
 	r.POST("/nodes/:id/runners/:runner/reject",
 		RejectNodeRunnerHandlerFuncV1(log, store))
+	r.POST("/nodes/:id/cordon",
+		CordonNodeHandlerFuncV1(log, scheduler, store))
+	r.POST("/nodes/:id/uncordon",
+		UncordonNodeHandlerFuncV1(log, scheduler, store))
 }
 
 func GetNodesHandlerFuncV1(log *zerolog.Logger, store store.Store) gin.HandlerFunc {
@@ -139,6 +143,7 @@ func RegisterNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, storer 
 			Status:       models.NodeStatusUnknown,
 			CPU:          models.Resource{Capacity: int64(req.CpuTotal), Allocated: 0, OvercommitRatio: req.CpuOvercommitRatio},
 			RAM:          models.Resource{Capacity: int64(req.MemTotal), Allocated: 0, OvercommitRatio: req.MemOvercommitRatio},
+			IsCordoned:   true,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}
@@ -403,6 +408,54 @@ func GetNodeRunnersHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store
 	return f
 }
 
+func CordonNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		node, err := store.GetNode(ctx, ctx.Param("id"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		node.IsCordoned = true
+		err = store.SaveNode(ctx, node)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeUpdated, node))
+
+		log.Info().Msgf("cordoned node %s", node.Name)
+		ctx.Status(204)
+	}
+
+	return f
+}
+
+func UncordonNodeHandlerFuncV1(log *zerolog.Logger, scheduler Scheduler, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		node, err := store.GetNode(ctx, ctx.Param("id"))
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		node.IsCordoned = false
+		err = store.SaveNode(ctx, node)
+		if err != nil {
+			httperr.E(ctx, err)
+			return
+		}
+
+		scheduler.HandleEvent(models.NewNodeEvent(models.EventTypeNodeUpdated, node))
+
+		log.Info().Msgf("uncordoned node %s", node.Name)
+		ctx.Status(204)
+	}
+
+	return f
+}
+
 func convertNodeToNodeV1(node *models.Node) *v1.Node {
 	groups := make([]string, 0, len(node.Groups))
 	for _, group := range node.Groups {
@@ -419,6 +472,7 @@ func convertNodeToNodeV1(node *models.Node) *v1.Node {
 		CpuFree:      node.CPU.Available(),
 		MemTotal:     node.RAM.Capacity,
 		MemFree:      node.RAM.Available(),
+		IsCordoned:   node.IsCordoned,
 		LastSeen:     node.UpdatedAt,
 	}
 
