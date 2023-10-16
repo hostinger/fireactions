@@ -71,6 +71,16 @@ function download_cni_plugins_arm64()
   rm -rf tmp
 }
 
+function download_kernel_amd64()
+{
+  curl -fsSL -o vmlinux https://storage.googleapis.com/fireactions/kernels/amd64/5.10/vmlinux
+}
+
+function download_kernel_arm64()
+{
+  curl -fsSL -o vmlinux https://storage.googleapis.com/fireactions/kernels/arm64/5.10/vmlinux
+}
+
 function main()
 {
   echo "[+] Preparing dependencies for release..."
@@ -82,6 +92,7 @@ function main()
 
   download_firecracker_amd64
   download_cni_plugins_amd64
+  download_kernel_amd64
 
   mkdir -p cni/conf.d
   cp ../../contrib/fireactions.conflist cni/conf.d/fireactions.conflist
@@ -93,6 +104,7 @@ function main()
 
   download_firecracker_arm64
   download_cni_plugins_arm64
+  download_kernel_arm64
 
   mkdir -p cni/conf.d
   cp ../../contrib/fireactions.conflist cni/conf.d/fireactions.conflist

@@ -32,20 +32,24 @@ jobs:
       with:
         project_id: fireactions
 
-    - name: Build Linux kernel
+    - name: Clone Linux kernel
       run: |
         git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
-        cp contrib/kernels/kernel-x86_64-${{ matrix.version }}.config linux/.config
+
+    - name: Build Linux kernel
+      run: |
         cd linux
+        cp ../contrib/kernels/kernel-x86_64-${{ matrix.version }}.config .config
         make olddefconfig
         make ARCH=x86_64 -j$(nproc) vmlinux
+        mv vmlinux ../vmlinux
 
     - name: Upload Linux kernel to GCS
       uses: google-github-actions/upload-cloud-storage@v1
       with:
-        destination: fireactions/kernels/x86_64/${{ matrix.version }}
+        destination: fireactions/kernels/amd64/${{ matrix.version }}
         process_gcloudignore: false
-        path: linux/vmlinux
+        path: vmlinux
 
   build-arm64:
     runs-on: ubuntu-latest
@@ -70,17 +74,21 @@ jobs:
       with:
         project_id: fireactions
 
-    - name: Build Linux kernel
+    - name: Clone Linux kernel
       run: |
         git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
-        cp contrib/kernels/kernel-arm64-${{ matrix.version }}.config linux/.config
+
+    - name: Build Linux kernel
+      run: |
         cd linux
+        cp ../contrib/kernels/kernel-arm64-${{ matrix.version }}.config .config
         make olddefconfig
         make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) Image
+        mv arch/arm64/boot/Image ../vmlinux
 
     - name: Upload Linux kernel to GCS
       uses: google-github-actions/upload-cloud-storage@v1
       with:
-        destination: fireactions/kernels/amd64/${{ matrix.version }}
+        destination: fireactions/kernels/arm64/${{ matrix.version }}
         process_gcloudignore: false
-        path: linux/arch/arm64/boot/Image
+        path: vmlinux
