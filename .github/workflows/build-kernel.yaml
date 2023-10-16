@@ -1,0 +1,61 @@
+---
+name: build-kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Kernel version to build
+        required: true
+        default: '5.10'
+      arch:
+        description: Architecture
+        required: true
+        type: choice
+        default: 'x86_64'
+        options:
+        - x86_64
+        - arm64
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build-kernel:
+    runs-on:
+      - self-hosted
+      - lt-bnk # (konradasb): TODO: Change this to GitHub-hosted once released publicly
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: fireactions
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential ccache flex git kmod libelf-dev libssl-dev libncurses-dev gcc-7
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 100
+
+    - name: Build Linux kernel
+      run: |
+        git clone --branch v${{ inputs.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+        cp contrib/kernels/kernel-${{ inputs.arch }}-${{ inputs.version }}.config linux/.config
+        cd linux
+        make ARCH=${{ inputs.arch }} -j$(nproc) vmlinux
+
+    - name: Upload Linux kernel to GCS
+      uses: google-github-actions/upload-cloud-storage@v1
+      with:
+        destination: fireactions/kernels/${{ inputs.arch }}/${{ inputs.version }}
+        process_gcloudignore: false
+        path: linux/vmlinux
