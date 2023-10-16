@@ -23,9 +23,9 @@ permissions:
 
 jobs:
   build-kernel:
-    runs-on:
-      - self-hosted
-      - lt-bnk # (konradasb): TODO: Change this to GitHub-hosted once released publicly
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -39,13 +39,6 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: fireactions
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y bc bison build-essential binutils-multiarch ccache flex git kmod libelf-dev libssl-dev libncurses-dev gcc-7 gcc-7-aarch64-linux-gnu
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 100
-        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc-7 /usr/bin/aarch64-linux-gnu-gcc
 
     - name: Build Linux kernel
       run: |
