@@ -7,7 +7,6 @@ Type=simple
 User=runner
 ExecStart=/home/runner/bin/runsvc.sh
 ExecStartPre=/home/runner/runner-setup.sh
-ExecStopPost=/usr/bin/sudo /usr/sbin/reboot
 EnvironmentFile=/etc/default/runner
 TimeoutStopSec=5min
 WorkingDirectory=/home/runner
