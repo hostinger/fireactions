@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        description: 'Version of the GitHub runner to build'
         required: true
 
 permissions:
@@ -47,7 +48,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         provenance: false
-        context: contrib
+        context: .
         file: contrib/${{ matrix.os }}.Dockerfile
         push: ${{ github.event_name != 'pull_request' }}
         tags: |
