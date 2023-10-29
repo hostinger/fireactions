@@ -108,7 +108,9 @@ func runRunnersShowCmd(cmd *cobra.Command, args []string) error {
 func runRunnersCompleteCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	_, err := client.Runners().Complete(cmd.Context(), args[0])
+	_, err := client.
+		Runners().
+		SetStatus(cmd.Context(), args[0], fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseCompleted})
 	if err != nil {
 		return err
 	}

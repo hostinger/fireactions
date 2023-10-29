@@ -427,16 +427,6 @@ func (c *runnersClient) GetRemoveToken(ctx context.Context, id string) (*RunnerR
 	return &token, response, nil
 }
 
-// Complete completes a Runner by ID.
-func (c *runnersClient) Complete(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/runners/%s/complete", id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.client.Do(req, nil)
-}
-
 // RunnerSetStatusRequest represents a request to set the status of a Runner by
 // ID.
 type RunnerSetStatusRequest struct {
@@ -446,6 +436,17 @@ type RunnerSetStatusRequest struct {
 // SetStatus sets the status of a Runner by ID.
 func (c *runnersClient) SetStatus(ctx context.Context, id string, runnerSetStatusRequest RunnerSetStatusRequest) (*Response, error) {
 	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/runners/%s/status", id), runnerSetStatusRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.client.Do(req, nil)
+}
+
+// Delete deletes a Runner by ID. This is a soft delete. The Runner will be
+// marked as deleted but will not be removed from the database.
+func (c *runnersClient) Delete(ctx context.Context, id string) (*Response, error) {
+	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/runners/%s", id), nil)
 	if err != nil {
 		return nil, err
 	}

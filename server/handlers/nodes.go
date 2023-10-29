@@ -64,7 +64,7 @@ func NodeHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFunc 
 func NodeRunnersHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
 		runners, err := store.GetRunners(ctx, func(r *fireactions.Runner) bool {
-			if r.NodeID == nil {
+			if r.NodeID == nil || r.DeletedAt != nil {
 				return false
 			}
 

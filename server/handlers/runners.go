@@ -24,11 +24,11 @@ func RegisterRunnersHandlers(
 	runners := router.Group("/runners")
 	{
 		runners.GET("", RunnersHandlerFunc(logger, store))
-		runners.POST("/:id/complete", RunnerCompleteHandlerFunc(logger, store))
 		runners.GET("/:id", RunnerHandlerFunc(logger, store))
 		runners.GET("/:id/registration-token", RunnerRegistrationTokenHandlerFunc(logger, store, tokenGetter))
 		runners.GET("/:id/remove-token", RunnerRemoveTokenHandlerFunc(logger, store, tokenGetter))
 		runners.PATCH("/:id/status", RunnerSetStatusHandlerFunc(logger, store))
+		runners.DELETE("/:id", RunnerDeleteHandlerFunc(logger, store))
 	}
 }
 
@@ -48,7 +48,7 @@ func RunnersHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFu
 		}
 
 		runners, err := store.GetRunners(ctx, func(r *fireactions.Runner) bool {
-			if r.Status.Phase == fireactions.RunnerPhaseSucceeded {
+			if r.DeletedAt != nil {
 				return false
 			}
 
@@ -80,22 +80,6 @@ func RunnerHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFun
 		}
 
 		ctx.JSON(200, runner)
-	}
-
-	return f
-}
-
-// RunnerCompleteHandlerFunc returns a HandlerFunc that handles HTTP requests to
-// endpoint POST /api/v1/runners/:id/complete
-func RunnerCompleteHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFunc {
-	f := func(ctx *gin.Context) {
-		err := store.DeallocateRunner(ctx, ctx.Param("id"))
-		if err != nil {
-			ctx.Error(err)
-			return
-		}
-
-		ctx.Status(204)
 	}
 
 	return f
@@ -157,6 +141,28 @@ func RunnerSetStatusHandlerFunc(logger *zerolog.Logger, store store.Store) gin.H
 		}
 
 		_, err = store.SetRunnerStatus(ctx, ctx.Param("id"), fireactions.RunnerStatus(request))
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		ctx.Status(204)
+	}
+
+	return f
+}
+
+// RunnerDeleteHandlerFunc returns a HandlerFunc that handles HTTP requests to
+// endpoint DELETE /api/v1/runners/:id
+func RunnerDeleteHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		err := store.DeallocateRunner(ctx, ctx.Param("id"))
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		err = store.SoftDeleteRunner(ctx, ctx.Param("id"))
 		if err != nil {
 			ctx.Error(err)
 			return

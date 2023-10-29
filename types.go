@@ -45,7 +45,7 @@ type RunnerPhase string
 const (
 	RunnerPhasePending   RunnerPhase = "Pending"
 	RunnerPhaseRunning   RunnerPhase = "Running"
-	RunnerPhaseSucceeded RunnerPhase = "Succeeded"
+	RunnerPhaseCompleted RunnerPhase = "Completed"
 	RunnerPhaseFailed    RunnerPhase = "Failed"
 )
 

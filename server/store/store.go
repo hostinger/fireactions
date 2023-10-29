@@ -24,6 +24,8 @@ type Store interface {
 	SetRunnerStatus(ctx context.Context, id string, status fireactions.RunnerStatus) (*fireactions.Runner, error)
 	AllocateRunner(ctx context.Context, nodeID string, runnerID string) error
 	DeallocateRunner(ctx context.Context, runnerID string) error
+	SoftDeleteRunner(ctx context.Context, id string) error
+	HardDeleteRunner(ctx context.Context, id string) error
 
 	Close() error
 }

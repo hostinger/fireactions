@@ -208,7 +208,7 @@ func (m *Manager) reconcileRunner(ctx context.Context, runner *fireactions.Runne
 	switch runner.Status.Phase {
 	case fireactions.RunnerPhasePending, fireactions.RunnerPhaseRunning:
 		return m.ensureRunnerStarted(ctx, runner)
-	case fireactions.RunnerPhaseSucceeded, fireactions.RunnerPhaseFailed:
+	case fireactions.RunnerPhaseCompleted, fireactions.RunnerPhaseFailed:
 		return m.ensureRunnerStopped(ctx, runner)
 	default:
 		return fmt.Errorf("unknown runner lifecycle phase: %s", runner.Status.Phase)
@@ -264,9 +264,9 @@ func (m *Manager) ensureRunnerStopped(ctx context.Context, runner *fireactions.R
 
 	m.client.
 		Runners().
-		Complete(context.Background(), runner.ID)
+		Delete(context.Background(), runner.ID)
 	if err != nil {
-		return fmt.Errorf("error completing runner: %w", err)
+		return fmt.Errorf("error deleting runner: %w", err)
 	}
 
 	delete(m.machines, runner.ID)

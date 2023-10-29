@@ -102,25 +102,7 @@ func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 			return err
 		}
 
-		runner.Status = fireactions.RunnerStatus{Phase: fireactions.RunnerPhaseSucceeded}
-		runner.UpdatedAt = time.Now()
-
-		data, err := json.Marshal(runner)
-		if err != nil {
-			return err
-		}
-
-		err = runnersBucket.Put([]byte(runner.ID), data)
-		if err != nil {
-			return err
-		}
-
-		if runner.NodeID == nil {
-			return nil
-		}
-
 		nodesBucket := tx.Bucket([]byte("nodes"))
-
 		v = nodesBucket.Get([]byte(*runner.NodeID))
 		if v == nil {
 			return store.ErrNotFound
@@ -136,12 +118,25 @@ func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 		node.RAM.Release(runner.Resources.MemoryBytes)
 		node.UpdatedAt = time.Now()
 
-		data, err = json.Marshal(node)
+		data, err := json.Marshal(node)
 		if err != nil {
 			return err
 		}
 
 		err = nodesBucket.Put([]byte(node.ID), data)
+		if err != nil {
+			return err
+		}
+
+		runner.NodeID = nil
+		runner.UpdatedAt = time.Now()
+
+		data, err = json.Marshal(runner)
+		if err != nil {
+			return err
+		}
+
+		err = runnersBucket.Put([]byte(runner.ID), data)
 		if err != nil {
 			return err
 		}
@@ -248,4 +243,54 @@ func (s *Store) SetRunnerStatus(ctx context.Context, id string, status fireactio
 	}
 
 	return runner, nil
+}
+
+func (s *Store) SoftDeleteRunner(ctx context.Context, id string) error {
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("runners"))
+
+		v := b.Get([]byte(id))
+		if v == nil {
+			return store.ErrNotFound
+		}
+
+		runner := &fireactions.Runner{}
+		err := json.Unmarshal(v, runner)
+		if err != nil {
+			return err
+		}
+
+		deletedAt := time.Now()
+		runner.DeletedAt = &deletedAt
+		runner.UpdatedAt = time.Now()
+		data, err := json.Marshal(runner)
+		if err != nil {
+			return err
+		}
+
+		return b.Put([]byte(id), data)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) HardDeleteRunner(ctx context.Context, id string) error {
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("runners"))
+
+		v := b.Get([]byte(id))
+		if v == nil {
+			return store.ErrNotFound
+		}
+
+		return b.Delete([]byte(id))
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

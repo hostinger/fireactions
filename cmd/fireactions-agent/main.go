@@ -67,7 +67,7 @@ func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fire
 		return fmt.Errorf("error configuring GitHub runner: %w", err)
 	}
 
-	logger.Info().Msgf("starting GitHub runner")
+	logger.Info().Msgf("Starting GitHub runner")
 
 	runsvcShPath := fmt.Sprintf("%s/run.sh", cwd)
 	if _, err := os.Stat(runsvcShPath); os.IsNotExist(err) {
@@ -104,7 +104,7 @@ func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fire
 
 	_, err = client.
 		Runners().
-		Complete(ctx, runner.ID)
+		SetStatus(ctx, runner.ID, fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseCompleted})
 	if err != nil {
 		logger.Error().Err(err).Msgf("error completing Fireactions Runner")
 	}
@@ -120,9 +120,8 @@ func configureGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *
 		return nil
 	}
 
-	logger.Info().Msgf("configuring GitHub runner")
+	logger.Info().Msgf("Configuring GitHub runner")
 
-	logger.Info().Msgf("retrieving GitHub runner registration token")
 	token, _, err := client.
 		Runners().
 		GetRegistrationToken(ctx, runner.ID)
