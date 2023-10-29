@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/webhooks/v6 v6.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/opencontainers/image-spec v1.1.0-rc5
-	github.com/rs/zerolog v1.30.0
+	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.3
 	go.etcd.io/bbolt v1.3.7
@@ -152,7 +152,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.14.0
 	golang.org/x/mod v0.13.0
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
