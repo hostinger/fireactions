@@ -118,7 +118,7 @@ func (s *Scheduler) init() error {
 	}
 
 	runners, err := s.store.GetRunners(context.Background(), func(m *fireactions.Runner) bool {
-		return m.NodeID == nil
+		return m.NodeID == nil && m.DeletedAt != nil
 	})
 	if err != nil {
 		return err
