@@ -1,0 +1,89 @@
+---
+name: test-performance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  github:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+        - '5.10'
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Clone Linux kernel
+      run: |
+        git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+
+    - name: Build Linux kernel
+      run: |
+        cd linux
+        cp ../contrib/kernels/kernel-x86_64-${{ matrix.version }}.config .config
+        make olddefconfig
+        make ARCH=x86_64 -j$(nproc) vmlinux
+        mv vmlinux ../vmlinux
+
+  current:
+    runs-on:
+      - self-hosted
+      - bnk
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+        - '5.10'
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Clone Linux kernel
+      run: |
+        git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+
+    - name: Build Linux kernel
+      run: |
+        cd linux
+        cp ../contrib/kernels/kernel-x86_64-${{ matrix.version }}.config .config
+        make olddefconfig
+        make ARCH=x86_64 -j$(nproc) vmlinux
+        mv vmlinux ../vmlinux
+
+  fireactions:
+    runs-on:
+      - self-hosted
+      - fireactions-4vcpu-8gb
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+        - '5.10'
+    container:
+      image: ghcr.io/konradasb/docker-kernel-build:e89c0048a44398df9e63081c20c2ffbdea06dae6
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Clone Linux kernel
+      run: |
+        git clone --branch v${{ matrix.version }} --single-branch --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git linux
+
+    - name: Build Linux kernel
+      run: |
+        cd linux
+        cp ../contrib/kernels/kernel-x86_64-${{ matrix.version }}.config .config
+        make olddefconfig
+        make ARCH=x86_64 -j$(nproc) vmlinux
+        mv vmlinux ../vmlinux
