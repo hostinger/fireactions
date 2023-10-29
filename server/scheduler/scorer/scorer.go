@@ -1,6 +1,6 @@
 package scorer
 
-import "github.com/hostinger/fireactions/server/models"
+import "github.com/hostinger/fireactions"
 
 // Scorer is an interface that scores nodes based on certain criteria.
 type Scorer interface {
@@ -8,8 +8,5 @@ type Scorer interface {
 	Name() string
 
 	// Score scores nodes based on certain criteria.
-	Score(runner *models.Runner, node *models.Node) (float64, error)
-
-	// String returns a string representation of the Scorer.
-	String() string
+	Score(node *fireactions.Node) (float64, error)
 }

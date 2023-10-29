@@ -3,7 +3,7 @@ package filter
 import (
 	"context"
 
-	"github.com/hostinger/fireactions/server/models"
+	"github.com/hostinger/fireactions"
 )
 
 // Filter is an interface that filters out nodes that don't meet certain
@@ -13,8 +13,5 @@ type Filter interface {
 	Name() string
 
 	// Filter filters out nodes that don't meet certain criteria.
-	Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error)
-
-	// String returns a string representation of the Filter.
-	String() string
+	Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error)
 }

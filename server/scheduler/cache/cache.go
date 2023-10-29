@@ -3,26 +3,26 @@ package cache
 import (
 	"sync"
 
-	"github.com/hostinger/fireactions/server/models"
+	"github.com/hostinger/fireactions"
 )
 
 type Cache interface {
-	GetNodes() ([]*models.Node, error)
-	AddNode(n *models.Node) error
-	DelNode(n *models.Node) error
-	PutNode(n *models.Node) error
+	GetNodes() ([]*fireactions.Node, error)
+	AddNode(n *fireactions.Node) error
+	DelNode(n *fireactions.Node) error
+	PutNode(n *fireactions.Node) error
 	DeepCopy() interface{}
 }
 
 type cacheImpl struct {
-	nodes   map[string]*models.Node
+	nodes   map[string]*fireactions.Node
 	nodesMu sync.RWMutex
 }
 
 // New creates a new implementation of Scheduler Cache
 func New() *cacheImpl {
 	c := &cacheImpl{
-		nodes:   make(map[string]*models.Node),
+		nodes:   make(map[string]*fireactions.Node),
 		nodesMu: sync.RWMutex{},
 	}
 
@@ -30,7 +30,7 @@ func New() *cacheImpl {
 }
 
 // AddNode adds a new node to the cache
-func (c *cacheImpl) AddNode(node *models.Node) error {
+func (c *cacheImpl) AddNode(node *fireactions.Node) error {
 	c.nodesMu.Lock()
 	defer c.nodesMu.Unlock()
 
@@ -44,7 +44,7 @@ func (c *cacheImpl) AddNode(node *models.Node) error {
 }
 
 // PutNode updates a node in the cache
-func (c *cacheImpl) PutNode(node *models.Node) error {
+func (c *cacheImpl) PutNode(node *fireactions.Node) error {
 	c.nodesMu.Lock()
 	defer c.nodesMu.Unlock()
 
@@ -58,7 +58,7 @@ func (c *cacheImpl) PutNode(node *models.Node) error {
 }
 
 // DelNode deletes a node from the cache
-func (c *cacheImpl) DelNode(node *models.Node) error {
+func (c *cacheImpl) DelNode(node *fireactions.Node) error {
 	c.nodesMu.Lock()
 	defer c.nodesMu.Unlock()
 
@@ -67,11 +67,11 @@ func (c *cacheImpl) DelNode(node *models.Node) error {
 }
 
 // GetNode gets a node from the cache
-func (c *cacheImpl) GetNodes() ([]*models.Node, error) {
+func (c *cacheImpl) GetNodes() ([]*fireactions.Node, error) {
 	c.nodesMu.RLock()
 	defer c.nodesMu.RUnlock()
 
-	nodes := make([]*models.Node, 0, len(c.nodes))
+	nodes := make([]*fireactions.Node, 0, len(c.nodes))
 	for _, node := range c.nodes {
 		nodes = append(nodes, node)
 	}
@@ -84,7 +84,7 @@ func (c *cacheImpl) DeepCopy() interface{} {
 	c.nodesMu.RLock()
 	defer c.nodesMu.RUnlock()
 
-	nodes := make(map[string]*models.Node, len(c.nodes))
+	nodes := make(map[string]*fireactions.Node, len(c.nodes))
 	for k, v := range c.nodes {
 		nodes[k] = v
 	}

@@ -1,4 +1,0 @@
-# Configuration file for /etc/systemd/system/runner.service
-
-ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/home/runner/hooks/job-completed.sh
-ACTIONS_RUNNER_HOOK_JOB_STARTED=/home/runner/hooks/job-started.sh

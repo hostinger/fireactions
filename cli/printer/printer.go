@@ -3,6 +3,7 @@ package printer
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -42,6 +43,13 @@ func PrintText(item Printable, out io.Writer, includeCols []string) {
 	cols := item.Cols()
 	if len(includeCols) > 0 && includeCols[0] != "" {
 		cols = includeCols
+	}
+
+	for _, c := range includeCols {
+		if _, ok := item.ColsMap()[c]; !ok {
+			fmt.Fprintf(out, "Column doesn't exist: %s. Available columns: %v\n", c, strings.Join(item.Cols(), ", "))
+			return
+		}
 	}
 
 	tw.SetHeader(cols)

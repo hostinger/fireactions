@@ -5,54 +5,38 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/hostinger/fireactions/server/models"
+	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/server/scheduler/cache"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
-	"github.com/hostinger/fireactions/server/scheduler/filter/cordon"
+	"github.com/hostinger/fireactions/server/scheduler/filter/affinity"
 	"github.com/hostinger/fireactions/server/scheduler/filter/cpucapacity"
-	"github.com/hostinger/fireactions/server/scheduler/filter/group"
 	"github.com/hostinger/fireactions/server/scheduler/filter/heartbeat"
-	"github.com/hostinger/fireactions/server/scheduler/filter/organisation"
 	"github.com/hostinger/fireactions/server/scheduler/filter/ramcapacity"
 	"github.com/hostinger/fireactions/server/scheduler/filter/status"
 	"github.com/hostinger/fireactions/server/scheduler/scorer"
 	"github.com/hostinger/fireactions/server/scheduler/scorer/freecpu"
 	"github.com/hostinger/fireactions/server/scheduler/scorer/freeram"
+	"github.com/hostinger/fireactions/server/store"
 	"github.com/rs/zerolog"
 )
 
-// Storer is an interface that stores and retrieves Runners and Nodes.
-type Storer interface {
-	ListRunners(ctx context.Context) ([]*models.Runner, error)
-	SaveRunner(ctx context.Context, runner *models.Runner) error
-	ListNodes(ctx context.Context) ([]*models.Node, error)
-	ReserveNodeResources(ctx context.Context, nodeID string, vcpus int64, ram int64) error
-}
-
 // Scheduler is responsible for scheduling Runners onto Nodes.
 type Scheduler struct {
-	queue        *SchedulingQueue
+	queue        *schedulingQueue
 	cache        cache.Cache
-	store        Storer
+	store        store.Store
 	filters      map[string]filter.Filter
 	scorers      map[string]scorer.Scorer
 	shutdownOnce sync.Once
 	shutdownCh   chan struct{}
 	isShutdown   bool
-	config       *Config
 	logger       *zerolog.Logger
 }
 
 // New creates a new Scheduler.
-func New(logger zerolog.Logger, cfg *Config, store Storer) (*Scheduler, error) {
-	err := cfg.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	logger = logger.With().Str("subsystem", "scheduler").Logger()
+func New(logger zerolog.Logger, store store.Store) (*Scheduler, error) {
 	s := &Scheduler{
-		queue:        NewSchedulingQueue(),
+		queue:        newSchedulingQueue(),
 		filters:      make(map[string]filter.Filter, 0),
 		scorers:      make(map[string]scorer.Scorer, 0),
 		cache:        cache.New(),
@@ -60,12 +44,18 @@ func New(logger zerolog.Logger, cfg *Config, store Storer) (*Scheduler, error) {
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
 		isShutdown:   false,
-		config:       cfg,
 		logger:       &logger,
 	}
 
-	s.registerFilters()
-	s.registerScorers()
+	filters := []filter.Filter{cpucapacity.New(), ramcapacity.New(), heartbeat.New(), status.New(), affinity.New()}
+	for _, filter := range filters {
+		s.filters[filter.Name()] = filter
+	}
+
+	scorers := []scorer.Scorer{freecpu.New(), freeram.New()}
+	for _, scorer := range scorers {
+		s.scorers[scorer.Name()] = scorer
+	}
 
 	return s, nil
 }
@@ -86,14 +76,14 @@ func (s *Scheduler) Shutdown() {
 	s.shutdownOnce.Do(func() { s.isShutdown = true; close(s.shutdownCh) })
 }
 
-// Schedule places a Runner into the scheduling queue. If the Runner is already
+// AddToQueue places a Runner into the scheduling queue. If the Runner is already
 // in the queue, an error is returned.
-func (s *Scheduler) Schedule(r *models.Runner) error {
+func (s *Scheduler) AddToQueue(m *fireactions.Runner) error {
 	if s.isShutdown {
 		return nil
 	}
 
-	err := s.queue.Enqueue(r)
+	err := s.queue.Enqueue(m)
 	if err != nil {
 		return fmt.Errorf("error enqueueing runner: %w", err)
 	}
@@ -101,41 +91,19 @@ func (s *Scheduler) Schedule(r *models.Runner) error {
 	return nil
 }
 
-func (s *Scheduler) registerFilters() {
-	filters := []filter.Filter{
-		cordon.New(), organisation.New(),
-		cpucapacity.New(), ramcapacity.New(), group.New(), heartbeat.New(), status.New(),
+// RemoveFromQueue removes a Runner from the scheduling queue. If the Runner is not
+// in the queue, an error is returned.
+func (s *Scheduler) RemoveFromQueue(id string) error {
+	if s.isShutdown {
+		return nil
 	}
 
-	for _, filter := range filters {
-		_, ok := s.filters[filter.Name()]
-		if ok {
-			panic(fmt.Sprintf("filter %s already exists", filter.Name()))
-		}
-
-		s.filters[filter.Name()] = filter
-		s.logger.Debug().Msgf("registered filter %s", filter)
-	}
-}
-
-func (s *Scheduler) registerScorers() {
-	scorers := []scorer.Scorer{
-		freecpu.New(s.config.FreeCpuScorerMultiplier), freeram.New(s.config.FreeRamScorerMultiplier),
-	}
-
-	for _, scorer := range scorers {
-		_, ok := s.scorers[scorer.Name()]
-		if ok {
-			panic(fmt.Sprintf("scorer %s already exists", scorer.Name()))
-		}
-
-		s.scorers[scorer.Name()] = scorer
-		s.logger.Debug().Msgf("registered scorer %s", scorer)
-	}
+	s.queue.Remove(id)
+	return nil
 }
 
 func (s *Scheduler) init() error {
-	nodes, err := s.store.ListNodes(context.Background())
+	nodes, err := s.store.GetNodes(context.Background(), nil)
 	if err != nil {
 		return err
 	}
@@ -146,17 +114,15 @@ func (s *Scheduler) init() error {
 			return err
 		}
 
-		s.logger.Debug().Msgf("added existing node %s to internal cache", n)
+		s.logger.Debug().Str("node", n.Name).Msgf("added existing node to scheduler cache")
 	}
 
-	runners, err := s.store.ListRunners(context.Background())
+	runners, err := s.store.GetRunners(context.Background(), func(m *fireactions.Runner) bool {
+		return m.NodeID == nil
+	})
 	if err != nil {
 		return err
 	}
-
-	runners = models.FilterRunners(runners, func(r *models.Runner) bool {
-		return r.Status == models.RunnerStatusPending
-	})
 
 	for _, r := range runners {
 		err := s.queue.Enqueue(r)
@@ -164,7 +130,7 @@ func (s *Scheduler) init() error {
 			return err
 		}
 
-		s.logger.Debug().Msgf("added existing runner %s to scheduling queue", r)
+		s.logger.Debug().Str("runner", r.Name).Msgf("added existing runner without assigned node to scheduler queue")
 	}
 
 	return nil
@@ -183,11 +149,7 @@ func (s *Scheduler) runScheduleLoop() {
 
 func (s *Scheduler) schedule() {
 	runner, err := s.queue.Dequeue()
-	switch err {
-	case nil:
-	case ErrQueueClosed:
-		return
-	default:
+	if err != nil {
 		s.logger.Error().Err(err).Msg("error dequeuing runner")
 		return
 	}
@@ -200,68 +162,80 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	feasibleNodes := findFeasibleNodes(runner, nodes, s.filters)
+	feasibleNodes := s.findFeasibleNodes(runner, nodes)
 	if len(feasibleNodes) == 0 {
 		s.queue.Block(runner.ID)
 		return
 	}
 
-	bestNode := findBestNode(runner, feasibleNodes, s.scorers)
+	bestNode := s.findBestNode(feasibleNodes)
 	if bestNode == nil {
 		s.queue.Block(runner.ID)
 		return
 	}
 
-	runner.Status = models.RunnerStatusAssigned
-	runner.Node = bestNode
-	err = s.store.SaveRunner(context.Background(), runner)
+	err = s.store.AllocateRunner(context.Background(), bestNode.ID, runner.ID)
 	if err != nil {
-		s.logger.Error().Err(err).Msg("error updating runner")
+		s.logger.Error().Err(err).Msg("error assigning runner to node")
 		return
 	}
 
-	err = s.store.ReserveNodeResources(context.Background(), bestNode.ID, runner.Flavor.VCPUs, runner.Flavor.GetMemorySizeBytes())
-	if err != nil {
-		s.logger.Error().Err(err).Msg("error reserving node resources")
-		return
-	}
-
-	s.logger.Info().Msgf("runner %s is assigned to node %s", runner.ID, bestNode.ID)
+	s.logger.Info().Str("runner", runner.Name).Str("node", bestNode.Name).
+		Msg("assigned runner to node")
 }
 
-func findFeasibleNodes(runner *models.Runner, nodes []*models.Node, filters map[string]filter.Filter) []*models.Node {
-	feasible := make([]*models.Node, 0, len(nodes))
-	for _, n := range nodes {
-		if !runFilters(runner, n, filters) {
+func (s *Scheduler) findFeasibleNodes(runner *fireactions.Runner, nodes []*fireactions.Node) []*fireactions.Node {
+	feasible := make([]*fireactions.Node, 0, len(nodes))
+
+	results := make(map[string]error, len(nodes))
+	for _, node := range nodes {
+		ok, reason := s.runFilters(runner, node)
+		if !ok {
+			results[node.ID] = reason
 			continue
 		}
-		feasible = append(feasible, n)
+
+		feasible = append(feasible, node)
+	}
+
+	if len(feasible) == 0 {
+		s.logger.Debug().Str("runner", runner.Name).Msgf("scheduler: no feasible nodes found for runner: %d/%d nodes filtered out: %v", len(nodes)-len(feasible), len(nodes), results)
 	}
 
 	return feasible
 }
 
-func findBestNode(runner *models.Runner, nodes []*models.Node, scorers map[string]scorer.Scorer) *models.Node {
-	if len(nodes) == 0 {
-		return nil
+func (s *Scheduler) runFilters(runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
+	for _, filter := range s.filters {
+		ok, reason := filter.Filter(context.Background(), runner, node)
+
+		if !ok {
+			return false, reason
+		}
+
+		continue
 	}
 
-	nodesMap := make(map[string]*models.Node, len(nodes))
+	return true, nil
+}
+
+func (s *Scheduler) findBestNode(nodes []*fireactions.Node) *fireactions.Node {
+	nodesMap := make(map[string]*fireactions.Node, len(nodes))
 	for _, n := range nodes {
 		nodesMap[n.ID] = n
 	}
 
 	scores := make(map[string]float64, len(nodes))
-	for _, n := range nodes {
-		result, err := runScorers(runner, n, scorers)
+	for _, node := range nodes {
+		result, err := s.runScorers(node)
 		if err != nil {
 			continue
 		}
 
-		scores[n.ID] = result
+		scores[node.ID] = result
 	}
 
-	var bestNode *models.Node
+	var bestNode *fireactions.Node
 	var bestScore float64
 
 	for nodeID, score := range scores {
@@ -275,10 +249,10 @@ func findBestNode(runner *models.Runner, nodes []*models.Node, scorers map[strin
 	return bestNode
 }
 
-func runScorers(runner *models.Runner, node *models.Node, scorers map[string]scorer.Scorer) (float64, error) {
+func (s *Scheduler) runScorers(node *fireactions.Node) (float64, error) {
 	var score float64
-	for _, scorer := range scorers {
-		result, err := scorer.Score(runner, node)
+	for _, scorer := range s.scorers {
+		result, err := scorer.Score(node)
 		if err != nil {
 			return 0, err
 		}
@@ -287,21 +261,4 @@ func runScorers(runner *models.Runner, node *models.Node, scorers map[string]sco
 	}
 
 	return score, nil
-}
-
-func runFilters(runner *models.Runner, node *models.Node, filters map[string]filter.Filter) bool {
-	for _, filter := range filters {
-		ok, err := filter.Filter(context.Background(), runner, node)
-		if err != nil {
-			return false
-		}
-
-		if ok {
-			continue
-		}
-
-		return false
-	}
-
-	return true
 }

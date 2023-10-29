@@ -2,33 +2,29 @@ package status
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/hostinger/fireactions/server/models"
+	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
 )
 
-// Filter is a filter that filters out nodes that are not online.
 type Filter struct {
+}
+
+func New() *Filter {
+	return &Filter{}
 }
 
 var _ filter.Filter = &Filter{}
 
-// Name returns the name of the filter.
 func (f *Filter) Name() string {
 	return "status"
 }
 
-// Filter filters out nodes that are not online.
-func (f *Filter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
-	return node.Status == models.NodeStatusOnline, nil
-}
+func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
+	if node.Status != fireactions.NodeStatusReady {
+		return false, fmt.Errorf("node is not ready: status %s", node.Status)
+	}
 
-// String returns a string representation of the filter.
-func (f *Filter) String() string {
-	return f.Name()
-}
-
-// New returns a new Filter.
-func New() *Filter {
-	return &Filter{}
+	return true, nil
 }

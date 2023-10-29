@@ -15,6 +15,7 @@ type cpuInfoCollector struct {
 	cpuInfo *CpuInfo
 }
 
+// Collect collects information about the CPU.
 func (c *cpuInfoCollector) Collect(ctx context.Context) (*CpuInfo, error) {
 	cpu, err := cpu.InfoWithContext(ctx)
 	if err != nil {

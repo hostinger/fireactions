@@ -2,14 +2,17 @@ package cpucapacity
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/hostinger/fireactions/server/models"
+	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
 )
 
-// Filter is a filter that filters out nodes that don't have enough CPU capacity
-// to run a workload.
 type Filter struct {
+}
+
+func New() *Filter {
+	return &Filter{}
 }
 
 var _ filter.Filter = &Filter{}
@@ -19,18 +22,10 @@ func (f *Filter) Name() string {
 	return "cpu-capacity"
 }
 
-// Filter filters out nodes that don't have enough CPU capacity to run a
-// workload.
-func (f *Filter) Filter(ctx context.Context, runner *models.Runner, node *models.Node) (bool, error) {
-	return node.CPU.IsAvailable(runner.Flavor.VCPUs), nil
-}
+func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
+	if !node.CPU.IsAvailable(runner.Resources.VCPUs) {
+		return false, fmt.Errorf("node doesn't have enough CPU capacity: requested %d, available %d", runner.Resources.VCPUs, node.CPU.Available())
+	}
 
-// String returns a string representation of the Filter.
-func (f *Filter) String() string {
-	return f.Name()
-}
-
-// New returns a new Filter.
-func New() *Filter {
-	return &Filter{}
+	return true, nil
 }

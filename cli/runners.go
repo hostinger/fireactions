@@ -1,10 +1,12 @@
 package cli
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"os"
+	"strings"
 
-	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/cli/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,7 +15,7 @@ import (
 func newRunnersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "runners",
-		Short: "Subcommand for managing Runner(s)",
+		Short: "Show subcommands for managing GitHub runners",
 	}
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if viper.GetString("fireactions-server-url") == "" {
@@ -29,40 +31,52 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newRunnersListCmd(), newRunnersGetCmd())
-	return cmd
-}
-
-func newRunnersGetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "get",
-		Short:   "Get a specific Runner by ID",
-		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"show"},
-		RunE:    runRunnersGetCmd,
-	}
-
+	cmd.AddCommand(newRunnersListCmd(), newRunnersShowCmd(), newRunnersCompleteCmd())
 	return cmd
 }
 
 func newRunnersListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls",
-		Short:   "List all created GitHub runners",
-		Args:    cobra.NoArgs,
+		Short:   "List all GitHub runners",
 		Aliases: []string{"list"},
+		Args:    cobra.NoArgs,
 		RunE:    runRunnersListCmd,
 	}
 
 	return cmd
 }
 
+func newRunnersShowCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "show ID",
+		Short:   "Get a specific GitHub runner by ID",
+		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"get"},
+		RunE:    runRunnersShowCmd,
+	}
+
+	return cmd
+}
+
+func newRunnersCompleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "complete ID",
+		Short:   "Mark a GitHub runner as completed",
+		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"done"},
+		RunE:    runRunnersCompleteCmd,
+	}
+
+	return cmd
+}
+
 func runRunnersListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	runners, _, err := client.Runners().List(cmd.Context(), nil)
 	if err != nil {
-		return fmt.Errorf("error fetching Runner(s): %w", err)
+		return err
 	}
 
 	item := &printer.Runner{Runners: runners}
@@ -70,15 +84,34 @@ func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runRunnersGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+func runRunnersShowCmd(cmd *cobra.Command, args []string) error {
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	runner, _, err := client.Runners().Get(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Runner(s): %w", err)
+		return err
 	}
 
-	item := &printer.Runner{Runners: api.Runners{runner}}
-	printer.PrintText(item, cmd.OutOrStdout(), nil)
+	var data bytes.Buffer
+	enc := json.NewEncoder(&data)
+	enc.SetIndent("", " ")
+	err = enc.Encode(runner)
+	if err != nil {
+		return err
+	}
+
+	cmd.SetOut(cmd.OutOrStdout())
+	cmd.Println(strings.TrimSpace(data.String()))
+	return nil
+}
+
+func runRunnersCompleteCmd(cmd *cobra.Command, args []string) error {
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	_, err := client.Runners().Complete(cmd.Context(), args[0])
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -1,3 +1,21 @@
+FROM golang:1.20 AS fireactions-agent
+
+WORKDIR /app
+
+COPY go.mod ./
+COPY go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=0  \
+    GOOS=linux     \
+    GOARCH=amd64
+
+RUN go build -v -o fireactions-agent ./cmd/fireactions-agent
+
 FROM ubuntu:20.04
 
 ARG TARGETPLATFORM
@@ -39,23 +57,22 @@ RUN systemctl enable haveged.service
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
-RUN adduser --disabled-password --gecos "" --uid 1001 runner    \
-    && groupadd docker --gid 121                                \
-    && usermod -aG sudo runner                                  \
-    && usermod -aG docker runner                                \
+RUN adduser --disabled-password --gecos "" --uid 1001 fireactions-agent  \
+    && groupadd docker --gid 121                                         \
+    && usermod -aG docker fireactions-agent                              \
+    && usermod -aG sudo fireactions-agent                                \
     && echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers
 
-ENV HOME=/home/runner
-
-ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
-RUN mkdir /opt/hostedtoolcache && chgrp docker /opt/hostedtoolcache && chmod g+rwx /opt/hostedtoolcache
+RUN mkdir /opt/hostedtoolcache && chgrp docker /opt/hostedtoolcache && chmod g+rwx /opt/hostedtoolcache \
+    && echo "RUNNER_TOOL_CACHE=/opt/hostedtoolcache" >> /etc/environment
 
 RUN export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2)                                                                                                    \
     && if [ "$ARCH" = "amd64" ] || [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "i386" ]; then export ARCH=x64 ; fi                                                \
-    && cd /home/runner                                                                                                                                      \
+    && cd /home/fireactions-agent                                                                                                                           \
     && curl -fLo runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${ARCH}-${RUNNER_VERSION}.tar.gz \
     && tar xzf ./runner.tar.gz && rm -rf runner.tar.gz                                                                                                      \
-    && ./bin/installdependencies.sh && chown -R runner:docker /home/runner
+    && ./bin/installdependencies.sh                                                                                                                         \
+    && chown -R fireactions-agent:docker /home/fireactions-agent
 
 RUN install -m 0755 -d /etc/apt/keyrings                                                                            \ 
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg      \
@@ -82,12 +99,7 @@ RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 ENV PATH="${PATH}:${HOME}/.local/bin/"
 RUN echo "PATH=${PATH}" >> /etc/environment
 
-COPY overlay/etc /etc
-COPY overlay/usr /usr
-COPY --chown=runner:docker overlay/home/runner /home/runner
+COPY --from=fireactions-agent --chown=fireactions-agent:docker /app/fireactions-agent /usr/bin/fireactions-agent
+COPY contrib/overlay/etc /etc
 
-RUN systemctl enable runner.service
-
-USER runner
-
-ENTRYPOINT ["/bin/bash", "-c"]
+RUN systemctl enable fireactions-agent.service

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hostinger/fireactions/api"
+	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/cli/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,6 +42,9 @@ func newNodesListCmd() *cobra.Command {
 		Args:    cobra.NoArgs,
 		RunE:    runNodesListCmd,
 	}
+
+	cmd.Flags().StringSliceP("columns", "c", nil, "Selects the columns to be displayed in the output")
+	cmd.Flags().StringP("format", "f", "table", "Selects the output format. Supported formats: table, json, yaml")
 
 	return cmd
 }
@@ -95,7 +98,7 @@ func newNodesUncordonCmd() *cobra.Command {
 }
 
 func runNodesUncordonCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
@@ -111,7 +114,7 @@ func runNodesUncordonCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runNodesCordonCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
@@ -127,7 +130,7 @@ func runNodesCordonCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
@@ -143,20 +146,34 @@ func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runNodesGetCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
 	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
 	if err != nil {
 		return fmt.Errorf("error fetching Node(s): %w", err)
 	}
 
-	item := &printer.Node{Nodes: api.Nodes{node}}
+	item := &printer.Node{Nodes: []*fireactions.Node{node}}
 	printer.PrintText(item, cmd.OutOrStdout(), nil)
 	return nil
 }
 
 func runNodesListCmd(cmd *cobra.Command, args []string) error {
-	client := api.NewClient(nil, api.WithEndpoint(viper.GetString("fireactions-server-url")))
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	columns, err := cmd.Flags().GetStringSlice("columns")
+	if err != nil {
+		return fmt.Errorf("error parsing --columns flag: %w", err)
+	}
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return fmt.Errorf("error parsing --format flag: %w", err)
+	}
+
+	if format == "json" || format == "yaml" {
+		return fmt.Errorf("format %s is not supported yet", format)
+	}
 
 	nodes, _, err := client.Nodes().List(cmd.Context(), nil)
 	if err != nil {
@@ -164,6 +181,6 @@ func runNodesListCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	item := &printer.Node{Nodes: nodes}
-	printer.PrintText(item, cmd.OutOrStdout(), nil)
+	printer.PrintText(item, cmd.OutOrStdout(), columns)
 	return nil
 }

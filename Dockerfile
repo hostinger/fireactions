@@ -14,7 +14,7 @@ ENV GO111MODULE=on \
     GOOS=linux     \
     GOARCH=amd64
 
-RUN go build -v -o fireactions .
+RUN go build -v -o fireactions ./cmd/fireactions
 
 RUN adduser --disabled-password --uid 1000 --gecos '' appuser && \
     chown -R appuser /app
