@@ -21,5 +21,5 @@ jobs:
         package-name: fireactions
         release-type: go
         pull-request-title-pattern: 'chore${scope}: Release ${component} ${version}'
-        skip-github-release: true
         token: ${{ secrets.ORG_GITHUB_TOKEN }}
+        draft: true
