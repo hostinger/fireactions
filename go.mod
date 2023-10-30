@@ -14,7 +14,7 @@ require (
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.3
-	go.etcd.io/bbolt v1.3.7
+	go.etcd.io/bbolt v1.3.8
 )
 
 require (
