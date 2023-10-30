@@ -12,42 +12,42 @@ Example configuration for a client:
 
 ```yaml
 ---
-fireactions-server-url: http://127.0.0.1:8080
+fireactions_server_url: http://127.0.0.1:8080
 
 node:
   name: ""
-  cpu-overcommit-ratio: 1.0
-  ram-overcommit-ratio: 1.0
+  cpu_overcommit_ratio: 1.0
+  ram_overcommit_ratio: 1.0
   labels:
     fireactions/region: default
 
-poll-interval: 5s
+poll_interval: 5s
 
-heartbeat-success-threshold: 1
-heartbeat-failure-threshold: 1
-heartbeat-interval: 1s
+heartbeat_success_threshold: 1
+heartbeat_failure_threshold: 1
+heartbeat_interval: 1s
 
 firecracker:
-  binary-path: ./firecracker
-  kernel-image-path: vmlinux.bin
-  kernel-args: console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw
-  socket-path: /var/run/fireactions/%s.sock
-  log-file-path: /var/log/fireactions/%s.log
-  log-level: debug
+  binary_path: ./firecracker
+  kernel_image_path: vmlinux.bin
+  kernel_args: console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw
+  socket_path: /var/run/fireactions/%s.sock
+  log_file_path: /var/log/fireactions/%s.log
+  log_level: debug
 
 containerd:
   address: /run/containerd/containerd.sock
 
 cni:
-  conf-dir: ./cni/conf.d
-  bin-dirs:
+  conf_dir: ./cni/conf.d
+  bin_dirs:
   - ./cni/bin
 
 metrics:
-  listen-addr: 127.0.0.1:8080
+  listen_addr: 127.0.0.1:8080
   enabled: true
 
-log-level: debug
+log_level: debug
 ```
 
 ## Server configuration
@@ -59,26 +59,26 @@ Example configuration for a server:
 data-dir: /var/lib/fireactions
 
 http:
-  listen-addr: 0.0.0.0:8081
+  listen_addr: 0.0.0.0:8081
 
 github:
-  webhook-secret: SECRET
-  job-label-prefix: fireactions-
-  job-labels:
+  webhook_secret: SECRET
+  job_label_prefix: fireactions-
+  job_labels:
   - name: 2vcpu-2gb
-    allowed-repositories:
+    allowed_repositories:
     - *
     runner:
       image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
-      image-pull-policy: IfNotPresent
+      image_pull_policy: IfNotPresent
       resources:
-        memory-mb: 2048
+        memory_mb: 2048
         vcpus: 2
       affinity:
       - { key: fireactions/region, operator: In, values: [default] }
-  app-id: 123456
-  app-private-key: |
+  app_id: 123456
+  app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----
 
-log-level: debug
+log_level: debug
 ```

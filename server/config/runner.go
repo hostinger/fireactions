@@ -9,7 +9,7 @@ import (
 // RunnerConfig is the configuration for the Runner.
 type RunnerConfig struct {
 	Image           string                  `mapstructure:"image"`
-	ImagePullPolicy string                  `mapstructure:"image-pull-policy"`
+	ImagePullPolicy string                  `mapstructure:"image_pull_policy"`
 	Affinity        []*RunnerAffinityConfig `mapstructure:"affinity"`
 	Resources       *RunnerResourcesConfig  `mapstructure:"resources"`
 }
@@ -17,7 +17,7 @@ type RunnerConfig struct {
 // RunnerResourcesConfig is the configuration for the Runner resources.
 type RunnerResourcesConfig struct {
 	VCPUs    int64 `mapstructure:"vcpus"`
-	MemoryMB int64 `mapstructure:"memory-mb"`
+	MemoryMB int64 `mapstructure:"memory_mb"`
 }
 
 // RunnerAffinityConfig is the configuration for the Runner affinity.
@@ -38,7 +38,7 @@ func (c *RunnerConfig) Validate() error {
 	switch c.ImagePullPolicy {
 	case "Always", "IfNotPresent", "Never":
 	default:
-		errs = multierror.Append(errs, fmt.Errorf("image-pull-policy must be one of: Always, IfNotPresent, Never"))
+		errs = multierror.Append(errs, fmt.Errorf("image_pull_policy must be one of: Always, IfNotPresent, Never"))
 	}
 
 	for _, affinity := range c.Affinity {
@@ -48,7 +48,7 @@ func (c *RunnerConfig) Validate() error {
 	}
 
 	if c.Resources == nil {
-		errs = multierror.Append(errs, fmt.Errorf("resources is required"))
+		errs = multierror.Append(errs, fmt.Errorf("resources config is required"))
 	} else {
 		if err := c.Resources.Validate(); err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("invalid resources config: %w", err))
@@ -94,11 +94,11 @@ func (c *RunnerResourcesConfig) Validate() error {
 	}
 
 	if c.MemoryMB <= 0 {
-		errs = multierror.Append(errs, fmt.Errorf("memory-mb must be greater than 0"))
+		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be greater than 0"))
 	}
 
 	if c.MemoryMB%256 != 0 {
-		errs = multierror.Append(errs, fmt.Errorf("memory-mb must be a multiple of 256"))
+		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be a multiple of 256"))
 	}
 
 	return errs
