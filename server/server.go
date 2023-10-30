@@ -92,6 +92,7 @@ func New(config *config.Config) (*Server, error) {
 
 	v1 := mux.Group("/api/v1")
 	{
+		handlers.RegisterMiscHandlers(v1)
 		handlers.RegisterRunnersHandlers(
 			&logger, v1, scheduler, store, tokenGetter)
 		handlers.RegisterNodesHandlers(
@@ -99,7 +100,6 @@ func New(config *config.Config) (*Server, error) {
 	}
 
 	mux.POST("/webhook", handlers.GitHubWebhookHandlerFunc(&logger, store, scheduler, config.GitHubConfig))
-	mux.GET("/healthz", handlers.HealthzHandlerFunc())
 	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
 
 	s.server = &http.Server{
