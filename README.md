@@ -16,7 +16,7 @@ Several key features:
 
 - **Customizable**
 
-  Define Your own virtual machine Flavors, Groups, Images and more to match Your needs. See [Configuration](./docs/configuration.md) for more information.
+  Define job labels and customize virtual machine resources to fit Your needs. See [Configuration](./docs/configuration.md) for more information.
 
 ## Quickstart
 
