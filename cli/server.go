@@ -29,6 +29,9 @@ func newServerCmd() *cobra.Command {
 	}
 	cmd.RunE = runServerCmd
 
+	viper.SetEnvPrefix("FIREACTIONS")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("/etc/fireactions")
@@ -38,9 +41,9 @@ func newServerCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP("config", "c", "config.yaml", "Sets the configuration file path.")
 	viper.BindPFlag("config", cmd.PersistentFlags().Lookup("config"))
 
-	viper.BindEnv("github.webhook-secret", "FIREACTIONS_GITHUB_WEBHOOK_SECRET")
-	viper.BindEnv("github.app-id", "FIREACTIONS_GITHUB_APP_ID")
-	viper.BindEnv("github.app-private-key", "FIREACTIONS_GITHUB_APP_PRIVATE_KEY")
+	viper.BindEnv("github.webhook_secret", "GITHUB_WEBHOOK_SECRET")
+	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
+	viper.BindEnv("github.app_private_key", "GITHUB_APP_PRIVATE_KEY")
 
 	return cmd
 }
