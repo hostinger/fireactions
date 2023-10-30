@@ -8,12 +8,11 @@ import (
 
 // GitHubConfig is the configuration for the GitHub integration.
 type GitHubConfig struct {
-	DefaultJobLabel string                  `mapstructure:"default-job-label"`
-	JobLabelPrefix  string                  `mapstructure:"job-label-prefix"`
-	JobLabels       []*GitHubJobLabelConfig `mapstructure:"job-labels"`
-	WebhookSecret   string                  `mapstructure:"webhook-secret"`
-	AppID           int64                   `mapstructure:"app-id"`
-	AppPrivateKey   string                  `mapstructure:"app-private-key"`
+	JobLabelPrefix string                  `mapstructure:"job-label-prefix"`
+	JobLabels      []*GitHubJobLabelConfig `mapstructure:"job-labels"`
+	WebhookSecret  string                  `mapstructure:"webhook-secret"`
+	AppID          int64                   `mapstructure:"app-id"`
+	AppPrivateKey  string                  `mapstructure:"app-private-key"`
 }
 
 // GitHubJobLabelConfig is the configuration for a single job label. The label defines which repositories are allowed
@@ -52,22 +51,6 @@ func (c *GitHubConfig) Validate() error {
 
 	if c.AppPrivateKey == "" {
 		errs = multierror.Append(errs, fmt.Errorf("app-private-key is required"))
-	}
-
-	if c.DefaultJobLabel == "" {
-		errs = multierror.Append(errs, fmt.Errorf("default-job-label is required"))
-	} else {
-		found := false
-		for _, label := range c.JobLabels {
-			if label.Name == c.DefaultJobLabel {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			errs = multierror.Append(errs, fmt.Errorf("default-job-label must be one of the configured job-labels"))
-		}
 	}
 
 	return errs
