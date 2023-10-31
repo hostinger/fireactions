@@ -15,6 +15,8 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
     steps:
     - name: Run release-please
       uses: google-github-actions/release-please-action@v3
