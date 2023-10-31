@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/hostinger/fireactions/compare/v1.0.2...v1.0.3) (2023-10-31)
+
+
+### Bug Fixes
+
+* **ci:** Link GHCR package to repository ([83825b4](https://github.com/hostinger/fireactions/commit/83825b4d3fcccd7e8f8760dc4b084255cbc1047c))
+
 ## [1.0.2](https://github.com/hostinger/fireactions/compare/v1.0.1...v1.0.2) (2023-10-31)
 
 
