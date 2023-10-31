@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/hostinger/fireactions/compare/v1.0.0...v1.0.1) (2023-10-31)
+
+
+### Bug Fixes
+
+* **ci:** Set missing release_created output ([1e9cc1f](https://github.com/hostinger/fireactions/commit/1e9cc1f736afba9c86c6aa720b3b0bde8b1b4ad0))
+
 ## 1.0.0 (2023-10-31)
 
 
