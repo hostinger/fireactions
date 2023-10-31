@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/hostinger/fireactions/compare/v1.0.1...v1.0.2) (2023-10-31)
+
+
+### Bug Fixes
+
+* **ci:** Set missing step ID on release workflow ([30cbf01](https://github.com/hostinger/fireactions/commit/30cbf0120762fb50779beded95c6bb7950e720ff))
+
 ## [1.0.1](https://github.com/hostinger/fireactions/compare/v1.0.0...v1.0.1) (2023-10-31)
 
 
