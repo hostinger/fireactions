@@ -2,16 +2,31 @@
 name: release
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-    - '*'
+    branches:
+    - main
 
 permissions:
-  packages: write
+  pull-requests: write
   contents: write
+  packages: write
 
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run release-please
+      uses: google-github-actions/release-please-action@v3
+      with:
+        package-name: fireactions
+        release-type: go
+        pull-request-title-pattern: 'chore${scope}: Release ${component} ${version}'
+        token: ${{ secrets.ORG_GITHUB_TOKEN }}
+
   release:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -32,7 +47,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.ORG_GITHUB_TOKEN }}
         username: ${{ github.actor }}
 
     - name: Release
