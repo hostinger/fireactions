@@ -23,4 +23,3 @@ jobs:
         pull-request-title-pattern: 'chore${scope}: Release ${component} ${version}'
         token: ${{ secrets.ORG_GITHUB_TOKEN }}
         draft: true
-        release-as: 1.0.0
