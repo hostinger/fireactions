@@ -21,6 +21,8 @@ RUN adduser --disabled-password --uid 1000 --gecos '' appuser && \
 
 FROM alpine:3.18.4
 
+LABEL org.opencontainers.image.source https://github.com/hostinger/fireactions
+
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /app/fireactions /usr/bin/fireactions
 
