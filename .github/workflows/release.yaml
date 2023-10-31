@@ -20,6 +20,7 @@ jobs:
     steps:
     - name: Run release-please
       uses: google-github-actions/release-please-action@v3
+      id: release-please
       with:
         package-name: fireactions
         release-type: go
