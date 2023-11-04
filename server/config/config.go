@@ -19,7 +19,7 @@ func NewDefaultConfig() *Config {
 	cfg := &Config{
 		HTTP:         &HTTPConfig{ListenAddress: ":8080"},
 		DataDir:      "/var/lib/fireactions",
-		GitHubConfig: &GitHubConfig{JobLabelPrefix: "fireactions"},
+		GitHubConfig: &GitHubConfig{JobLabelPrefix: "fireactions-"},
 		LogLevel:     "info",
 	}
 
