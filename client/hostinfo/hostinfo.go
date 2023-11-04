@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/rs/zerolog"
 	"github.com/shirou/gopsutil/host"
 )
 
@@ -32,18 +31,15 @@ type hostInfoCollector struct {
 	cpuInfoCollector *cpuInfoCollector
 	memInfoCollector *memInfoCollector
 
-	logger *zerolog.Logger
-	l      *sync.Mutex
+	l *sync.Mutex
 }
 
 // NewCollector creates a new Collector.
-func NewCollector(logger zerolog.Logger) *hostInfoCollector {
-	logger = logger.With().Str("component", "host-info-collector").Logger()
+func NewCollector() *hostInfoCollector {
 	c := &hostInfoCollector{
 		lastHostInfo:     &HostInfo{},
 		cpuInfoCollector: newCpuInfoCollector(),
 		memInfoCollector: newMemInfoCollector(),
-		logger:           &logger,
 		l:                &sync.Mutex{},
 	}
 

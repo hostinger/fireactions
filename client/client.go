@@ -54,7 +54,7 @@ func New(config *Config) (*Client, error) {
 	c := &Client{
 		config:             config,
 		client:             fireactions.NewClient(nil, fireactions.WithEndpoint(config.FireactionsServerURL)),
-		hostInfoCollector:  hostinfo.NewCollector(logger),
+		hostInfoCollector:  hostinfo.NewCollector(),
 		shutdownOnce:       sync.Once{},
 		shutdownCh:         make(chan struct{}),
 		heartbeatSuccessCh: make(chan struct{}, 1),
