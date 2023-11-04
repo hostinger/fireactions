@@ -97,9 +97,5 @@ func (c *RunnerResourcesConfig) Validate() error {
 		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be greater than 0"))
 	}
 
-	if c.MemoryMB%256 != 0 {
-		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be a multiple of 256"))
-	}
-
 	return errs
 }
