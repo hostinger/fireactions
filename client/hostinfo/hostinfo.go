@@ -2,9 +2,6 @@ package hostinfo
 
 import (
 	"context"
-	"io"
-	"os"
-	"strings"
 	"sync"
 
 	"github.com/rs/zerolog"
@@ -13,12 +10,11 @@ import (
 
 // HostInfo is a struct that contains information about the host.
 type HostInfo struct {
-	Hostname  string
-	MachineID string
-	OS        string
-	CpuInfo   *CpuInfo
-	MemInfo   *MemInfo
-	Uptime    uint64
+	Hostname string
+	OS       string
+	CpuInfo  *CpuInfo
+	MemInfo  *MemInfo
+	Uptime   uint64
 }
 
 // Collector is an interface that describes a host info collector.
@@ -80,11 +76,6 @@ func (c *hostInfoCollector) Collect(ctx context.Context) (*HostInfo, error) {
 		return nil, err
 	}
 
-	err = c.collectMachineID()
-	if err != nil {
-		return nil, err
-	}
-
 	return c.lastHostInfo, nil
 }
 
@@ -94,20 +85,4 @@ func (c *hostInfoCollector) Last() *HostInfo {
 	defer c.l.Unlock()
 
 	return c.lastHostInfo
-}
-
-func (c *hostInfoCollector) collectMachineID() error {
-	f, err := os.Open("/var/lib/dbus/machine-id")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	uuid, err := io.ReadAll(f)
-	if err != nil {
-		return err
-	}
-
-	c.lastHostInfo.MachineID = strings.TrimSpace(string(uuid))
-	return nil
 }
