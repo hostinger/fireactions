@@ -9,9 +9,11 @@ import (
 	"github.com/samber/lo"
 )
 
+// Filter implements filter.Filter interface.
 type Filter struct {
 }
 
+// New creates new Filter.
 func New() *Filter {
 	return &Filter{}
 }
@@ -23,6 +25,7 @@ func (f *Filter) Name() string {
 	return "affinity"
 }
 
+// Filter filters out nodes based on affinity expressions.
 func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
 	if runner.Affinity == nil {
 		return true, nil
@@ -50,8 +53,8 @@ func filterNodeLabel(node *fireactions.Node, key string, operation string, value
 
 	switch operation {
 	case "In":
-		if !lo.Contains(values, labelValue) {
-			return false, nil
+		if lo.Contains(values, labelValue) {
+			return true, nil
 		}
 	case "NotIn":
 		if lo.Contains(values, labelValue) {
@@ -61,5 +64,5 @@ func filterNodeLabel(node *fireactions.Node, key string, operation string, value
 		return false, fmt.Errorf("unsupported expression operation: %s", operation)
 	}
 
-	return true, nil
+	return false, nil
 }
