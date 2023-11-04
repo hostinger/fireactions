@@ -31,11 +31,6 @@ type ImageManager interface {
 		ctx context.Context, snapshotKey string) error
 }
 
-type GitHubTokenGetter interface {
-	GetRegistrationToken(ctx context.Context, organisation string) (string, error)
-	GetRemoveToken(ctx context.Context, organisation string) (string, error)
-}
-
 // Config is the configuration for the Manager.
 type Config struct {
 	PollInterval         time.Duration
