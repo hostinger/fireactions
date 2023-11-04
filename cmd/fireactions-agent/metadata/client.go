@@ -166,6 +166,3 @@ func (c *Client) GetMetadata(ctx context.Context, path string, v interface{}) (m
 func (c *Client) Close() {
 	c.client.CloseIdleConnections()
 }
-
-// curl http://169.254.169.254/latest/api/token -X PUT -H"X-Metadata-Token-TTL-Seconds: 300"
-// curl http://169.254.169.254/ -X GET -H "Accept: application/json" -H "X-Metadata-Token:
