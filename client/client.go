@@ -145,7 +145,6 @@ func (c *Client) Start() {
 	go c.manager.Run()
 
 	c.logger.Info().Str("id", c.ID).Str("version", build.GitTag).Msgf("started client")
-	return
 }
 
 func (c *Client) register(ctx context.Context) error {
