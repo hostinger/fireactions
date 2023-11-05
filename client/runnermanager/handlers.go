@@ -3,12 +3,11 @@ package runnermanager
 import (
 	"context"
 	"fmt"
-	"os"
-	"syscall"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/client/rootfs"
 )
 
 func (m *Manager) newSetMetadataHandler(runner *fireactions.Runner) firecracker.Handler {
@@ -59,28 +58,18 @@ func (m *Manager) newSetupRootDriveHandler(runner *fireactions.Runner) firecrack
 			IsReadOnly:   firecracker.Bool(false),
 		}}
 
-		mountPath := fmt.Sprintf("%s/fireactions-%s", os.TempDir(), runner.ID)
-		err = os.MkdirAll(mountPath, 0755)
+		rootfs, err := rootfs.New(rootDrivePath)
 		if err != nil {
-			return fmt.Errorf("error creating mount path: %w", err)
+			return fmt.Errorf("error creating rootfs: %w", err)
 		}
+		defer rootfs.Close()
 
-		err = syscall.Mount(rootDrivePath, mountPath, "ext4", 0, "")
-		if err != nil {
-			return fmt.Errorf("error mounting root drive: %w", err)
-		}
-
-		defer func() {
-			syscall.Unmount(mountPath, 0)
-			os.RemoveAll(mountPath)
-		}()
-
-		err = setupHostname(mountPath, runner.Name)
+		err = rootfs.SetupHostname(runner.Name)
 		if err != nil {
 			return fmt.Errorf("error setting up hostname: %w", err)
 		}
 
-		err = setupDNS(mountPath)
+		err = rootfs.SetupDNS()
 		if err != nil {
 			return fmt.Errorf("error setting up DNS: %w", err)
 		}
