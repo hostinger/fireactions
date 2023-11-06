@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd"
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/build"
-	"github.com/hostinger/fireactions/client/containerd"
 	"github.com/hostinger/fireactions/client/heartbeater"
 	"github.com/hostinger/fireactions/client/hoststats"
 	"github.com/hostinger/fireactions/client/runnermanager"
@@ -75,14 +75,15 @@ func New(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("error creating heartbeater: %w", err)
 	}
 
-	c.containerd, err = containerd.NewClient(&containerd.Config{
-		Address: config.Containerd.Address,
-	})
+	containerdOpts := []containerd.ClientOpt{
+		containerd.WithDefaultNamespace("fireactions"), containerd.WithTimeout(5 * time.Second),
+	}
+	containerd, err := containerd.New(config.Containerd.Address, containerdOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("error creating containerd client: %w", err)
+		return nil, fmt.Errorf("creating containerd client: %w", err)
 	}
 
-	c.manager, err = runnermanager.New(&logger, c.client, c.containerd.ImageService(), &c.ID, &runnermanager.Config{
+	c.manager, err = runnermanager.New(&logger, c.client, containerd, &c.ID, &runnermanager.Config{
 		PollInterval: config.PollInterval,
 		CNIConfig:    &runnermanager.CNIConfig{ConfDir: config.CNI.ConfDir, BinDirs: config.CNI.BinDirs},
 		FirecrackerConfig: &runnermanager.FirecrackerConfig{

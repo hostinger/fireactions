@@ -4,52 +4,45 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/leases"
 )
 
-func leaseName(owner string) string {
-	return fmt.Sprintf("fireactions/%s", owner)
-}
-
-// newContextWithOwnerLease creates a new context with a lease for the given owner. If a lease already exists for the
-// owner, it will be reused.
-func newContextWithOwnerLease(ctx context.Context, client *containerd.Client, owner string) (context.Context, error) {
-	leaseName := leaseName(owner)
-
+// CreateLease creates a new Lease if it does not already exist. If it does
+// exist, it returns the existing Lease.
+func CreateLease(ctx context.Context, client Client, leaseID string, opts ...leases.Opt) (*leases.Lease, error) {
 	leasesService := client.LeasesService()
-	existingLeases, err := leasesService.List(ctx, fmt.Sprintf("id==%s", leaseName))
+	existingLeases, err := leasesService.List(ctx, fmt.Sprintf("id==%s", leaseID))
 	if err != nil {
 		return nil, err
 	}
 
 	for _, lease := range existingLeases {
-		if lease.ID != leaseName {
+		if lease.ID != leaseID {
 			continue
 		}
 
-		return leases.WithLease(ctx, lease.ID), nil
+		return &lease, nil
 	}
 
-	lease, err := leasesService.Create(ctx, leases.WithID(leaseName))
+	opts = append(opts, leases.WithID(leaseID))
+	lease, err := leasesService.Create(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return leases.WithLease(ctx, lease.ID), nil
+	return &lease, nil
 }
 
-func deleteLease(ctx context.Context, client *containerd.Client, owner string) error {
-	leaseName := leaseName(owner)
-
+// DeleteLease deletes a Lease if it exists.
+func DeleteLease(ctx context.Context, client Client, leaseID string) error {
 	leasesService := client.LeasesService()
-	existingLeases, err := leasesService.List(ctx, fmt.Sprintf("id==%s", leaseName))
+	existingLeases, err := leasesService.List(ctx, fmt.Sprintf("id==%s", leaseID))
 	if err != nil {
 		return err
 	}
 
 	for _, lease := range existingLeases {
-		if lease.ID != leaseName {
+		if lease.ID != leaseID {
 			continue
 		}
 
@@ -57,4 +50,15 @@ func deleteLease(ctx context.Context, client *containerd.Client, owner string) e
 	}
 
 	return nil
+}
+
+// NewContextWithLease creates a new context with a Lease. The Lease is created
+// if it does not already exist.
+func NewContextWithLease(ctx context.Context, client Client, leaseID string, opts ...leases.Opt) (context.Context, error) {
+	lease, err := CreateLease(ctx, client, leaseID, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return leases.WithLease(ctx, lease.ID), nil
 }

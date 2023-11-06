@@ -13,23 +13,13 @@ import (
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/client/containerd"
 	"github.com/rs/zerolog"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
 
 const defaultCNINetworkName = "fireactions"
-
-type ImageManager interface {
-	PullImage(
-		ctx context.Context, imageRef string, imageOwner string) error
-	ImageExists(
-		ctx context.Context, imageRef string) (bool, error)
-	CreateImageSnapshot(
-		ctx context.Context, imageRef string, snapshotKey string) (string, error)
-	DeleteSnapshot(
-		ctx context.Context, snapshotKey string) error
-}
 
 // Config is the configuration for the Manager.
 type Config struct {
@@ -70,9 +60,9 @@ type Manager struct {
 	config       *Config
 	targetNodeID *string
 	machines     map[string]*firecracker.Machine
-	imageManager ImageManager
 	attempts     map[string]int
 	client       fireactions.Client
+	containerd   containerd.Client
 	stopCh       chan struct{}
 	logger       *zerolog.Logger
 	enabled      bool
@@ -81,7 +71,7 @@ type Manager struct {
 
 // New creates a new Manager.
 func New(
-	logger *zerolog.Logger, client fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
+	logger *zerolog.Logger, client fireactions.Client, containerd containerd.Client, targetNodeID *string, config *Config,
 ) (*Manager, error) {
 	if config == nil {
 		config = &Config{PollInterval: 5 * time.Second}
@@ -92,17 +82,17 @@ func New(
 		return nil, fmt.Errorf("error validating config: %w", err)
 	}
 
-	return newManager(logger, client, imageManager, targetNodeID, config), nil
+	return newManager(logger, client, containerd, targetNodeID, config), nil
 }
 
 func newManager(
-	logger *zerolog.Logger, client fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
+	logger *zerolog.Logger, client fireactions.Client, containerd containerd.Client, targetNodeID *string, config *Config,
 ) *Manager {
 	m := &Manager{
 		config:       config,
 		targetNodeID: targetNodeID,
 		machines:     make(map[string]*firecracker.Machine),
-		imageManager: imageManager,
+		containerd:   containerd,
 		client:       client,
 		stopCh:       make(chan struct{}),
 		attempts:     make(map[string]int),
@@ -247,12 +237,6 @@ func (m *Manager) ensureRunnerStopped(ctx context.Context, runner *fireactions.R
 	err := m.stopMachine(ctx, machine)
 	if err != nil {
 		return fmt.Errorf("error stopping Firecracker VM: %w", err)
-	}
-
-	err = m.imageManager.
-		DeleteSnapshot(ctx, fmt.Sprintf("fireactions/%s", runner.ID))
-	if err != nil {
-		return fmt.Errorf("error deleting Firecracker VM snapshot: %w", err)
 	}
 
 	m.client.DeleteRunner(context.Background(), runner.ID)

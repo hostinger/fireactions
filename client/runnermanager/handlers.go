@@ -3,10 +3,13 @@ package runnermanager
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/containerd/containerd/leases"
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/client/containerd"
 	"github.com/hostinger/fireactions/client/rootfs"
 )
 
@@ -23,33 +26,49 @@ func (m *Manager) newSetupRootDriveHandler(runner *fireactions.Runner) firecrack
 	fn := func(ctx context.Context, machine *firecracker.Machine) error {
 		switch runner.ImagePullPolicy {
 		case fireactions.RunnerImagePullPolicyAlways:
-			err := m.imageManager.PullImage(ctx, runner.Image, runner.ID)
+			err := containerd.PullImage(ctx, m.containerd, runner.Image)
 			if err != nil {
-				return fmt.Errorf("error pulling image: %w", err)
+				return fmt.Errorf("containerd: pulling image: %w", err)
 			}
 		case fireactions.RunnerImagePullPolicyIfNotPresent:
-			ok, err := m.imageManager.ImageExists(ctx, runner.Image)
+			ok, err := containerd.ImageExists(ctx, m.containerd, runner.Image)
 			if err != nil {
-				return fmt.Errorf("error checking if image exists: %w", err)
+				return fmt.Errorf("containerd: getting image: %w", err)
 			}
 
 			if ok {
 				break
 			}
 
-			err = m.imageManager.PullImage(ctx, runner.Image, runner.ID)
+			err = containerd.PullImage(ctx, m.containerd, runner.Image)
 			if err != nil {
-				return fmt.Errorf("error pulling image: %w", err)
+				return fmt.Errorf("containerd: pulling image: %w", err)
 			}
 		case fireactions.RunnerImagePullPolicyNever:
+			ok, err := containerd.ImageExists(ctx, m.containerd, runner.Image)
+			if err != nil {
+				return fmt.Errorf("containerd: getting image: %w", err)
+			}
+
+			if !ok {
+				return fmt.Errorf("containerd: image not found")
+			}
 		default:
 		}
 
-		rootDrivePath, err := m.imageManager.CreateImageSnapshot(
-			ctx, runner.Image, fmt.Sprintf("fireactions/%s", runner.ID))
+		leaseID := fmt.Sprintf("fireactions/runner/%s", runner.ID)
+		leaseCtx, err := containerd.NewContextWithLease(ctx, m.containerd, leaseID, leases.WithExpiration(6*time.Hour))
 		if err != nil {
-			return fmt.Errorf("error creating image snapshot: %w", err)
+			return fmt.Errorf("containerd: creating context with lease: %w", err)
 		}
+
+		snapshotKey := fmt.Sprintf("fireactions/runner/%s", runner.ID)
+		mounts, err := containerd.CreateSnapshot(leaseCtx, m.containerd, runner.Image, "devmapper", snapshotKey)
+		if err != nil {
+			return fmt.Errorf("containerd: creating snapshot: %w", err)
+		}
+
+		rootDrivePath := mounts[0].Source
 
 		machine.Cfg.Drives = []models.Drive{{
 			DriveID:      firecracker.String("rootfs"),
@@ -60,18 +79,18 @@ func (m *Manager) newSetupRootDriveHandler(runner *fireactions.Runner) firecrack
 
 		rootfs, err := rootfs.New(rootDrivePath)
 		if err != nil {
-			return fmt.Errorf("error creating rootfs: %w", err)
+			return fmt.Errorf("rootfs: %w", err)
 		}
 		defer rootfs.Close()
 
 		err = rootfs.SetupHostname(runner.Name)
 		if err != nil {
-			return fmt.Errorf("error setting up hostname: %w", err)
+			return fmt.Errorf("rootfs: setting up hostname: %w", err)
 		}
 
 		err = rootfs.SetupDNS()
 		if err != nil {
-			return fmt.Errorf("error setting up DNS: %w", err)
+			return fmt.Errorf("rootfs: setting up DNS: %w", err)
 		}
 
 		return nil
