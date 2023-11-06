@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hostinger/fireactions"
-	"github.com/hostinger/fireactions/cmd/fireactions-agent/metadata"
+	"github.com/hostinger/fireactions/cmd/fireactions-agent/mmds"
 	"github.com/rs/zerolog"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	logger.Info().Msgf("starting Fireactions Agent")
 
-	metadataClient, err := metadata.NewClient(nil)
+	metadataClient, err := mmds.NewClient(nil)
 	if err != nil {
 		logger.Fatal().Err(err).Msgf("error creating Firecracker MMDS client")
 	}

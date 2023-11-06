@@ -1,4 +1,4 @@
-package metadata
+package mmds
 
 import (
 	"bytes"
