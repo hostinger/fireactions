@@ -47,7 +47,7 @@ func main() {
 	}
 
 	fireactionsClient := fireactions.NewClient(nil, fireactions.WithEndpoint(fireactionsServerURL))
-	runner, _, err := fireactionsClient.Runners().Get(context.Background(), fireactionsRunnerID)
+	runner, _, err := fireactionsClient.GetRunner(context.Background(), fireactionsRunnerID)
 	if err != nil {
 		logger.Fatal().Err(err).Msgf("error getting Fireactions Runner")
 	}
@@ -60,7 +60,7 @@ func main() {
 	logger.Info().Msgf("stopping Fireactions Agent")
 }
 
-func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fireactions.Client, runner *fireactions.Runner) error {
+func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client fireactions.Client, runner *fireactions.Runner) error {
 	cwd, _ := os.Getwd()
 	err := configureGitHubRunner(logger, ctx, client, runner, cwd)
 	if err != nil {
@@ -83,18 +83,16 @@ func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fire
 		return fmt.Errorf("error starting run.sh: %w", err)
 	}
 
-	_, err = client.
-		Runners().
-		SetStatus(ctx, runner.ID, fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseRunning})
+	_, err = client.SetRunnerStatus(ctx, runner.ID, fireactions.SetRunnerStatusRequest{
+		Phase: fireactions.RunnerPhaseRunning})
 	if err != nil {
 		logger.Error().Err(err).Msgf("error setting Fireactions Runner status to %s", fireactions.RunnerPhaseRunning)
 	}
 
 	err = runsvcCmd.Wait()
 	if err != nil {
-		_, err = client.
-			Runners().
-			SetStatus(ctx, runner.ID, fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseFailed})
+		_, err = client.SetRunnerStatus(ctx, runner.ID, fireactions.SetRunnerStatusRequest{
+			Phase: fireactions.RunnerPhaseFailed})
 		if err != nil {
 			logger.Error().Err(err).Msgf("error setting Fireactions Runner status to %s", fireactions.RunnerPhaseFailed)
 		}
@@ -102,9 +100,8 @@ func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fire
 		return fmt.Errorf("run.sh exited with error: %w", err)
 	}
 
-	_, err = client.
-		Runners().
-		SetStatus(ctx, runner.ID, fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseCompleted})
+	_, err = client.SetRunnerStatus(ctx, runner.ID, fireactions.SetRunnerStatusRequest{
+		Phase: fireactions.RunnerPhaseCompleted})
 	if err != nil {
 		logger.Error().Err(err).Msgf("error completing Fireactions Runner")
 	}
@@ -113,7 +110,7 @@ func startGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fire
 	return nil
 }
 
-func configureGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *fireactions.Client, runner *fireactions.Runner, runnerPath string) error {
+func configureGitHubRunner(logger *zerolog.Logger, ctx context.Context, client fireactions.Client, runner *fireactions.Runner, runnerPath string) error {
 	_, err := os.Stat(fmt.Sprintf("%s/.runner", runnerPath))
 	if err == nil {
 		logger.Info().Msgf("GitHub runner already configured. Skipping configuration. To reconfigure, delete the .runner file.")
@@ -122,9 +119,7 @@ func configureGitHubRunner(logger *zerolog.Logger, ctx context.Context, client *
 
 	logger.Info().Msgf("Configuring GitHub runner")
 
-	token, _, err := client.
-		Runners().
-		GetRegistrationToken(ctx, runner.ID)
+	token, _, err := client.GetRunnerRegistrationToken(ctx, runner.ID)
 	if err != nil {
 		return fmt.Errorf("error getting GitHub runner registration token: %w", err)
 	}

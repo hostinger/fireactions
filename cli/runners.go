@@ -74,7 +74,7 @@ func newRunnersCompleteCmd() *cobra.Command {
 func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runners, _, err := client.Runners().List(cmd.Context(), nil)
+	runners, _, err := client.ListRunners(cmd.Context(), nil)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 func runRunnersShowCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	runner, _, err := client.Runners().Get(cmd.Context(), args[0])
+	runner, _, err := client.GetRunner(cmd.Context(), args[0])
 	if err != nil {
 		return err
 	}
@@ -108,9 +108,8 @@ func runRunnersShowCmd(cmd *cobra.Command, args []string) error {
 func runRunnersCompleteCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	_, err := client.
-		Runners().
-		SetStatus(cmd.Context(), args[0], fireactions.RunnerSetStatusRequest{Phase: fireactions.RunnerPhaseCompleted})
+	_, err := client.SetRunnerStatus(cmd.Context(), args[0], fireactions.SetRunnerStatusRequest{
+		Phase: fireactions.RunnerPhaseCompleted})
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,27 @@ var (
 )
 
 // Client manages communication with the Fireactions API.
-type Client struct {
+type Client interface {
+	SetUserAgent(userAgent string)
+	SetEndpoint(endpoint string)
+	SetClient(client *http.Client)
+	ListNodes(ctx context.Context, opts *NodesListOptions) ([]*Node, *Response, error)
+	GetNode(ctx context.Context, id string) (*Node, *Response, error)
+	HeartbeatNode(ctx context.Context, id string) (*Response, error)
+	RegisterNode(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*NodeRegistrationInfo, *Response, error)
+	DeregisterNode(ctx context.Context, id string) (*Response, error)
+	CordonNode(ctx context.Context, id string) (*Response, error)
+	UncordonNode(ctx context.Context, id string) (*Response, error)
+	GetNodeRunners(ctx context.Context, id string) ([]*Runner, *Response, error)
+	GetRunner(ctx context.Context, id string) (*Runner, *Response, error)
+	ListRunners(ctx context.Context, opts *RunnersListOptions) ([]*Runner, *Response, error)
+	GetRunnerRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error)
+	GetRunnerRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error)
+	SetRunnerStatus(ctx context.Context, id string, setRunnerStatusRequest SetRunnerStatusRequest) (*Response, error)
+	DeleteRunner(ctx context.Context, id string) (*Response, error)
+}
+
+type clientImpl struct {
 	client *http.Client
 
 	// Endpoint is the Fireactions API endpoint.
@@ -30,42 +50,45 @@ type Client struct {
 }
 
 // ClientOpt is an option for a new Fireactions client.
-type ClientOpt func(*Client)
+type ClientOpt func(Client)
 
 // WithHTTPClient returns a ClientOpt that specifies the HTTP client to use when
 // making requests to the Fireactions API.
 func WithHTTPClient(client *http.Client) ClientOpt {
-	f := func(c *Client) {
-		c.client = client
+	f := func(c Client) {
+		c.SetClient(client)
 	}
+
 	return f
 }
 
 // WithEndpoint returns a ClientOpt that specifies the Fireactions API endpoint
 // to use when making requests to the Fireactions API.
 func WithEndpoint(endpoint string) ClientOpt {
-	f := func(c *Client) {
-		c.Endpoint = endpoint
+	f := func(c Client) {
+		c.SetEndpoint(endpoint)
 	}
+
 	return f
 }
 
 // WithUserAgent returns a ClientOpt that specifies the User-Agent header to use
 // when making requests to the Fireactions API.
 func WithUserAgent(userAgent string) ClientOpt {
-	f := func(c *Client) {
-		c.UserAgent = userAgent
+	f := func(c Client) {
+		c.SetUserAgent(userAgent)
 	}
+
 	return f
 }
 
-// NewClient returns a new Fireactions client.
-func NewClient(client *http.Client, opts ...ClientOpt) *Client {
+// NewClient returns a new Fireactions Client implementation.
+func NewClient(client *http.Client, opts ...ClientOpt) *clientImpl {
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	c := &Client{
+	c := &clientImpl{
 		Endpoint:  defaultEndpoint,
 		UserAgent: defaultUserAgent,
 		client:    client,
@@ -79,7 +102,7 @@ func NewClient(client *http.Client, opts ...ClientOpt) *Client {
 }
 
 // NewRequestWithContext returns a new HTTP request with a context.
-func (c *Client) NewRequestWithContext(ctx context.Context, method, endpoint string, body interface{}) (*http.Request, error) {
+func (c *clientImpl) NewRequestWithContext(ctx context.Context, method, endpoint string, body interface{}) (*http.Request, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -98,7 +121,7 @@ func (c *Client) NewRequestWithContext(ctx context.Context, method, endpoint str
 }
 
 // Do sends an HTTP request and returns an HTTP response.
-func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
+func (c *clientImpl) Do(req *http.Request, v interface{}) (*Response, error) {
 	rsp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -184,28 +207,19 @@ func (o *ListOptions) Apply(req *http.Request) {
 	req.URL.RawQuery = q.Encode()
 }
 
-type nodesClient struct {
-	client *Client
-}
-
-// Nodes returns a client for interacting with Nodes.
-func (c *Client) Nodes() *nodesClient {
-	return &nodesClient{client: c}
-}
-
 // NodesListOptions specifies the optional parameters to the
 // NodesClient.List method.
 type NodesListOptions struct {
 	ListOptions
 }
 
-// List returns a list of Nodes.
-func (c *nodesClient) List(ctx context.Context, opts *NodesListOptions) ([]*Node, *Response, error) {
+// ListNodes returns a list of Nodes.
+func (c *clientImpl) ListNodes(ctx context.Context, opts *NodesListOptions) ([]*Node, *Response, error) {
 	type Root struct {
 		Nodes []*Node `json:"nodes"`
 	}
 
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/nodes", nil)
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/nodes", nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -215,7 +229,7 @@ func (c *nodesClient) List(ctx context.Context, opts *NodesListOptions) ([]*Node
 	}
 
 	var root Root
-	response, err := c.client.Do(req, &root)
+	response, err := c.Do(req, &root)
 	if err != nil {
 		return nil, response, err
 	}
@@ -223,15 +237,15 @@ func (c *nodesClient) List(ctx context.Context, opts *NodesListOptions) ([]*Node
 	return root.Nodes, response, nil
 }
 
-// Get returns a Node by ID.
-func (c *nodesClient) Get(ctx context.Context, id string) (*Node, *Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/nodes/%s", id), nil)
+// GetNode returns a Node by ID.
+func (c *clientImpl) GetNode(ctx context.Context, id string) (*Node, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/nodes/%s", id), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var node Node
-	response, err := c.client.Do(req, &node)
+	response, err := c.Do(req, &node)
 	if err != nil {
 		return nil, response, err
 	}
@@ -256,15 +270,15 @@ type NodeRegistrationInfo struct {
 	ID string `json:"id"`
 }
 
-// Register registers a Node.
-func (c *nodesClient) Register(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*NodeRegistrationInfo, *Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/nodes", nodeRegisterRequest)
+// RegisterNode registers a Node.
+func (c *clientImpl) RegisterNode(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*NodeRegistrationInfo, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/nodes", nodeRegisterRequest)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var nodeRegistrationInfo NodeRegistrationInfo
-	response, err := c.client.Do(req, &nodeRegistrationInfo)
+	response, err := c.Do(req, &nodeRegistrationInfo)
 	if err != nil {
 		return nil, response, err
 	}
@@ -272,59 +286,59 @@ func (c *nodesClient) Register(ctx context.Context, nodeRegisterRequest *NodeReg
 	return &nodeRegistrationInfo, response, nil
 }
 
-// Deregister deregisters a Node by ID.
-func (c *nodesClient) Deregister(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/nodes/%s", id), nil)
+// DeregisterNode deregisters a Node by ID.
+func (c *clientImpl) DeregisterNode(ctx context.Context, id string) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/nodes/%s", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
 }
 
-// Cordon cordon a Node by ID.
-func (c *nodesClient) Cordon(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/cordon", id), nil)
+// CordonNode cordons a Node by ID.
+func (c *clientImpl) CordonNode(ctx context.Context, id string) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/cordon", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
 }
 
-// Uncordon uncordon a Node by ID.
-func (c *nodesClient) Uncordon(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/uncordon", id), nil)
+// UncordonNode uncordons a Node by ID.
+func (c *clientImpl) UncordonNode(ctx context.Context, id string) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/uncordon", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
 }
 
-// Heartbeat sends a heartbeat for a Node by ID.
-func (c *nodesClient) Heartbeat(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/heartbeat", id), nil)
+// HeartbeatNode sends a heartbeat for a Node by ID.
+func (c *clientImpl) HeartbeatNode(ctx context.Context, id string) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/heartbeat", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
 }
 
-// GetRunners returns a list of Runners for a Node by ID.
-func (c *nodesClient) GetRunners(ctx context.Context, id string) ([]*Runner, *Response, error) {
+// GetNodeRunners returns a list of Runners for a Node by ID.
+func (c *clientImpl) GetNodeRunners(ctx context.Context, id string) ([]*Runner, *Response, error) {
 	type Root struct {
 		Runners []*Runner `json:"runners"`
 	}
 
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/nodes/%s/runners", id), nil)
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/nodes/%s/runners", id), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var root Root
-	response, err := c.client.Do(req, &root)
+	response, err := c.Do(req, &root)
 	if err != nil {
 		return nil, response, err
 	}
@@ -332,29 +346,20 @@ func (c *nodesClient) GetRunners(ctx context.Context, id string) ([]*Runner, *Re
 	return root.Runners, response, nil
 }
 
-// Runners returns a client for interacting with Runners.
-func (c *Client) Runners() *runnersClient {
-	return &runnersClient{client: c}
-}
-
-type runnersClient struct {
-	client *Client
-}
-
-// Get returns a Runner by ID.
-func (c *runnersClient) Get(ctx context.Context, id string) (*Runner, *Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s", id), nil)
+// GetRunner returns a Runner by ID.
+func (c *clientImpl) GetRunner(ctx context.Context, id string) (*Runner, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s", id), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var machine Runner
-	response, err := c.client.Do(req, &machine)
+	var runner Runner
+	response, err := c.Do(req, &runner)
 	if err != nil {
 		return nil, response, err
 	}
 
-	return &machine, response, nil
+	return &runner, response, nil
 }
 
 // RunnersListOptions specifies the optional parameters to the
@@ -363,19 +368,19 @@ type RunnersListOptions struct {
 	ListOptions
 }
 
-// List returns a list of Runners.
-func (c *runnersClient) List(ctx context.Context, opts *RunnersListOptions) ([]*Runner, *Response, error) {
+// ListRunners returns a list of Runners.
+func (c *clientImpl) ListRunners(ctx context.Context, opts *RunnersListOptions) ([]*Runner, *Response, error) {
 	type Root struct {
 		Runners []*Runner `json:"runners"`
 	}
 
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/runners", nil)
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, "/api/v1/runners", nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var root Root
-	response, err := c.client.Do(req, &root)
+	response, err := c.Do(req, &root)
 	if err != nil {
 		return nil, response, err
 	}
@@ -390,14 +395,14 @@ type RunnerRegistrationToken struct {
 }
 
 // GetRegistrationToken returns a GitHub registration token for a Runner by ID.
-func (c *runnersClient) GetRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/registration-token", id), nil)
+func (c *clientImpl) GetRunnerRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/registration-token", id), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var token RunnerRegistrationToken
-	response, err := c.client.Do(req, &token)
+	response, err := c.Do(req, &token)
 	if err != nil {
 		return nil, response, err
 	}
@@ -412,14 +417,14 @@ type RunnerRemoveToken struct {
 }
 
 // GetRemoveToken returns a GitHub removal token for a Runner by ID.
-func (c *runnersClient) GetRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/remove-token", id), nil)
+func (c *clientImpl) GetRunnerRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/remove-token", id), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var token RunnerRemoveToken
-	response, err := c.client.Do(req, &token)
+	response, err := c.Do(req, &token)
 	if err != nil {
 		return nil, response, err
 	}
@@ -429,27 +434,45 @@ func (c *runnersClient) GetRemoveToken(ctx context.Context, id string) (*RunnerR
 
 // RunnerSetStatusRequest represents a request to set the status of a Runner by
 // ID.
-type RunnerSetStatusRequest struct {
+type SetRunnerStatusRequest struct {
 	Phase RunnerPhase `json:"phase" binding:"required"`
 }
 
-// SetStatus sets the status of a Runner by ID.
-func (c *runnersClient) SetStatus(ctx context.Context, id string, runnerSetStatusRequest RunnerSetStatusRequest) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/runners/%s/status", id), runnerSetStatusRequest)
+// SetRunnerStatus sets the status of a Runner by ID.
+func (c *clientImpl) SetRunnerStatus(ctx context.Context, id string, setRunnerStatusRequest SetRunnerStatusRequest) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPatch, fmt.Sprintf("/api/v1/runners/%s/status", id), setRunnerStatusRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
 }
 
-// Delete deletes a Runner by ID. This is a soft delete. The Runner will be
+// DeleteRunner deletes a Runner by ID. This is a soft delete. The Runner will be
 // marked as deleted but will not be removed from the database.
-func (c *runnersClient) Delete(ctx context.Context, id string) (*Response, error) {
-	req, err := c.client.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/runners/%s", id), nil)
+func (c *clientImpl) DeleteRunner(ctx context.Context, id string) (*Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/runners/%s", id), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.client.Do(req, nil)
+	return c.Do(req, nil)
+}
+
+// SetUserAgent sets the User-Agent header to use when making requests to the
+// Fireactions API.
+func (c *clientImpl) SetUserAgent(userAgent string) {
+	c.UserAgent = userAgent
+}
+
+// SetEndpoint sets the Fireactions API endpoint to use when making requests to
+// the Fireactions API.
+func (c *clientImpl) SetEndpoint(endpoint string) {
+	c.Endpoint = endpoint
+}
+
+// SetClient sets the HTTP client to use when making requests to the
+// Fireactions API.
+func (c *clientImpl) SetClient(client *http.Client) {
+	c.client = client
 }

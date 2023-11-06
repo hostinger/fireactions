@@ -133,7 +133,7 @@ func RunnerRemoveTokenHandlerFunc(logger *zerolog.Logger, store store.Store, tok
 // endpoint PATCH /api/v1/runners/:id/status
 func RunnerSetStatusHandlerFunc(logger *zerolog.Logger, store store.Store) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		var request fireactions.RunnerSetStatusRequest
+		var request fireactions.SetRunnerStatusRequest
 		err := ctx.ShouldBindJSON(&request)
 		if err != nil {
 			ctx.Error(err)

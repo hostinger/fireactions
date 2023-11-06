@@ -100,14 +100,9 @@ func newNodesUncordonCmd() *cobra.Command {
 func runNodesUncordonCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	_, err := client.UncordonNode(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Node(s): %w", err)
-	}
-
-	_, err = client.Nodes().Uncordon(cmd.Context(), node.ID)
-	if err != nil {
-		return fmt.Errorf("error uncordoning Node: %w", err)
+		return err
 	}
 
 	return nil
@@ -116,14 +111,9 @@ func runNodesUncordonCmd(cmd *cobra.Command, args []string) error {
 func runNodesCordonCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	_, err := client.CordonNode(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Node(s): %w", err)
-	}
-
-	_, err = client.Nodes().Cordon(cmd.Context(), node.ID)
-	if err != nil {
-		return fmt.Errorf("error cordoning Node: %w", err)
+		return err
 	}
 
 	return nil
@@ -132,14 +122,9 @@ func runNodesCordonCmd(cmd *cobra.Command, args []string) error {
 func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	_, err := client.DeregisterNode(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Node(s): %w", err)
-	}
-
-	_, err = client.Nodes().Deregister(cmd.Context(), node.ID)
-	if err != nil {
-		return fmt.Errorf("error deregistering Node: %w", err)
+		return err
 	}
 
 	return nil
@@ -148,9 +133,9 @@ func runNodesDeregisterCmd(cmd *cobra.Command, args []string) error {
 func runNodesGetCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
-	node, _, err := client.Nodes().Get(cmd.Context(), args[0])
+	node, _, err := client.GetNode(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("error fetching Node(s): %w", err)
+		return err
 	}
 
 	item := &printer.Node{Nodes: []*fireactions.Node{node}}
@@ -175,9 +160,9 @@ func runNodesListCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("format %s is not supported yet", format)
 	}
 
-	nodes, _, err := client.Nodes().List(cmd.Context(), nil)
+	nodes, _, err := client.ListNodes(cmd.Context(), nil)
 	if err != nil {
-		return fmt.Errorf("error fetching Node(s): %w", err)
+		return err
 	}
 
 	item := &printer.Node{Nodes: nodes}

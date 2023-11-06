@@ -72,7 +72,7 @@ type Manager struct {
 	machines     map[string]*firecracker.Machine
 	imageManager ImageManager
 	attempts     map[string]int
-	client       *fireactions.Client
+	client       fireactions.Client
 	stopCh       chan struct{}
 	logger       *zerolog.Logger
 	enabled      bool
@@ -81,7 +81,7 @@ type Manager struct {
 
 // New creates a new Manager.
 func New(
-	logger *zerolog.Logger, client *fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
+	logger *zerolog.Logger, client fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
 ) (*Manager, error) {
 	if config == nil {
 		config = &Config{PollInterval: 5 * time.Second}
@@ -96,7 +96,7 @@ func New(
 }
 
 func newManager(
-	logger *zerolog.Logger, client *fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
+	logger *zerolog.Logger, client fireactions.Client, imageManager ImageManager, targetNodeID *string, config *Config,
 ) *Manager {
 	m := &Manager{
 		config:       config,
@@ -161,9 +161,7 @@ func (m *Manager) Poll() {
 	m.l.Lock()
 	defer m.l.Unlock()
 
-	runners, _, err := m.client.
-		Nodes().
-		GetRunners(context.Background(), *m.targetNodeID)
+	runners, _, err := m.client.GetNodeRunners(context.Background(), *m.targetNodeID)
 	if err != nil {
 		m.logger.Error().Err(err).Msg("error getting runners")
 		return
@@ -257,9 +255,7 @@ func (m *Manager) ensureRunnerStopped(ctx context.Context, runner *fireactions.R
 		return fmt.Errorf("error deleting Firecracker VM snapshot: %w", err)
 	}
 
-	m.client.
-		Runners().
-		Delete(context.Background(), runner.ID)
+	m.client.DeleteRunner(context.Background(), runner.ID)
 	if err != nil {
 		return fmt.Errorf("error deleting runner: %w", err)
 	}

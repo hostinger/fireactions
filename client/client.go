@@ -22,7 +22,7 @@ type Client struct {
 
 	config             *Config
 	isConnected        bool
-	client             *fireactions.Client
+	client             fireactions.Client
 	hostStatsCollector hoststats.Collector
 	manager            *runnermanager.Manager
 	heartbeater        *heartbeater.Heartbeater
@@ -67,7 +67,7 @@ func New(config *Config) (*Client, error) {
 		FailureThreshold: config.HeartbeatFailureThreshold,
 		SuccessThreshold: config.HeartbeatSuccessThreshold,
 		Interval:         config.HeartbeatInterval,
-		HeartbeatFunc:    func() error { _, err := c.client.Nodes().Heartbeat(context.Background(), c.ID); return err },
+		HeartbeatFunc:    func() error { _, err := c.client.HeartbeatNode(context.Background(), c.ID); return err },
 		FailureCh:        c.heartbeatFailureCh,
 		SuccessCh:        c.heartbeatSuccessCh,
 	})
@@ -173,9 +173,7 @@ func (c *Client) register(ctx context.Context) error {
 		req.Labels = nil
 	}
 
-	nodeRegistrationInfo, _, err := c.client.
-		Nodes().
-		Register(ctx, req)
+	nodeRegistrationInfo, _, err := c.client.RegisterNode(ctx, req)
 	if err != nil {
 		return fmt.Errorf("could not register node: %w", err)
 	}
