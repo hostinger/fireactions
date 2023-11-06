@@ -11,7 +11,7 @@ import (
 	"github.com/hostinger/fireactions/build"
 	"github.com/hostinger/fireactions/client/containerd"
 	"github.com/hostinger/fireactions/client/heartbeater"
-	"github.com/hostinger/fireactions/client/hostinfo"
+	"github.com/hostinger/fireactions/client/hoststats"
 	"github.com/hostinger/fireactions/client/runnermanager"
 	"github.com/rs/zerolog"
 )
@@ -23,7 +23,7 @@ type Client struct {
 	config             *Config
 	isConnected        bool
 	client             *fireactions.Client
-	hostInfoCollector  hostinfo.Collector
+	hostStatsCollector hoststats.Collector
 	manager            *runnermanager.Manager
 	heartbeater        *heartbeater.Heartbeater
 	containerd         *containerd.Client
@@ -54,7 +54,7 @@ func New(config *Config) (*Client, error) {
 	c := &Client{
 		config:             config,
 		client:             fireactions.NewClient(nil, fireactions.WithEndpoint(config.FireactionsServerURL)),
-		hostInfoCollector:  hostinfo.NewCollector(),
+		hostStatsCollector: hoststats.NewCollector(),
 		shutdownOnce:       sync.Once{},
 		shutdownCh:         make(chan struct{}),
 		heartbeatSuccessCh: make(chan struct{}, 1),
@@ -148,7 +148,7 @@ func (c *Client) Start() {
 }
 
 func (c *Client) register(ctx context.Context) error {
-	hostinfo, err := c.hostInfoCollector.Collect(ctx)
+	hostinfo, err := c.hostStatsCollector.Collect(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host info: %w", err)
 	}

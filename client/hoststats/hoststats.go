@@ -1,4 +1,4 @@
-package hostinfo
+package hoststats
 
 import (
 	"context"
@@ -25,7 +25,7 @@ type Collector interface {
 	Last() *HostInfo
 }
 
-type hostInfoCollector struct {
+type hostStatsCollector struct {
 	lastHostInfo *HostInfo
 
 	cpuInfoCollector *cpuInfoCollector
@@ -35,8 +35,8 @@ type hostInfoCollector struct {
 }
 
 // NewCollector creates a new Collector.
-func NewCollector() *hostInfoCollector {
-	c := &hostInfoCollector{
+func NewCollector() *hostStatsCollector {
+	c := &hostStatsCollector{
 		lastHostInfo:     &HostInfo{},
 		cpuInfoCollector: newCpuInfoCollector(),
 		memInfoCollector: newMemInfoCollector(),
@@ -47,7 +47,7 @@ func NewCollector() *hostInfoCollector {
 }
 
 // Collect collects host info.
-func (c *hostInfoCollector) Collect(ctx context.Context) (*HostInfo, error) {
+func (c *hostStatsCollector) Collect(ctx context.Context) (*HostInfo, error) {
 	c.l.Lock()
 	defer c.l.Unlock()
 
@@ -76,7 +76,7 @@ func (c *hostInfoCollector) Collect(ctx context.Context) (*HostInfo, error) {
 }
 
 // Last returns the last collected host info.
-func (c *hostInfoCollector) Last() *HostInfo {
+func (c *hostStatsCollector) Last() *HostInfo {
 	c.l.Lock()
 	defer c.l.Unlock()
 
