@@ -1,4 +1,4 @@
-package runnermanager
+package runner
 
 import (
 	"context"

@@ -12,7 +12,7 @@ import (
 	"github.com/hostinger/fireactions/build"
 	"github.com/hostinger/fireactions/client/heartbeater"
 	"github.com/hostinger/fireactions/client/hoststats"
-	"github.com/hostinger/fireactions/client/runnermanager"
+	"github.com/hostinger/fireactions/client/runner"
 	"github.com/rs/zerolog"
 )
 
@@ -24,7 +24,7 @@ type Client struct {
 	isConnected        bool
 	client             fireactions.Client
 	hostStatsCollector hoststats.Collector
-	manager            *runnermanager.Manager
+	manager            *runner.Manager
 	heartbeater        *heartbeater.Heartbeater
 	containerd         *containerd.Client
 	shutdownOnce       sync.Once
@@ -83,10 +83,10 @@ func New(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("creating containerd client: %w", err)
 	}
 
-	c.manager, err = runnermanager.New(&logger, c.client, containerd, &c.ID, &runnermanager.Config{
+	c.manager, err = runner.New(&logger, c.client, containerd, &c.ID, &runner.Config{
 		PollInterval: config.PollInterval,
-		CNIConfig:    &runnermanager.CNIConfig{ConfDir: config.CNI.ConfDir, BinDirs: config.CNI.BinDirs},
-		FirecrackerConfig: &runnermanager.FirecrackerConfig{
+		CNIConfig:    &runner.CNIConfig{ConfDir: config.CNI.ConfDir, BinDirs: config.CNI.BinDirs},
+		FirecrackerConfig: &runner.FirecrackerConfig{
 			BinaryPath:      config.Firecracker.BinaryPath,
 			SocketPath:      config.Firecracker.SocketPath,
 			KernelImagePath: config.Firecracker.KernelImagePath,
