@@ -60,6 +60,7 @@ type Manager struct {
 	config       *Config
 	targetNodeID *string
 	machines     map[string]*firecracker.Machine
+	machinesMu   *sync.RWMutex
 	attempts     map[string]int
 	client       fireactions.Client
 	containerd   containerd.Client
@@ -92,6 +93,7 @@ func newManager(
 		config:       config,
 		targetNodeID: targetNodeID,
 		machines:     make(map[string]*firecracker.Machine),
+		machinesMu:   &sync.RWMutex{},
 		containerd:   containerd,
 		client:       client,
 		stopCh:       make(chan struct{}),
@@ -178,7 +180,7 @@ func (m *Manager) Stop(ctx context.Context) error {
 	for _, machine := range m.machines {
 		err := m.stopMachine(ctx, machine)
 		if err != nil {
-			return fmt.Errorf("error stopping Machine: %w", err)
+			return fmt.Errorf("machine %s: %w", machine.Cfg.VMID, err)
 		}
 
 		m.logger.Info().Str("id", machine.Cfg.VMID).Msg("stopped runner")
@@ -198,15 +200,39 @@ func (m *Manager) reconcileRunner(ctx context.Context, runner *fireactions.Runne
 	}
 }
 
+func (m *Manager) getMachine(id string) (*firecracker.Machine, bool) {
+	m.machinesMu.RLock()
+	defer m.machinesMu.RUnlock()
+
+	machine, ok := m.machines[id]
+	return machine, ok
+}
+
+func (m *Manager) setMachine(id string, machine *firecracker.Machine) {
+	m.machinesMu.Lock()
+	defer m.machinesMu.Unlock()
+
+	m.machines[id] = machine
+}
+
+func (m *Manager) delMachine(id string) {
+	m.machinesMu.Lock()
+	defer m.machinesMu.Unlock()
+
+	delete(m.machines, id)
+}
+
 func (m *Manager) ensureRunnerStarted(ctx context.Context, runner *fireactions.Runner) error {
-	machine, ok := m.machines[runner.ID]
+	var err error
+	_, ok := m.getMachine(runner.ID)
 	if ok {
+		// Machine already exists, check if it's still running.
 		return nil
 	}
 
 	machine, err := m.createMachine(ctx, runner)
 	if err != nil {
-		return fmt.Errorf("error creating Machine: %w", err)
+		return fmt.Errorf("createMachine: %w", err)
 	}
 
 	startCtx, cancel := context.WithTimeout(ctx, m.config.StartTimeout)
@@ -215,28 +241,23 @@ func (m *Manager) ensureRunnerStarted(ctx context.Context, runner *fireactions.R
 	start := time.Now()
 	err = m.startMachine(startCtx, machine)
 	if err != nil {
-		if err := m.stopMachine(ctx, machine); err != nil {
-			return fmt.Errorf("error stopping failed to start Firecracker VM: %w", err)
-		}
-
-		return fmt.Errorf("error starting Firecracker VM: %w", err)
+		return fmt.Errorf("startMachine: %w", err)
 	}
 
-	m.machines[runner.ID] = machine
-	m.logger.Info().Str("id", runner.ID).Msgf("started runner in %.3fs", time.Since(start).Seconds())
-
+	m.setMachine(runner.ID, machine)
+	m.logger.Info().Str("id", runner.ID).Dur("duration", time.Since(start)).Msg("started runner")
 	return nil
 }
 
 func (m *Manager) ensureRunnerStopped(ctx context.Context, runner *fireactions.Runner) error {
-	machine, ok := m.machines[runner.ID]
+	machine, ok := m.getMachine(runner.ID)
 	if ok {
 		err := m.stopMachine(ctx, machine)
 		if err != nil {
 			return fmt.Errorf("stopMachine: %w", err)
 		}
 
-		delete(m.machines, runner.ID)
+		m.delMachine(runner.ID)
 	}
 
 	_, err := m.client.DeleteRunner(context.Background(), runner.ID)
@@ -329,13 +350,11 @@ func (m *Manager) startMachine(ctx context.Context, machine *firecracker.Machine
 		go func() { errCh <- machine.Wait(stopCtx) }()
 		select {
 		case err := <-errCh:
-			if err != nil && (strings.Contains(err.Error(), "signal: terminated") || strings.Contains(err.Error(), "signal: interrupt")) {
-				delete(m.machines, machine.Cfg.VMID)
-				return
+			if err != nil && !strings.Contains(err.Error(), "signal: terminated") {
+				m.logger.Warn().Err(err).Str("id", machine.Cfg.VMID).Msgf("runner exited with error")
 			}
 
-			m.logger.Warn().Err(err).Str("id", machine.Cfg.VMID).Msgf("unexpected Firecracker VM exit")
-			delete(m.machines, machine.Cfg.VMID)
+			m.delMachine(machine.Cfg.VMID)
 		case <-stopCtx.Done():
 			return
 		}
@@ -352,15 +371,14 @@ func (m *Manager) stopMachine(ctx context.Context, machine *firecracker.Machine)
 
 	defer func() {
 		var err error
-
 		err = os.Remove(machine.Cfg.SocketPath)
 		if err != nil && !os.IsNotExist(err) {
-			m.logger.Warn().Str("id", machine.Cfg.VMID).Err(err).Msg("error removing machine socket file")
+			m.logger.Warn().Str("id", machine.Cfg.VMID).Err(err).Msgf("removing machine socket file")
 		}
 
 		err = os.Remove(fmt.Sprintf("%s/fireactions-%s", os.TempDir(), machine.Cfg.VMID))
 		if err != nil && !os.IsNotExist(err) {
-			m.logger.Warn().Str("id", machine.Cfg.VMID).Err(err).Msg("error removing machine temporary root drive mount directory")
+			m.logger.Warn().Str("id", machine.Cfg.VMID).Err(err).Msgf("removing machine temporary root drive mount directory")
 		}
 	}()
 
