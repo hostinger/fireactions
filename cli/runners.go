@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -44,6 +45,7 @@ func newRunnersListCmd() *cobra.Command {
 		RunE:    runRunnersListCmd,
 	}
 
+	cmd.Flags().StringSliceP("columns", "c", nil, "Selects the columns to be displayed in the output")
 	return cmd
 }
 
@@ -74,13 +76,18 @@ func newRunnersCompleteCmd() *cobra.Command {
 func runRunnersListCmd(cmd *cobra.Command, args []string) error {
 	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
 
+	columns, err := cmd.Flags().GetStringSlice("columns")
+	if err != nil {
+		return fmt.Errorf("error parsing --columns flag: %w", err)
+	}
+
 	runners, _, err := client.ListRunners(cmd.Context(), nil)
 	if err != nil {
 		return err
 	}
 
 	item := &printer.Runner{Runners: runners}
-	printer.PrintText(item, cmd.OutOrStdout(), nil)
+	printer.PrintText(item, cmd.OutOrStdout(), columns)
 	return nil
 }
 
