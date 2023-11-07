@@ -32,7 +32,7 @@ func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *f
 	}
 
 	for _, expression := range runner.Affinity {
-		ok, err := filterNodeLabel(node, expression.Key, expression.Operation, expression.Values)
+		ok, err := filterNodeLabel(node, expression.Key, expression.Operator, expression.Values)
 		if err != nil {
 			return false, err
 		}
@@ -45,13 +45,13 @@ func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *f
 	return true, nil
 }
 
-func filterNodeLabel(node *fireactions.Node, key string, operation string, values []string) (bool, error) {
+func filterNodeLabel(node *fireactions.Node, key string, operator string, values []string) (bool, error) {
 	labelValue, ok := node.Labels[key]
 	if !ok {
 		return false, nil
 	}
 
-	switch operation {
+	switch operator {
 	case "In":
 		if lo.Contains(values, labelValue) {
 			return true, nil
@@ -61,7 +61,7 @@ func filterNodeLabel(node *fireactions.Node, key string, operation string, value
 			return false, nil
 		}
 	default:
-		return false, fmt.Errorf("unsupported expression operation: %s", operation)
+		return false, fmt.Errorf("unsupported expression operator: %s", operator)
 	}
 
 	return false, nil

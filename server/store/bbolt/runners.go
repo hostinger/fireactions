@@ -87,6 +87,34 @@ func (s *Store) CreateRunner(ctx context.Context, runner *fireactions.Runner) er
 	return nil
 }
 
+func (s *Store) CreateRunners(ctx context.Context, runners []*fireactions.Runner) error {
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("runners"))
+
+		for _, runner := range runners {
+			runner.CreatedAt = time.Now()
+			runner.UpdatedAt = time.Now()
+
+			data, err := json.Marshal(runner)
+			if err != nil {
+				return err
+			}
+
+			err = b.Put([]byte(runner.ID), data)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		runnersBucket := tx.Bucket([]byte("runners"))

@@ -32,7 +32,7 @@ You can also set FIREACTIONS_SERVER_URL environment variable. See --help for mor
 	viper.BindPFlag("fireactions-server-url", cmd.PersistentFlags().Lookup("fireactions-server-url"))
 	viper.BindEnv("fireactions-server-url", "FIREACTIONS_SERVER_URL")
 
-	cmd.AddCommand(newRunnersListCmd(), newRunnersShowCmd(), newRunnersCompleteCmd())
+	cmd.AddCommand(newRunnersListCmd(), newRunnersShowCmd(), newRunnersCompleteCmd(), newRunnersCreateCmd())
 	return cmd
 }
 
@@ -69,6 +69,25 @@ func newRunnersCompleteCmd() *cobra.Command {
 		Aliases: []string{"done"},
 		RunE:    runRunnersCompleteCmd,
 	}
+
+	return cmd
+}
+
+func newRunnersCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a new GitHub runner(s)",
+		Args:  cobra.NoArgs,
+		RunE:  runRunnersCreateCmd,
+	}
+
+	cmd.Flags().StringP("organisation", "o", "", "Sets the organisation to use. (required)")
+	cmd.MarkFlagRequired("organisation")
+
+	cmd.Flags().StringP("job-label", "j", "", `Sets the job label to use. The job label must be already configured in the server config file. (required)`)
+	cmd.MarkFlagRequired("job-label")
+
+	cmd.Flags().IntP("count", "c", 1, "Sets the number of runners to create")
 
 	return cmd
 }
@@ -120,6 +139,39 @@ func runRunnersCompleteCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func runRunnersCreateCmd(cmd *cobra.Command, args []string) error {
+	client := fireactions.NewClient(nil, fireactions.WithEndpoint(viper.GetString("fireactions-server-url")))
+
+	organisation, err := cmd.Flags().GetString("organisation")
+	if err != nil {
+		return fmt.Errorf("error parsing --organisation flag: %w", err)
+	}
+
+	jobLabel, err := cmd.Flags().GetString("job-label")
+	if err != nil {
+		return fmt.Errorf("error parsing --job-label flag: %w", err)
+	}
+
+	count, err := cmd.Flags().GetInt("count")
+	if err != nil {
+		return fmt.Errorf("error parsing --count flag: %w", err)
+	}
+
+	runners, _, err := client.CreateRunner(cmd.Context(), fireactions.CreateRunnerRequest{
+		Organisation: organisation,
+		JobLabel:     jobLabel,
+		Count:        count,
+	})
+	if err != nil {
+		return err
+	}
+
+	item := &printer.Runner{Runners: runners}
+	printer.PrintText(item, cmd.OutOrStdout(), nil)
 
 	return nil
 }

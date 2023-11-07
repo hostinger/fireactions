@@ -132,10 +132,7 @@ func (h *jobHandler) handleQueued(ctx context.Context, j *webhooks.WorkflowJobPa
 		return fmt.Errorf("error creating runner: %w", err)
 	}
 
-	if err := h.scheduler.AddToQueue(runner); err != nil {
-		return fmt.Errorf("error adding runner to scheduling queue %s: %w", runner.ID, err)
-	}
-
+	h.scheduler.AddToQueue(runner)
 	h.logger.Info().
 		Str("id", runner.ID).Str("name", runner.Name).Msgf("runner creation triggered by job %d", j.WorkflowJob.ID)
 	return nil
@@ -172,7 +169,7 @@ func newRunnerFromJobPayload(j *webhooks.WorkflowJobPayload, jobLabelConfig *con
 	}
 
 	for _, expression := range jobLabelConfig.Runner.Affinity {
-		affinity := &fireactions.RunnerAffinityExpression{Key: expression.Key, Operation: expression.Operator, Values: expression.Values}
+		affinity := &fireactions.RunnerAffinityExpression{Key: expression.Key, Operator: expression.Operator, Values: expression.Values}
 		runner.Affinity = append(runner.Affinity, affinity)
 	}
 

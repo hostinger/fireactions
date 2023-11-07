@@ -20,6 +20,7 @@ type Store interface {
 
 	GetRunners(ctx context.Context, filter fireactions.RunnerFilterFunc) ([]*fireactions.Runner, error)
 	GetRunner(ctx context.Context, id string) (*fireactions.Runner, error)
+	CreateRunners(ctx context.Context, runners []*fireactions.Runner) error
 	CreateRunner(ctx context.Context, runner *fireactions.Runner) error
 	SetRunnerStatus(ctx context.Context, id string, status fireactions.RunnerStatus) (*fireactions.Runner, error)
 	AllocateRunner(ctx context.Context, nodeID string, runnerID string) error

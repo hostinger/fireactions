@@ -23,13 +23,13 @@ type Runner struct {
 }
 
 type RunnerAffinityExpression struct {
-	Key       string
-	Operation string
-	Values    []string
+	Key      string
+	Operator string
+	Values   []string
 }
 
 func (r *RunnerAffinityExpression) String() string {
-	return fmt.Sprintf("%s %s %v", r.Key, r.Operation, r.Values)
+	return fmt.Sprintf("%s %s %v", r.Key, r.Operator, r.Values)
 }
 
 type RunnerImagePullPolicy string

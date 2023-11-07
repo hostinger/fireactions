@@ -78,17 +78,14 @@ func (s *Scheduler) Shutdown() {
 
 // AddToQueue places a Runner into the scheduling queue. If the Runner is already
 // in the queue, an error is returned.
-func (s *Scheduler) AddToQueue(m *fireactions.Runner) error {
+func (s *Scheduler) AddToQueue(runners ...*fireactions.Runner) {
 	if s.isShutdown {
-		return nil
+		return
 	}
 
-	err := s.queue.Enqueue(m)
-	if err != nil {
-		return fmt.Errorf("error enqueueing runner: %w", err)
+	for _, r := range runners {
+		s.queue.Enqueue(r)
 	}
-
-	return nil
 }
 
 // RemoveFromQueue removes a Runner from the scheduling queue. If the Runner is not
@@ -125,12 +122,7 @@ func (s *Scheduler) init() error {
 	}
 
 	for _, r := range runners {
-		err := s.queue.Enqueue(r)
-		if err != nil {
-			return err
-		}
-
-		s.logger.Debug().Str("runner", r.Name).Msgf("added existing runner without assigned node to scheduler queue")
+		s.queue.Enqueue(r)
 	}
 
 	return nil

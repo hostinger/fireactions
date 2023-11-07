@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/server/config"
 	"github.com/hostinger/fireactions/server/scheduler"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/rs/zerolog"
@@ -19,7 +23,7 @@ type GitHubTokenGetter interface {
 // to the provided router.
 func RegisterRunnersHandlers(
 	logger *zerolog.Logger, router *gin.RouterGroup, scheduler *scheduler.Scheduler, store store.Store,
-	tokenGetter GitHubTokenGetter,
+	tokenGetter GitHubTokenGetter, config *config.Config,
 ) {
 	runners := router.Group("/runners")
 	{
@@ -29,6 +33,7 @@ func RegisterRunnersHandlers(
 		runners.GET("/:id/remove-token", RunnerRemoveTokenHandlerFunc(logger, store, tokenGetter))
 		runners.PATCH("/:id/status", RunnerSetStatusHandlerFunc(logger, store))
 		runners.DELETE("/:id", RunnerDeleteHandlerFunc(logger, store))
+		runners.POST("", RunnerCreateHandlerFunc(logger, store, scheduler, config))
 	}
 }
 
@@ -169,6 +174,76 @@ func RunnerDeleteHandlerFunc(logger *zerolog.Logger, store store.Store) gin.Hand
 		}
 
 		ctx.Status(204)
+	}
+
+	return f
+}
+
+// RunnerCreateHandlerFunc returns a HandlerFunc that handles HTTP requests to
+// endpoint POST /api/v1/runners
+func RunnerCreateHandlerFunc(logger *zerolog.Logger, store store.Store, scheduler *scheduler.Scheduler, config *config.Config) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		var request fireactions.CreateRunnerRequest
+		err := ctx.ShouldBindJSON(&request)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		if request.Count < 1 {
+			ctx.JSON(400, gin.H{"error": "count must be greater than 0"})
+			return
+		}
+
+		jobLabel, ok := config.GitHubConfig.GetJobLabelConfig(request.JobLabel)
+		if !ok {
+			ctx.JSON(404, gin.H{"error": "job label doesn't exist"})
+			return
+		}
+
+		var runners []*fireactions.Runner
+		for i := 0; i < request.Count; i++ {
+			runnerID := uuid.New().String()
+			runner := &fireactions.Runner{
+				ID:              runnerID,
+				Name:            fmt.Sprintf("runner-%s", runnerID),
+				NodeID:          nil,
+				Image:           jobLabel.Runner.Image,
+				ImagePullPolicy: fireactions.RunnerImagePullPolicy(jobLabel.Runner.ImagePullPolicy),
+				Status:          fireactions.RunnerStatus{Phase: fireactions.RunnerPhasePending},
+				Organisation:    request.Organisation,
+				Labels:          []string{"self-hosted", fmt.Sprintf("%s%s", config.GitHubConfig.JobLabelPrefix, jobLabel.Name)},
+				CreatedAt:       time.Now(),
+				UpdatedAt:       time.Now(),
+				DeletedAt:       nil,
+			}
+
+			runner.Resources = fireactions.RunnerResources{
+				VCPUs:       jobLabel.Runner.Resources.VCPUs,
+				MemoryBytes: jobLabel.Runner.Resources.MemoryMB * 1024 * 1024,
+			}
+
+			if jobLabel.Runner.ImagePullPolicy == "" {
+				runner.ImagePullPolicy = fireactions.RunnerImagePullPolicyIfNotPresent
+			} else {
+				runner.ImagePullPolicy = fireactions.RunnerImagePullPolicy(jobLabel.Runner.ImagePullPolicy)
+			}
+
+			for _, affinity := range jobLabel.Runner.Affinity {
+				runner.Affinity = append(runner.Affinity, &fireactions.RunnerAffinityExpression{Key: affinity.Key, Operator: affinity.Operator, Values: affinity.Values})
+			}
+
+			runners = append(runners, runner)
+		}
+
+		err = store.CreateRunners(ctx, runners)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		scheduler.AddToQueue(runners...)
+		ctx.JSON(200, gin.H{"runners": runners})
 	}
 
 	return f

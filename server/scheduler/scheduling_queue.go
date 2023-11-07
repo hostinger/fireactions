@@ -35,13 +35,13 @@ func newSchedulingQueue() *schedulingQueue {
 
 // Enqueue enqueues a Runner into the queue. If the Runner is already in the
 // queue, it is ignored.
-func (q *schedulingQueue) Enqueue(m *fireactions.Runner) error {
+func (q *schedulingQueue) Enqueue(m *fireactions.Runner) {
 	q.l.Lock()
 	defer q.l.Unlock()
 
 	_, ok := q.runnersInQueue[m.ID]
 	if ok {
-		return nil
+		return
 	}
 
 	defer q.cond.Signal()
@@ -49,7 +49,7 @@ func (q *schedulingQueue) Enqueue(m *fireactions.Runner) error {
 	q.runnersInQueue[m.ID] = m
 	heap.Push(q.waiting, m)
 
-	return nil
+	return
 }
 
 // Dequeue dequeues a Runner from the queue. If the queue is empty, it blocks

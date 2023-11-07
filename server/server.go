@@ -94,7 +94,7 @@ func New(config *config.Config) (*Server, error) {
 	{
 		handlers.RegisterMiscHandlers(v1)
 		handlers.RegisterRunnersHandlers(
-			&logger, v1, scheduler, store, tokenGetter)
+			&logger, v1, scheduler, store, tokenGetter, config)
 		handlers.RegisterNodesHandlers(
 			&logger, v1, scheduler, store)
 	}

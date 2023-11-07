@@ -37,9 +37,9 @@ func TestFilter(t *testing.T) {
 				runner: &fireactions.Runner{
 					Affinity: []*fireactions.RunnerAffinityExpression{
 						{
-							Key:       "region",
-							Operation: "In",
-							Values:    []string{"europe"},
+							Key:      "region",
+							Operator: "In",
+							Values:   []string{"europe"},
 						},
 					},
 				},
@@ -59,9 +59,9 @@ func TestFilter(t *testing.T) {
 				runner: &fireactions.Runner{
 					Affinity: []*fireactions.RunnerAffinityExpression{
 						{
-							Key:       "region",
-							Operation: "NotIn",
-							Values:    []string{"europe"},
+							Key:      "region",
+							Operator: "NotIn",
+							Values:   []string{"europe"},
 						},
 					},
 				},
@@ -81,9 +81,9 @@ func TestFilter(t *testing.T) {
 				runner: &fireactions.Runner{
 					Affinity: []*fireactions.RunnerAffinityExpression{
 						{
-							Key:       "region",
-							Operation: "In",
-							Values:    []string{"europe"},
+							Key:      "region",
+							Operator: "In",
+							Values:   []string{"europe"},
 						},
 					},
 				},
@@ -103,9 +103,9 @@ func TestFilter(t *testing.T) {
 				runner: &fireactions.Runner{
 					Affinity: []*fireactions.RunnerAffinityExpression{
 						{
-							Key:       "region",
-							Operation: "NotIn",
-							Values:    []string{"europe"},
+							Key:      "region",
+							Operator: "NotIn",
+							Values:   []string{"europe"},
 						},
 					},
 				},
@@ -123,9 +123,9 @@ func TestFilter(t *testing.T) {
 				runner: &fireactions.Runner{
 					Affinity: []*fireactions.RunnerAffinityExpression{
 						{
-							Key:       "region",
-							Operation: "Equals",
-							Values:    []string{"europe"},
+							Key:      "region",
+							Operator: "Equals",
+							Values:   []string{"europe"},
 						},
 					},
 				},

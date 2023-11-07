@@ -31,6 +31,7 @@ type Client interface {
 	UncordonNode(ctx context.Context, id string) (*Response, error)
 	GetNodeRunners(ctx context.Context, id string) ([]*Runner, *Response, error)
 	GetRunner(ctx context.Context, id string) (*Runner, *Response, error)
+	CreateRunner(ctx context.Context, createRunnerRequest CreateRunnerRequest) ([]*Runner, *Response, error)
 	ListRunners(ctx context.Context, opts *RunnersListOptions) ([]*Runner, *Response, error)
 	GetRunnerRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error)
 	GetRunnerRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error)
@@ -457,6 +458,31 @@ func (c *clientImpl) DeleteRunner(ctx context.Context, id string) (*Response, er
 	}
 
 	return c.Do(req, nil)
+}
+
+type CreateRunnerRequest struct {
+	Organisation string `json:"organisation" binding:"required"`
+	JobLabel     string `json:"job_label" binding:"required"`
+	Count        int    `json:"count" binding:"required"`
+}
+
+func (c *clientImpl) CreateRunner(ctx context.Context, createRunnerRequest CreateRunnerRequest) ([]*Runner, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/runners", createRunnerRequest)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	type Root struct {
+		Runners []*Runner `json:"runners"`
+	}
+
+	var root Root
+	response, err := c.Do(req, &root)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return root.Runners, response, nil
 }
 
 // SetUserAgent sets the User-Agent header to use when making requests to the
