@@ -26,7 +26,6 @@ type Client struct {
 	hostStatsCollector hoststats.Collector
 	manager            *runner.Manager
 	heartbeater        *heartbeater.Heartbeater
-	containerd         *containerd.Client
 	shutdownOnce       sync.Once
 	shutdownCh         chan struct{}
 	heartbeatFailureCh chan struct{}
@@ -119,7 +118,6 @@ func (c *Client) shutdown(ctx context.Context) {
 	}
 
 	c.heartbeater.Stop()
-	c.containerd.Close()
 }
 
 func (c *Client) Start() {
