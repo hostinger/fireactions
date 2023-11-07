@@ -230,23 +230,21 @@ func (m *Manager) ensureRunnerStarted(ctx context.Context, runner *fireactions.R
 
 func (m *Manager) ensureRunnerStopped(ctx context.Context, runner *fireactions.Runner) error {
 	machine, ok := m.machines[runner.ID]
-	if !ok {
-		return nil
+	if ok {
+		err := m.stopMachine(ctx, machine)
+		if err != nil {
+			return fmt.Errorf("stopMachine: %w", err)
+		}
+
+		delete(m.machines, runner.ID)
 	}
 
-	err := m.stopMachine(ctx, machine)
+	_, err := m.client.DeleteRunner(context.Background(), runner.ID)
 	if err != nil {
-		return fmt.Errorf("error stopping Firecracker VM: %w", err)
+		return fmt.Errorf("client: %w", err)
 	}
 
-	m.client.DeleteRunner(context.Background(), runner.ID)
-	if err != nil {
-		return fmt.Errorf("error deleting runner: %w", err)
-	}
-
-	delete(m.machines, runner.ID)
 	m.logger.Info().Str("id", runner.ID).Msg("stopped runner")
-
 	return nil
 }
 
