@@ -130,7 +130,7 @@ func configureGitHubRunner(logger *zerolog.Logger, ctx context.Context, client f
 	}
 
 	configArgs := []string{"--url", fmt.Sprintf("https://github.com/%s", runner.Organisation), "--name", runner.Name,
-		"--labels", strings.Join(runner.Labels, ","), "--token", token.Token, "--ephemeral", "--replace", "--disableupdate", "--unattended", "--no-default-labels", "--replace"}
+		"--labels", strings.Join(runner.Labels, ","), "--token", token.Token, "--ephemeral", "--replace", "--disableupdate", "--unattended", "--no-default-labels"}
 
 	logger.Info().Msgf("starting config.sh with args: %s", strings.Join(configArgs, " "))
 	configCmd := exec.CommandContext(ctx, configShPath, configArgs...)
