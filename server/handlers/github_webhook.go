@@ -150,7 +150,7 @@ func newRunnerFromJobPayload(j *webhooks.WorkflowJobPayload, jobLabelConfig *con
 	runnerID := uuid.New().String()
 	runner := &fireactions.Runner{
 		ID:           runnerID,
-		Name:         fmt.Sprintf("runner-%s", runnerID),
+		Name:         fmt.Sprintf("fireactions-%s", runnerID),
 		NodeID:       nil,
 		Image:        jobLabelConfig.Runner.Image,
 		Status:       fireactions.RunnerStatus{Phase: fireactions.RunnerPhasePending},

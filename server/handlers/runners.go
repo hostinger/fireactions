@@ -206,7 +206,7 @@ func RunnerCreateHandlerFunc(logger *zerolog.Logger, store store.Store, schedule
 			runnerID := uuid.New().String()
 			runner := &fireactions.Runner{
 				ID:              runnerID,
-				Name:            fmt.Sprintf("runner-%s", runnerID),
+				Name:            fmt.Sprintf("fireactions-%s", runnerID),
 				NodeID:          nil,
 				Image:           jobLabel.Runner.Image,
 				ImagePullPolicy: fireactions.RunnerImagePullPolicy(jobLabel.Runner.ImagePullPolicy),
