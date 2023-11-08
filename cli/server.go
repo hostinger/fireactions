@@ -67,7 +67,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 
 	server, err := server.New(config)
 	if err != nil {
-		return fmt.Errorf("error creating server: %w", err)
+		return err
 	}
 
 	signalCh := make(chan os.Signal, 1)
@@ -81,7 +81,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 
 	err = server.Start()
 	if err != nil {
-		return fmt.Errorf("error starting server: %w", err)
+		return err
 	}
 
 	return nil

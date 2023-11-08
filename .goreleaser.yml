@@ -1,4 +1,6 @@
 ---
+project_name: fireactions
+
 builds:
 - id: fireactions
   main: ./cmd/fireactions
@@ -6,9 +8,9 @@ builds:
   - CGO_ENABLED=0
   ldflags:
   - -s -w
-  - -X github.com/hostinger/fireactions/version.Version={{ .Version }}
-  - -X github.com/hostinger/fireactions/version.Date={{ .Date }}
-  - -X github.com/hostinger/fireactions/version.Commit={{ .Commit }}
+  - -X github.com/hostinger/{{ .ProjectName }}/version.Version={{ .Version }}
+  - -X github.com/hostinger/{{ .ProjectName }}/version.Date={{ .Date }}
+  - -X github.com/hostinger/{{ .ProjectName }}/version.Commit={{ .Commit }}
   goos:
   - linux
   goarch:
@@ -20,7 +22,7 @@ archives:
 - id: fireactions
   builds:
   - fireactions
-  name_template: fireactions-v{{ .Version }}-{{ .Os }}-{{ .Arch }}
+  name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
   format: tar.gz
   files:
   - src: LICENSE
@@ -31,16 +33,56 @@ archives:
     dst: CONFIGURATION.md
 
 dockers:
-- id: server
-  dockerfile: Dockerfile
+- use: buildx
   image_templates:
-  - ghcr.io/hostinger/fireactions:{{ .Version }}
-  - ghcr.io/hostinger/fireactions:latest
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-amd64
+  build_flag_templates:
+  - "--platform=linux/amd64"
+  - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+  - "--label=org.opencontainers.image.description=BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines."
+  - "--label=org.opencontainers.image.source=https://github.com/hostinger/{{ .ProjectName }}"
+  - "--label=org.opencontainers.image.url=https://github.com/hostinger/{{ .ProjectName }}"
+  - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+  - "--label=org.opencontainers.image.version={{ .Version }}"
+  - "--label=org.opencontainers.image.created={{ .Now.Format \"2006-01-02T15:04:05Z07:00\" }}"
+  - "--label=org.opencontainers.image.licenses=MIT"
+  - "--label=org.opencontainers.image.vendor=Hostinger"
   extra_files:
-    - "./"
+  - entrypoint.sh
+  goarch: amd64
+- use: buildx
+  image_templates:
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-arm64
+  build_flag_templates:
+  - "--platform=linux/arm64"
+  - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+  - "--label=org.opencontainers.image.description=BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines."
+  - "--label=org.opencontainers.image.source=https://github.com/hostinger/{{ .ProjectName }}"
+  - "--label=org.opencontainers.image.url=https://github.com/hostinger/{{ .ProjectName }}"
+  - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+  - "--label=org.opencontainers.image.version={{ .Version }}"
+  - "--label=org.opencontainers.image.created={{ .Now.Format \"2006-01-02T15:04:05Z07:00\" }}"
+  - "--label=org.opencontainers.image.licenses=MIT"
+  - "--label=org.opencontainers.image.vendor=Hostinger"
+  extra_files:
+  - entrypoint.sh
+  goarch: arm64
+
+docker_manifests:
+- name_template: ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}
+  image_templates:
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-amd64
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-arm64
+- name_template: ghcr.io/hostinger/fireactions:latest
+  image_templates:
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-amd64
+  - ghcr.io/hostinger/{{ .ProjectName }}:{{ .Tag }}-arm64
 
 release:
   mode: keep-existing
 
 changelog:
   skip: true
+
+checksum:
+  name_template: checksums.txt
