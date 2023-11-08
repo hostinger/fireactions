@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/hostinger/fireactions/compare/v1.1.0...v1.2.0) (2023-11-08)
+
+
+### Features
+
+* **ci:** Build multiplatform Docker image ([4ce43b3](https://github.com/hostinger/fireactions/commit/4ce43b3844cfe4483e6a0b9dc4ab2ca04b72810e))
+
 ## [1.1.0](https://github.com/hostinger/fireactions/compare/v1.0.3...v1.1.0) (2023-11-08)
 
 
