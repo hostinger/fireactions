@@ -1,8 +1,4 @@
 ---
-before:
-  hooks:
-  - hack/release.sh
-
 builds:
 - id: fireactions
   main: ./cmd/fireactions
@@ -32,8 +28,6 @@ archives:
     dst: README.md
   - src: docs/configuration.md
     dst: CONFIGURATION.md
-  - src: release/{{ .Arch }}
-    dst: .
 
 dockers:
 - id: server
