@@ -1,31 +1,17 @@
-FROM golang:1.20 as build
+FROM --platform=$TARGETPLATFORM debian:stable-slim
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates                                              \
+    && apt-get autoremove -y                                     \
+    && apt-get clean                                             \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*             \
+    && groupadd -g 1000 fireactions                              \
+    && useradd -u 1000 -g fireactions -s /bin/sh -m fireactions
 
-COPY go.mod ./
-COPY go.sum ./
+COPY fireactions /usr/bin/fireactions
 
-RUN go mod download
+EXPOSE 8080
 
-COPY . .
+COPY entrypoint.sh /usr/bin/entrypoint.sh
 
-ENV GO111MODULE=on \
-    CGO_ENABLED=0  \
-    GOOS=linux     \
-    GOARCH=amd64
-
-RUN go build -v -o fireactions ./cmd/fireactions
-
-RUN adduser --disabled-password --uid 1000 --gecos '' appuser && \
-    chown -R appuser /app
-
-FROM alpine:3.18.4
-
-LABEL org.opencontainers.image.source https://github.com/hostinger/fireactions
-
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /app/fireactions /usr/bin/fireactions
-
-USER appuser
-
-ENTRYPOINT ["/usr/bin/fireactions", "server"]
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]

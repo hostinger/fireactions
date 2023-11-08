@@ -11,7 +11,7 @@ LDFLAGS := -ldflags "-s -w -X $(MODULE)/version.Version=$(GIT_TAG) -X $(MODULE)/
 
 .PHONY: build
 build:
-	@ GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o fireactions ./cmd/fireactions
+	@ $(GO) build $(LDFLAGS) -o fireactions ./cmd/fireactions
 
 .PHONY: clean
 clean:

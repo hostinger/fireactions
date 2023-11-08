@@ -1,15 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/hostinger/fireactions/cli"
 )
 
 func main() {
-	cmd := cli.New()
-	if err := cmd.Execute(); err != nil {
-		cmd.PrintErrf("Error: %s\n", err.Error())
-		os.Exit(1)
+	cli := cli.New()
+	if err := cli.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing CLI command: %s\n", err.Error())
 	}
 }

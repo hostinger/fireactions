@@ -147,14 +147,14 @@ func (s *Server) Start() error {
 
 	err = s.scheduler.Start()
 	if err != nil {
-		return fmt.Errorf("error starting scheduler: %w", err)
+		return fmt.Errorf("scheduler: %w", err)
 	}
 
 	s.up.Set(1)
 
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("error starting server: %w", err)
+		return err
 	}
 
 	return nil
