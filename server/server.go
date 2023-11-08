@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/hostinger/fireactions/build"
 	"github.com/hostinger/fireactions/server/config"
 	"github.com/hostinger/fireactions/server/github"
 	"github.com/hostinger/fireactions/server/handlers"
@@ -20,6 +19,7 @@ import (
 	"github.com/hostinger/fireactions/server/scheduler"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/server/store/bbolt"
+	"github.com/hostinger/fireactions/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
@@ -141,7 +141,7 @@ func (s *Server) Shutdown(ctx context.Context) {
 
 // Start starts the Server. It blocks until Shutdown() is called.
 func (s *Server) Start() error {
-	s.logger.Info().Str("version", build.GitTag).Msgf("starting server on %s", s.server.Addr)
+	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("starting server on %s", s.config.HTTP.ListenAddress)
 
 	var err error
 

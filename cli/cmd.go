@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/hostinger/fireactions/version"
 	"github.com/spf13/cobra"
 )
 
@@ -11,8 +12,10 @@ func New() *cobra.Command {
 		Short:         "BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		Version:       version.Version,
 	}
 
+	cmd.SetVersionTemplate(version.String())
 	cmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	cmd.PersistentFlags().SortFlags = false
 	cmd.CompletionOptions.DisableDefaultCmd = true
@@ -23,6 +26,6 @@ func New() *cobra.Command {
 		return nil
 	})
 
-	cmd.AddCommand(newVersionCmd(), newNodesCmd(), newRunnersCmd(), newServerCmd(), newClientCmd())
+	cmd.AddCommand(newNodesCmd(), newRunnersCmd(), newServerCmd(), newClientCmd())
 	return cmd
 }

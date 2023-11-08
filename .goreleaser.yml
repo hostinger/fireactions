@@ -5,9 +5,10 @@ builds:
   env:
   - CGO_ENABLED=0
   ldflags:
-  - -X github.com/hostinger/fireactions/build.GitTag={{ .Version }}
-  - -X github.com/hostinger/fireactions/build.GitCommit={{ .Commit }}
-  - -X github.com/hostinger/fireactions/build.BuildDate={{ .Date }}
+  - -s -w
+  - -X github.com/hostinger/fireactions/version.Version={{ .Version }}
+  - -X github.com/hostinger/fireactions/version.Date={{ .Date }}
+  - -X github.com/hostinger/fireactions/version.Commit={{ .Commit }}
   goos:
   - linux
   goarch:

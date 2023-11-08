@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hostinger/fireactions/build"
+	"github.com/hostinger/fireactions/version"
 )
 
 var (
-	defaultUserAgent = fmt.Sprintf("fireactions/%s", build.GitTag)
+	defaultUserAgent = fmt.Sprintf("fireactions/%s", version.Version)
 	defaultEndpoint  = "http://127.0.0.1:8080"
 )
 

@@ -7,7 +7,7 @@ BUILD_DATE := $(shell date '+%FT%T')
 
 MODULE := $(shell $(GO) list -m)
 
-LDFLAGS := -ldflags "-X $(MODULE)/build.GitTag=$(GIT_TAG) -X $(MODULE)/build.GitCommit=$(GIT_COMMIT) -X $(MODULE)/build.BuildDate=$(BUILD_DATE)"
+LDFLAGS := -ldflags "-s -w -X $(MODULE)/version.Version=$(GIT_TAG) -X $(MODULE)/version.Commit=$(GIT_COMMIT) -X $(MODULE)/version.Date=$(BUILD_DATE)"
 
 .PHONY: build
 build:

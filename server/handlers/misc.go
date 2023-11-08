@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hostinger/fireactions/build"
+	"github.com/hostinger/fireactions/version"
 )
 
 // RegisterMiscHandlers registers HTTP handlers for /healthz, /readyz, /livez
@@ -50,7 +50,7 @@ func LivezHandlerFunc() gin.HandlerFunc {
 // endpoint GET /version
 func VersionHandlerFunc() gin.HandlerFunc {
 	f := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"version": build.GitTag, "commit": build.GitCommit, "date": build.BuildDate})
+		c.String(http.StatusOK, version.String())
 	}
 
 	return f

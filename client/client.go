@@ -9,10 +9,10 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/hostinger/fireactions"
-	"github.com/hostinger/fireactions/build"
 	"github.com/hostinger/fireactions/client/heartbeater"
 	"github.com/hostinger/fireactions/client/hoststats"
 	"github.com/hostinger/fireactions/client/runner"
+	"github.com/hostinger/fireactions/version"
 	"github.com/rs/zerolog"
 )
 
@@ -143,7 +143,7 @@ func (c *Client) Start() {
 	go c.handleHearbeats()
 	go c.manager.Run()
 
-	c.logger.Info().Str("id", c.ID).Str("version", build.GitTag).Msgf("started client")
+	c.logger.Info().Str("id", c.ID).Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msg("started client")
 }
 
 func (c *Client) register(ctx context.Context) error {
