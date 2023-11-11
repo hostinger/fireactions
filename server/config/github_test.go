@@ -7,36 +7,39 @@ import (
 )
 
 func TestGitHubJobLabelConfig_Validate(t *testing.T) {
-	t.Run("invalid", func(t *testing.T) {
+	t.Run("ReturnsErrorIfNameIsEmpty", func(t *testing.T) {
 		cfg := &GitHubJobLabelConfig{
-			Name:                "",
-			AllowedRepositories: nil,
-			Runner:              nil,
+			Name: "",
 		}
 
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "name is required")
-		assert.Contains(t, err.Error(), "runner config is required")
 	})
 
-	t.Run("invalid allowed_repositories", func(t *testing.T) {
+	t.Run("ReturnsErrorIfRunnerIsNil", func(t *testing.T) {
 		cfg := &GitHubJobLabelConfig{
-			Name:                "test",
-			AllowedRepositories: []string{""},
-			Runner:              nil,
+			Name: "test",
 		}
 
 		err := cfg.Validate()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "allowed_repositories must not contain empty strings")
+		assert.Contains(t, err.Error(), "runner config is required")
 	})
 
-	t.Run("invalid runner", func(t *testing.T) {
+	t.Run("ReturnsErrorIfAllowedRepositoriesIsInvalid", func(t *testing.T) {
 		cfg := &GitHubJobLabelConfig{
-			Name:                "test",
-			AllowedRepositories: nil,
-			Runner:              &RunnerConfig{},
+			AllowedRepositories: []string{"["},
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "allowed_repositories regexp is invalid")
+	})
+
+	t.Run("ReturnsErrorIfRunnerIsInvalid", func(t *testing.T) {
+		cfg := &GitHubJobLabelConfig{
+			Runner: &RunnerConfig{},
 		}
 
 		err := cfg.Validate()
@@ -46,27 +49,68 @@ func TestGitHubJobLabelConfig_Validate(t *testing.T) {
 }
 
 func TestGitHubConfig_Validate(t *testing.T) {
-	t.Run("invalid", func(t *testing.T) {
-		cfg := &GitHubConfig{}
+	t.Run("ReturnsErrorIfJobLabelPrefixIsEmpty", func(t *testing.T) {
+		cfg := &GitHubConfig{
+			JobLabelPrefix: "",
+		}
 
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "job_label_prefix is required")
+	})
+
+	t.Run("ReturnsErrorIfJobLabelsIsEmpty", func(t *testing.T) {
+		cfg := &GitHubConfig{
+			JobLabels: make([]*GitHubJobLabelConfig, 0),
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "at least one job_label is required")
+	})
+
+	t.Run("ReturnsErrorIfWebhookSecretIsEmpty", func(t *testing.T) {
+		cfg := &GitHubConfig{
+			WebhookSecret: "",
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "webhook_secret is required")
+	})
+
+	t.Run("ReturnsErrorIfAppIDIsZero", func(t *testing.T) {
+		cfg := &GitHubConfig{
+			AppID: 0,
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "app_id is required")
+	})
+
+	t.Run("ReturnsErrorIfAppPrivateKeyIsEmpty", func(t *testing.T) {
+		cfg := &GitHubConfig{
+			AppPrivateKey: "",
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "app_private_key is required")
 	})
 
-	t.Run("invalid job_label", func(t *testing.T) {
+	t.Run("ReturnsErrorIfJobLabelIsInvalid", func(t *testing.T) {
 		cfg := &GitHubConfig{
-			JobLabels: []*GitHubJobLabelConfig{{}},
+			JobLabels: []*GitHubJobLabelConfig{
+				{},
+			},
 		}
 
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid job_label config")
 	})
+
 }
 
 func TestGitHubConfig_GetJobLabelConfig(t *testing.T) {

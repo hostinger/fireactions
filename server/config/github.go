@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/hashicorp/go-multierror"
 )
@@ -80,8 +81,8 @@ func (c *GitHubJobLabelConfig) Validate() error {
 
 	if len(c.AllowedRepositories) > 0 {
 		for _, repo := range c.AllowedRepositories {
-			if repo == "" {
-				errs = multierror.Append(errs, fmt.Errorf("allowed_repositories must not contain empty strings"))
+			if _, err := regexp.Compile(repo); err != nil {
+				errs = multierror.Append(errs, fmt.Errorf("allowed_repositories regexp is invalid: %w", err))
 			}
 		}
 	}

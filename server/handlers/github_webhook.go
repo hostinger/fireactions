@@ -107,7 +107,12 @@ func (h *jobHandler) Handle(ctx context.Context, j *webhooks.WorkflowJobPayload)
 	}
 
 	if !lo.ContainsBy(jobLabelConfig.AllowedRepositories, func(item string) bool {
-		return regexp.MustCompile(item).MatchString(j.Repository.FullName)
+		regexp, err := regexp.Compile(item)
+		if err != nil {
+			return false
+		}
+
+		return regexp.MatchString(j.Repository.FullName)
 	}) {
 		logger.Debug().Msgf("skipped job: repository %s not allowed", j.Repository.FullName)
 		return nil
