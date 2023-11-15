@@ -13,18 +13,15 @@ func TestNewDefaultConfig(t *testing.T) {
 }
 
 func TestConfig_Validate(t *testing.T) {
-	t.Run("invalid", func(t *testing.T) {
+	t.Run("ReturnsErrorIfHTTPIsNil", func(t *testing.T) {
 		cfg := &Config{}
 
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "http config is required")
-		assert.Contains(t, err.Error(), "data_dir is required")
-		assert.Contains(t, err.Error(), "github config is required")
-		assert.Contains(t, err.Error(), "log_level is required")
 	})
 
-	t.Run("invalid http config", func(t *testing.T) {
+	t.Run("ReturnsErrorIfHTTPIsInvalid", func(t *testing.T) {
 		cfg := &Config{
 			HTTP: &HTTPConfig{},
 		}
@@ -34,7 +31,35 @@ func TestConfig_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid http config")
 	})
 
-	t.Run("invalid github config", func(t *testing.T) {
+	t.Run("ReturnsErrorIfDataDirIsEmpty", func(t *testing.T) {
+		cfg := &Config{
+			DataDir: "",
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "data_dir is required")
+	})
+
+	t.Run("ReturnsErrorIfDataDirDoesNotExist", func(t *testing.T) {
+		cfg := &Config{
+			DataDir: "/does/not/exist",
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "data_dir does not exist")
+	})
+
+	t.Run("ReturnsErrorIfGitHubConfigIsNil", func(t *testing.T) {
+		cfg := &Config{}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "github config is required")
+	})
+
+	t.Run("ReturnsErrorIfGitHubConfigIsInvalid", func(t *testing.T) {
 		cfg := &Config{
 			GitHubConfig: &GitHubConfig{},
 		}
@@ -44,7 +69,17 @@ func TestConfig_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid github config")
 	})
 
-	t.Run("invalid log_level", func(t *testing.T) {
+	t.Run("ReturnsErrorIfLogLevelIsEmpty", func(t *testing.T) {
+		cfg := &Config{
+			LogLevel: "",
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "log_level is required")
+	})
+
+	t.Run("ReturnsErrorIfLogLevelIsInvalid", func(t *testing.T) {
 		cfg := &Config{
 			LogLevel: "invalid",
 		}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/go-multierror"
 )
@@ -40,6 +41,11 @@ func (c *Config) Validate() error {
 
 	if c.DataDir == "" {
 		errs = multierror.Append(errs, fmt.Errorf("data_dir is required"))
+	} else {
+		_, err := os.Stat(c.DataDir)
+		if err != nil && os.IsNotExist(err) {
+			errs = multierror.Append(errs, fmt.Errorf("data_dir does not exist: %s", c.DataDir))
+		}
 	}
 
 	if c.GitHubConfig == nil {
