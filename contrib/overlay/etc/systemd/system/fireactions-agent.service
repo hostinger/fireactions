@@ -5,10 +5,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=fireactions-agent
+User=root
 ExecStart=/usr/bin/fireactions-agent
-TimeoutStopSec=5min
-WorkingDirectory=/home/fireactions-agent
 Restart=on-failure
 RestartSec=5s
 

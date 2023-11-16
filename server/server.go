@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,7 +26,6 @@ import (
 
 // Server struct.
 type Server struct {
-	TLSConfig    *tls.Config
 	store        store.Store
 	scheduler    *scheduler.Scheduler
 	server       *http.Server
@@ -47,14 +45,9 @@ func New(config *config.Config) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing log level: %w", err)
 	}
-	logger := zerolog.
-		New(os.Stdout).Level(logLevel).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	})
+	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
 
 	s := &Server{
-		TLSConfig:    &tls.Config{},
 		config:       config,
 		shutdownOnce: sync.Once{},
 		shutdownCh:   make(chan struct{}),
@@ -141,7 +134,7 @@ func (s *Server) Shutdown(ctx context.Context) {
 
 // Start starts the Server. It blocks until Shutdown() is called.
 func (s *Server) Start() error {
-	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("starting server on %s", s.config.HTTP.ListenAddress)
+	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("Starting server on %s", s.config.HTTP.ListenAddress)
 
 	var err error
 

@@ -67,6 +67,34 @@ func (s *Store) GetRunner(ctx context.Context, id string) (*fireactions.Runner, 
 	return runner, nil
 }
 
+func (s *Store) GetRunnerByName(ctx context.Context, name string) (*fireactions.Runner, error) {
+	runner := &fireactions.Runner{}
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("runners"))
+
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			err := json.Unmarshal(v, runner)
+			if err != nil {
+				return err
+			}
+
+			if runner.Name != name {
+				continue
+			}
+
+			return nil
+		}
+
+		return store.ErrNotFound
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return runner, nil
+}
+
 func (s *Store) CreateRunner(ctx context.Context, runner *fireactions.Runner) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("runners"))

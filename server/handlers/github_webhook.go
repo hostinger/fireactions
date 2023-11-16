@@ -79,14 +79,10 @@ func newJobHandler(
 func (h *jobHandler) Handle(ctx context.Context, j *webhooks.WorkflowJobPayload) error {
 	logger := h.logger.With().
 		Str("organisation", j.Organization.Login).
-		Str("repository", j.Repository.FullName).
-		Int64("jobID", j.WorkflowJob.ID).
-		Str("jobName", j.WorkflowJob.Name).
-		Strs("jobLabels", j.WorkflowJob.Labels).
 		Logger()
 
 	if !lo.Contains(j.WorkflowJob.Labels, "self-hosted") {
-		logger.Debug().Msgf("skipped job: not using self-hosted label")
+		logger.Debug().Msgf("skipped job %d: not using self-hosted label", j.WorkflowJob.ID)
 		return nil
 	}
 
@@ -95,14 +91,14 @@ func (h *jobHandler) Handle(ctx context.Context, j *webhooks.WorkflowJobPayload)
 	})
 
 	if !found {
-		logger.Debug().Msgf("skipped job: label doesn't have prefix %s", h.config.JobLabelPrefix)
+		logger.Debug().Msgf("skipped job %d: not using fireactions label", j.WorkflowJob.ID)
 		return nil
 	}
 
 	jobLabel := strings.TrimPrefix(l, h.config.JobLabelPrefix)
 	jobLabelConfig, ok := h.config.GetJobLabelConfig(jobLabel)
 	if !ok {
-		logger.Debug().Msgf("skipped job: label %s not found in config", jobLabel)
+		logger.Debug().Msgf("skipped job %d: no config for label %s", j.WorkflowJob.ID, jobLabel)
 		return nil
 	}
 
@@ -114,17 +110,30 @@ func (h *jobHandler) Handle(ctx context.Context, j *webhooks.WorkflowJobPayload)
 
 		return regexp.MatchString(j.Repository.FullName)
 	}) {
-		logger.Debug().Msgf("skipped job: repository %s not allowed", j.Repository.FullName)
+		logger.Debug().Msgf("skipped job %d: repository %s is not allowed to use label %s", j.WorkflowJob.ID, j.Repository.FullName, jobLabel)
 		return nil
 	}
 
 	switch j.WorkflowJob.Status {
 	case "queued":
-		return h.handleQueued(ctx, j, jobLabelConfig)
+		err := h.handleQueued(ctx, j, jobLabelConfig)
+		if err != nil {
+			return fmt.Errorf("queued: %w", err)
+		}
+
+		logger.Info().Msgf("created GitHub runner for job %d", j.WorkflowJob.ID)
 	case "in_progress":
-		return h.handleInProgress(ctx, j)
+		err := h.handleInProgress(ctx, j)
+		if err != nil {
+			return fmt.Errorf("in_progress: %w", err)
+		}
 	case "completed":
-		return h.handleCompleted(ctx, j)
+		err := h.handleCompleted(ctx, j)
+		if err != nil {
+			return fmt.Errorf("completed: %w", err)
+		}
+
+		logger.Info().Msgf("deleted GitHub runner for job %d", j.WorkflowJob.ID)
 	}
 
 	return nil
@@ -138,16 +147,40 @@ func (h *jobHandler) handleQueued(ctx context.Context, j *webhooks.WorkflowJobPa
 	}
 
 	h.scheduler.AddToQueue(runner)
-	h.logger.Info().
-		Str("id", runner.ID).Str("name", runner.Name).Msgf("runner creation triggered by job %d", j.WorkflowJob.ID)
 	return nil
 }
 
 func (h *jobHandler) handleInProgress(ctx context.Context, j *webhooks.WorkflowJobPayload) error {
+	runner, err := h.store.GetRunnerByName(ctx, j.WorkflowJob.RunnerName)
+	switch err {
+	case nil, store.ErrNotFound:
+		break
+	default:
+		return fmt.Errorf("store: getting runner: %w", err)
+	}
+
+	_, err = h.store.SetRunnerStatus(ctx, runner.ID, fireactions.RunnerStatus{Phase: fireactions.RunnerPhaseActive})
+	if err != nil {
+		return fmt.Errorf("store: setting runner status: %w", err)
+	}
+
 	return nil
 }
 
 func (h *jobHandler) handleCompleted(ctx context.Context, j *webhooks.WorkflowJobPayload) error {
+	runner, err := h.store.GetRunnerByName(ctx, j.WorkflowJob.RunnerName)
+	switch err {
+	case nil, store.ErrNotFound:
+		break
+	default:
+		return fmt.Errorf("store: getting runner: %w", err)
+	}
+
+	_, err = h.store.SetRunnerStatus(ctx, runner.ID, fireactions.RunnerStatus{Phase: fireactions.RunnerPhaseCompleted})
+	if err != nil {
+		return fmt.Errorf("store: setting runner status: %w", err)
+	}
+
 	return nil
 }
 

@@ -110,8 +110,6 @@ func (s *Scheduler) init() error {
 		if err != nil {
 			return err
 		}
-
-		s.logger.Debug().Str("node", n.Name).Msgf("added existing node to scheduler cache")
 	}
 
 	runners, err := s.store.GetRunners(context.Background(), func(m *fireactions.Runner) bool {
@@ -172,8 +170,7 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	s.logger.Info().Str("runner", runner.Name).Str("node", bestNode.Name).
-		Msg("assigned runner to node")
+	s.logger.Debug().Msgf("scheduler: assigned runner %s to node %s", runner.Name, bestNode.Name)
 }
 
 func (s *Scheduler) findFeasibleNodes(runner *fireactions.Runner, nodes []*fireactions.Node) []*fireactions.Node {
@@ -191,7 +188,7 @@ func (s *Scheduler) findFeasibleNodes(runner *fireactions.Runner, nodes []*firea
 	}
 
 	if len(feasible) == 0 {
-		s.logger.Debug().Str("runner", runner.Name).Msgf("scheduler: no feasible nodes found for runner: %d/%d nodes filtered out: %v", len(nodes)-len(feasible), len(nodes), results)
+		s.logger.Debug().Msgf("scheduler: no feasible nodes found for runner %s: %d/%d nodes filtered out: %v", runner.Name, len(nodes)-len(feasible), len(nodes), results)
 	}
 
 	return feasible

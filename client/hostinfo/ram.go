@@ -1,4 +1,4 @@
-package hoststats
+package hostinfo
 
 import (
 	"context"

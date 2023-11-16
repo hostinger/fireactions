@@ -44,9 +44,9 @@ type RunnerPhase string
 
 const (
 	RunnerPhasePending   RunnerPhase = "Pending"
-	RunnerPhaseRunning   RunnerPhase = "Running"
+	RunnerPhaseIdle      RunnerPhase = "Idle"
+	RunnerPhaseActive    RunnerPhase = "Active"
 	RunnerPhaseCompleted RunnerPhase = "Completed"
-	RunnerPhaseFailed    RunnerPhase = "Failed"
 )
 
 type RunnerStatus struct {

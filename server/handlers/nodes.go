@@ -114,7 +114,7 @@ func NodeRegisterHandlerFunc(logger *zerolog.Logger, scheduler *scheduler.Schedu
 			}
 
 			scheduler.NotifyNodeUpdated(node)
-			logger.Info().Str("node", node.Name).Msgf("updated node")
+			logger.Info().Msgf("updated node: %s", node.Name)
 			ctx.JSON(200, &fireactions.NodeRegistrationInfo{ID: node.ID})
 			return
 		}
@@ -139,7 +139,7 @@ func NodeRegisterHandlerFunc(logger *zerolog.Logger, scheduler *scheduler.Schedu
 		}
 
 		scheduler.NotifyNodeCreated(node)
-		logger.Info().Str("node", node.Name).Msgf("registered node")
+		logger.Info().Msgf("registered node: %s", node.Name)
 		ctx.JSON(200, &fireactions.NodeRegistrationInfo{ID: node.ID})
 	}
 
@@ -164,7 +164,7 @@ func NodeDeregisterHandlerFunc(logger *zerolog.Logger, scheduler *scheduler.Sche
 		}
 
 		scheduler.NotifyNodeDeleted(node)
-		logger.Info().Str("node", id).Msgf("deregistered node")
+		logger.Info().Msgf("deregistered node: %s", node.Name)
 		ctx.Status(204)
 	}
 
@@ -182,7 +182,7 @@ func NodeCordonHandlerFunc(logger *zerolog.Logger, scheduler *scheduler.Schedule
 		}
 
 		scheduler.NotifyNodeUpdated(node)
-		logger.Info().Str("node", node.Name).Msgf("cordoned node")
+		logger.Info().Msgf("cordoned node: %s", node.Name)
 		ctx.Status(204)
 	}
 
@@ -200,7 +200,7 @@ func NodeUncordonHandlerFunc(logger *zerolog.Logger, scheduler *scheduler.Schedu
 		}
 
 		scheduler.NotifyNodeUpdated(node)
-		logger.Info().Str("node", node.Name).Msgf("uncordoned node")
+		logger.Info().Msgf("uncordoned node: %s", node.Name)
 		ctx.Status(204)
 	}
 

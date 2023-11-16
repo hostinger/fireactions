@@ -10,8 +10,8 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/client/heartbeater"
-	"github.com/hostinger/fireactions/client/hoststats"
-	"github.com/hostinger/fireactions/client/runner"
+	"github.com/hostinger/fireactions/client/hostinfo"
+	"github.com/hostinger/fireactions/client/runnermanager"
 	"github.com/hostinger/fireactions/version"
 	"github.com/rs/zerolog"
 )
@@ -23,8 +23,8 @@ type Client struct {
 	config             *Config
 	isConnected        bool
 	client             fireactions.Client
-	hostStatsCollector hoststats.Collector
-	manager            *runner.Manager
+	hostinfoCollector  hostinfo.Collector
+	manager            runnermanager.Manager
 	heartbeater        *heartbeater.Heartbeater
 	shutdownOnce       sync.Once
 	shutdownCh         chan struct{}
@@ -44,16 +44,12 @@ func New(config *Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing log level: %w", err)
 	}
-	logger := zerolog.
-		New(os.Stdout).Level(logLevel).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	})
+	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
 
 	c := &Client{
 		config:             config,
 		client:             fireactions.NewClient(nil, fireactions.WithEndpoint(config.FireactionsServerURL)),
-		hostStatsCollector: hoststats.NewCollector(),
+		hostinfoCollector:  hostinfo.NewCollector(),
 		shutdownOnce:       sync.Once{},
 		shutdownCh:         make(chan struct{}),
 		heartbeatSuccessCh: make(chan struct{}, 1),
@@ -82,23 +78,17 @@ func New(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("creating containerd client: %w", err)
 	}
 
-	c.manager, err = runner.New(&logger, c.client, containerd, &c.ID, &runner.Config{
-		PollInterval: config.PollInterval,
-		CNIConfig:    &runner.CNIConfig{ConfDir: config.CNI.ConfDir, BinDirs: config.CNI.BinDirs},
-		FirecrackerConfig: &runner.FirecrackerConfig{
-			BinaryPath:      config.Firecracker.BinaryPath,
-			SocketPath:      config.Firecracker.SocketPath,
-			KernelImagePath: config.Firecracker.KernelImagePath,
-			KernelArgs:      config.Firecracker.KernelArgs,
-			LogFilePath:     config.Firecracker.LogFilePath,
-			LogLevel:        config.Firecracker.LogLevel,
-		},
-		FireactionsServerURL: config.FireactionsServerURL,
-		StartTimeout:         60 * time.Second,
+	c.manager, err = runnermanager.New(&logger, c.client, containerd, &c.ID, &runnermanager.Config{
+		PollInterval:               config.PollInterval,
+		StartTimeout:               60 * time.Second,
+		FirecrackerBinaryPath:      config.Firecracker.BinaryPath,
+		FirecrackerKernelImagePath: config.Firecracker.KernelImagePath,
+		FirecrackerKernelArgs:      config.Firecracker.KernelArgs,
+		FirecrackerLogFilePath:     config.Firecracker.LogFilePath,
+		FirecrackerLogLevel:        config.Firecracker.LogLevel,
+		CNIConfDir:                 config.CNI.ConfDir,
+		CNIBinDirs:                 config.CNI.BinDirs,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating machine manager: %w", err)
-	}
 
 	return c, nil
 }
@@ -109,12 +99,12 @@ func (c *Client) Shutdown(ctx context.Context) {
 }
 
 func (c *Client) shutdown(ctx context.Context) {
-	c.logger.Info().Msg("stopping client")
+	c.logger.Info().Msg("Stopping client")
 	close(c.shutdownCh)
 
 	err := c.manager.Stop(ctx)
 	if err != nil {
-		c.logger.Error().Err(err).Msg("error stopping machine manager")
+		c.logger.Error().Err(err).Msg("Failed to stop Manager")
 	}
 
 	c.heartbeater.Stop()
@@ -143,11 +133,11 @@ func (c *Client) Start() {
 	go c.handleHearbeats()
 	go c.manager.Run()
 
-	c.logger.Info().Str("id", c.ID).Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msg("started client")
+	c.logger.Info().Str("id", c.ID).Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msg("Started client")
 }
 
 func (c *Client) register(ctx context.Context) error {
-	hostinfo, err := c.hostStatsCollector.Collect(ctx)
+	hostinfo, err := c.hostinfoCollector.Collect(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting host info: %w", err)
 	}
