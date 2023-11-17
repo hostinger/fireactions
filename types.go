@@ -23,9 +23,9 @@ type Runner struct {
 }
 
 type RunnerAffinityExpression struct {
-	Key      string
-	Operator string
-	Values   []string
+	Key      string   `json:"key"`
+	Operator string   `json:"operator"`
+	Values   []string `json:"values"`
 }
 
 func (r *RunnerAffinityExpression) String() string {
@@ -50,7 +50,7 @@ const (
 )
 
 type RunnerStatus struct {
-	Phase RunnerPhase
+	Phase RunnerPhase `json:"phase"`
 }
 
 // RunnerFilterFunc is a function that filters a Runner. It returns true if the
@@ -61,8 +61,8 @@ type RunnerFilterFunc func(*Runner) bool
 // calculate the amount of resources that a Node needs to have available in
 // order to run the Runner.
 type RunnerResources struct {
-	VCPUs       int64
-	MemoryBytes int64
+	VCPUs       int64 `json:"vcpus"`
+	MemoryBytes int64 `json:"memory_bytes"`
 }
 
 // Node represents a bare metal server that can run GitHub runners in
