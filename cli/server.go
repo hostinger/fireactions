@@ -17,33 +17,26 @@ import (
 
 func newServerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "server",
-		Short: "Starts the Fireactions agent in server-only mode.",
+		Use:     "server",
+		Short:   "Start the Fireactions server",
+		Args:    cobra.NoArgs,
+		RunE:    runServerCmd,
+		GroupID: "main",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			config, err := cmd.Flags().GetString("config")
+			if err != nil {
+				return err
+			}
+
+			if config != "" {
+				viper.SetConfigFile(config)
+			}
+
+			return viper.ReadInConfig()
+		},
 	}
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if viper.GetString("config") == "" {
-			viper.SetConfigFile(viper.GetString("config"))
-		}
 
-		return viper.ReadInConfig()
-	}
-	cmd.RunE = runServerCmd
-
-	viper.SetEnvPrefix("FIREACTIONS")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/etc/fireactions")
-	viper.AddConfigPath("$HOME/.fireactions")
-	viper.AddConfigPath(".")
-
-	cmd.PersistentFlags().StringP("config", "c", "config.yaml", "Sets the configuration file path.")
-	viper.BindPFlag("config", cmd.PersistentFlags().Lookup("config"))
-
-	viper.BindEnv("github.webhook_secret", "GITHUB_WEBHOOK_SECRET")
-	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
-	viper.BindEnv("github.app_private_key", "GITHUB_APP_PRIVATE_KEY")
+	cmd.Flags().StringP("config", "c", "", "Sets the configuration file path.")
 
 	return cmd
 }
@@ -52,7 +45,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 	config := config.NewDefaultConfig()
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling configuration: %w", err)
+		return fmt.Errorf("unmarshal: %w", err)
 	}
 
 	err = config.Validate()
@@ -67,7 +60,7 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 
 	server, err := server.New(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating server: %w", err)
 	}
 
 	signalCh := make(chan os.Signal, 1)
