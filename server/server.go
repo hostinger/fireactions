@@ -11,10 +11,7 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/hostinger/fireactions/server/config"
 	"github.com/hostinger/fireactions/server/github"
-	"github.com/hostinger/fireactions/server/handlers"
-	"github.com/hostinger/fireactions/server/httperr"
 	"github.com/hostinger/fireactions/server/scheduler"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/server/store/bbolt"
@@ -29,7 +26,8 @@ type Server struct {
 	store        store.Store
 	scheduler    *scheduler.Scheduler
 	server       *http.Server
-	config       *config.Config
+	config       *Config
+	github       *github.Client
 	shutdownOnce sync.Once
 	shutdownMu   sync.Mutex
 	shutdownCh   chan struct{}
@@ -40,7 +38,7 @@ type Server struct {
 }
 
 // New creates a new Server.
-func New(config *config.Config) (*Server, error) {
+func New(config *Config) (*Server, error) {
 	logLevel, err := zerolog.ParseLevel(config.LogLevel)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing log level: %w", err)
@@ -59,9 +57,6 @@ func New(config *config.Config) (*Server, error) {
 	mux := gin.New()
 	mux.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
 	mux.Use(gin.Recovery())
-	mux.Use(httperr.HandlerFunc(
-		httperr.Map(store.ErrNotFound).To(http.StatusNotFound, "Resource doesn't exist."),
-	))
 
 	store, err := bbolt.New(filepath.Join(config.DataDir, "fireactions.db"))
 	if err != nil {
@@ -75,25 +70,36 @@ func New(config *config.Config) (*Server, error) {
 	}
 	s.scheduler = scheduler
 
-	tokenGetter, err := github.NewClient(&github.ClientConfig{
-		AppID:         config.GitHubConfig.AppID,
-		AppPrivateKey: config.GitHubConfig.AppPrivateKey,
-	})
+	github, err := github.NewClient(&github.ClientConfig{AppID: config.GitHubConfig.AppID, AppPrivateKey: config.GitHubConfig.AppPrivateKey})
 	if err != nil {
-		return nil, fmt.Errorf("error creating GitHub client: %w", err)
+		return nil, fmt.Errorf("creating GitHub client: %w", err)
 	}
+	s.github = github
 
+	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
+	mux.GET("/version", s.handleGetVersion)
+	mux.GET("/healthz", s.handleGetHealthz)
+
+	mux.POST("/webhook", s.handleGitHubWebhook())
 	v1 := mux.Group("/api/v1")
 	{
-		handlers.RegisterMiscHandlers(v1)
-		handlers.RegisterRunnersHandlers(
-			&logger, v1, scheduler, store, tokenGetter, config)
-		handlers.RegisterNodesHandlers(
-			&logger, v1, scheduler, store)
+		v1.GET("/healthz", s.handleGetHealthz)
+		v1.GET("/runners", s.handleGetRunners)
+		v1.GET("/runners/:id", s.handleGetRunner)
+		v1.GET("/nodes", s.handleGetNodes)
+		v1.POST("/nodes", s.handleRegisterNode)
+		v1.GET("/nodes/:id", s.handleGetNode)
+		v1.POST("/runners", s.handleCreateRunner)
+		v1.PATCH("/runners/:id/status", s.handleSetRunnerStatus)
+		v1.GET("/runners/:id/registration-token", s.handleGetRunnerRegistrationToken)
+		v1.GET("/runners/:id/remove-token", s.handleGetRunnerRemoveToken)
+		v1.DELETE("/runners/:id", s.handleDeleteRunner)
+		v1.GET("/nodes/:id/runners", s.handleGetNodeRunners)
+		v1.POST("/nodes/:id/heartbeat", s.handleHeartbeatNode)
+		v1.DELETE("/nodes/:id", s.handleDeregisterNode)
+		v1.POST("/nodes/:id/cordon", s.handleCordonNode)
+		v1.POST("/nodes/:id/uncordon", s.handleUncordonNode)
 	}
-
-	mux.POST("/webhook", handlers.GitHubWebhookHandlerFunc(&logger, store, scheduler, config.GitHubConfig))
-	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
 
 	s.server = &http.Server{
 		Addr:         config.HTTP.ListenAddress,
@@ -118,7 +124,7 @@ func New(config *config.Config) (*Server, error) {
 // cancelled.
 func (s *Server) Shutdown(ctx context.Context) {
 	s.shutdownOnce.Do(func() {
-		s.logger.Info().Msg("stopping server")
+		s.logger.Info().Msg("Stopping server")
 
 		err := s.server.Shutdown(ctx)
 		if err != nil {

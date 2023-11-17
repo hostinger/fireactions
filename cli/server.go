@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/server"
-	"github.com/hostinger/fireactions/server/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -42,7 +41,7 @@ func newServerCmd() *cobra.Command {
 }
 
 func runServerCmd(cmd *cobra.Command, args []string) error {
-	config := config.NewDefaultConfig()
+	config := server.NewDefaultConfig()
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		return fmt.Errorf("unmarshal: %w", err)
