@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/pkg/stringid"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/version"
 	"github.com/samber/lo"
@@ -45,7 +45,7 @@ func (s *Server) handleGitHubWebhook() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(200, gin.H{"error": "OK"})
+		ctx.JSON(200, gin.H{"message": "OK"})
 	}
 
 	return f
@@ -95,8 +95,6 @@ func (s *Server) handleGitHubWorkflowJob(ctx context.Context, j *webhooks.Workfl
 		if err != nil {
 			return fmt.Errorf("queued: %w", err)
 		}
-
-		logger.Info().Msgf("created GitHub runner for job %d", j.WorkflowJob.ID)
 	case "in_progress":
 		err := s.handleGitHubWorkflowJobInProgress(ctx, j)
 		if err != nil {
@@ -107,20 +105,29 @@ func (s *Server) handleGitHubWorkflowJob(ctx context.Context, j *webhooks.Workfl
 		if err != nil {
 			return fmt.Errorf("completed: %w", err)
 		}
-
-		logger.Info().Msgf("deleted GitHub runner for job %d", j.WorkflowJob.ID)
 	}
 
 	return nil
 }
 
 func (s *Server) handleGitHubWorkflowJobInProgress(ctx context.Context, j *webhooks.WorkflowJobPayload) error {
+	logger := s.logger.With().
+		Str("organisation", j.Organization.Login).
+		Logger()
+
 	runner, err := s.store.GetRunnerByName(ctx, j.WorkflowJob.RunnerName)
-	switch err {
-	case nil, store.ErrNotFound:
-		break
-	default:
+	if err != nil {
+		if err == store.ErrNotFound {
+			logger.Warn().Msgf("skipped updating GitHub runner %s for job %d: runner doesn't exist", j.WorkflowJob.RunnerName, j.WorkflowJob.ID)
+			return nil
+		}
+
 		return fmt.Errorf("store: getting runner: %w", err)
+	}
+
+	if runner.Status.Phase == fireactions.RunnerPhaseActive {
+		logger.Warn().Msgf("skipped updating GitHub runner %s for job %d: runner is already active (multiple jobs might have ran on this GitHub runner)",
+			j.WorkflowJob.RunnerName, j.WorkflowJob.ID)
 	}
 
 	_, err = s.store.SetRunnerStatus(ctx, runner.ID, fireactions.RunnerStatus{Phase: fireactions.RunnerPhaseActive})
@@ -128,16 +135,28 @@ func (s *Server) handleGitHubWorkflowJobInProgress(ctx context.Context, j *webho
 		return fmt.Errorf("store: setting runner status: %w", err)
 	}
 
+	logger.Info().Msgf("updated GitHub runner %s for job %d (job is in progress)", runner.Name, j.WorkflowJob.ID)
 	return nil
 }
 
 func (s *Server) handleGitHubWorkflowJobCompleted(ctx context.Context, j *webhooks.WorkflowJobPayload) error {
+	logger := s.logger.With().
+		Str("organisation", j.Organization.Login).
+		Logger()
+
 	runner, err := s.store.GetRunnerByName(ctx, j.WorkflowJob.RunnerName)
-	switch err {
-	case nil, store.ErrNotFound:
-		break
-	default:
+	if err != nil {
+		if err == store.ErrNotFound {
+			logger.Warn().Msgf("skipped deleting GitHub runner %s for job %d: runner doesn't exist", j.WorkflowJob.RunnerName, j.WorkflowJob.ID)
+			return nil
+		}
+
 		return fmt.Errorf("store: getting runner: %w", err)
+	}
+
+	if runner.Status.Phase == fireactions.RunnerPhaseCompleted {
+		logger.Warn().Msgf("skipped deleting GitHub runner %s for job %d: runner is already completed (multiple jobs might have ran on this GitHub runner)",
+			j.WorkflowJob.RunnerName, j.WorkflowJob.ID)
 	}
 
 	_, err = s.store.SetRunnerStatus(ctx, runner.ID, fireactions.RunnerStatus{Phase: fireactions.RunnerPhaseCompleted})
@@ -145,16 +164,22 @@ func (s *Server) handleGitHubWorkflowJobCompleted(ctx context.Context, j *webhoo
 		return fmt.Errorf("store: setting runner status: %w", err)
 	}
 
+	logger.Info().Msgf("deleted GitHub runner %s for job %d (job is completed)", runner.Name, j.WorkflowJob.ID)
 	return nil
 }
 
 func (s *Server) handleGitHubWorkflowJobQueued(ctx context.Context, j *webhooks.WorkflowJobPayload, jobLabelConfig *GitHubJobLabelConfig) error {
+	logger := s.logger.With().
+		Str("organisation", j.Organization.Login).
+		Logger()
+
 	runner := newRunnerFromJobPayload(j, jobLabelConfig)
 
 	if err := s.store.CreateRunner(ctx, runner); err != nil {
 		return fmt.Errorf("store: creating runner: %w", err)
 	}
 
+	logger.Info().Msgf("created GitHub runner %s for job %d", runner.Name, j.WorkflowJob.ID)
 	s.scheduler.AddToQueue(runner)
 	return nil
 }
@@ -180,7 +205,7 @@ func (s *Server) handleCreateRunner(ctx *gin.Context) {
 
 	var runners []*fireactions.Runner
 	for i := 0; i < request.Count; i++ {
-		runnerID := uuid.New().String()
+		runnerID := stringid.New()
 		runner := &fireactions.Runner{
 			ID:              runnerID,
 			Name:            fmt.Sprintf("fireactions-%s", runnerID),
@@ -374,12 +399,12 @@ func (s *Server) handleRegisterNode(ctx *gin.Context) {
 		node.CPU.OvercommitRatio = req.CpuOvercommitRatio
 		node.RAM.OvercommitRatio = req.RamOvercommitRatio
 		node.Labels = req.Labels
-		node.HeartbeatInterval = req.HeartbeatInterval
+		node.PollInterval = req.PollInterval
 		node.UpdatedAt = time.Now()
 
 		err = s.store.SaveNode(ctx, node)
 		if err != nil {
-			ctx.Error(err)
+			ctx.JSON(500, gin.H{"error": fmt.Sprintf("Internal server error: %s", err.Error())})
 			return
 		}
 
@@ -389,18 +414,17 @@ func (s *Server) handleRegisterNode(ctx *gin.Context) {
 		return
 	}
 
-	uuid := uuid.New().String()
 	node = &fireactions.Node{
-		ID:                uuid,
-		Name:              req.Name,
-		CPU:               fireactions.NodeResource{Allocated: 0, Capacity: req.CpuCapacity, OvercommitRatio: req.CpuOvercommitRatio},
-		RAM:               fireactions.NodeResource{Allocated: 0, Capacity: req.RamCapacity, OvercommitRatio: req.RamOvercommitRatio},
-		Status:            fireactions.NodeStatusCordoned,
-		Labels:            req.Labels,
-		HeartbeatInterval: req.HeartbeatInterval,
-		LastHeartbeat:     time.Now(),
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		ID:           stringid.New(),
+		Name:         req.Name,
+		CPU:          fireactions.NodeResource{Allocated: 0, Capacity: req.CpuCapacity, OvercommitRatio: req.CpuOvercommitRatio},
+		RAM:          fireactions.NodeResource{Allocated: 0, Capacity: req.RamCapacity, OvercommitRatio: req.RamOvercommitRatio},
+		Status:       fireactions.NodeStatusCordoned,
+		Labels:       req.Labels,
+		PollInterval: req.PollInterval,
+		LastPoll:     time.Now(),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 	err = s.store.SaveNode(ctx, node)
 	if err != nil {
@@ -449,22 +473,6 @@ func (s *Server) handleUncordonNode(ctx *gin.Context) {
 	ctx.Status(204)
 }
 
-func (s *Server) handleHeartbeatNode(ctx *gin.Context) {
-	node, err := s.store.SetNodeLastHeartbeat(ctx, ctx.Param("id"), time.Now())
-	if err != nil {
-		if err == store.ErrNotFound {
-			ctx.JSON(404, gin.H{"error": fmt.Sprintf("Node with ID %s doesn't exist", ctx.Param("id"))})
-		} else {
-			ctx.JSON(500, gin.H{"error": fmt.Sprintf("Internal server error: %s", err.Error())})
-		}
-
-		return
-	}
-
-	s.scheduler.NotifyNodeUpdated(node)
-	ctx.Status(204)
-}
-
 func (s *Server) handleDeregisterNode(ctx *gin.Context) {
 	id := ctx.Param("id")
 	node, err := s.store.GetNode(ctx, id)
@@ -490,18 +498,30 @@ func (s *Server) handleDeregisterNode(ctx *gin.Context) {
 }
 
 func (s *Server) handleGetNodeRunners(ctx *gin.Context) {
+	node, err := s.store.SetNodeLastPoll(ctx, ctx.Param("id"), time.Now())
+	if err != nil {
+		if err == store.ErrNotFound {
+			ctx.JSON(404, gin.H{"error": fmt.Sprintf("Node with ID %s doesn't exist", ctx.Param("id"))})
+		} else {
+			ctx.JSON(500, gin.H{"error": fmt.Sprintf("Internal server error: %s", err.Error())})
+		}
+
+		return
+	}
+
 	runners, err := s.store.GetRunners(ctx, func(r *fireactions.Runner) bool {
 		if r.NodeID == nil || r.DeletedAt != nil {
 			return false
 		}
 
-		return *r.NodeID == ctx.Param("id")
+		return *r.NodeID == node.ID
 	})
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": fmt.Sprintf("Internal server error: %s", err.Error())})
 		return
 	}
 
+	s.scheduler.NotifyNodeUpdated(node)
 	ctx.JSON(200, gin.H{"runners": runners})
 }
 
@@ -539,7 +559,7 @@ func (s *Server) handleGetVersion(ctx *gin.Context) {
 }
 
 func newRunnerFromJobPayload(j *webhooks.WorkflowJobPayload, jobLabelConfig *GitHubJobLabelConfig) *fireactions.Runner {
-	runnerID := uuid.New().String()
+	runnerID := stringid.New()
 	runner := &fireactions.Runner{
 		ID:           runnerID,
 		Name:         fmt.Sprintf("fireactions-%s", runnerID),

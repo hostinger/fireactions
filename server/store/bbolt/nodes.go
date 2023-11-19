@@ -121,7 +121,7 @@ func (s *Store) GetNodes(ctx context.Context, filter fireactions.NodeFilterFunc)
 	return nodes, nil
 }
 
-func (s *Store) SetNodeLastHeartbeat(ctx context.Context, id string, lastHeartbeat time.Time) (*fireactions.Node, error) {
+func (s *Store) SetNodeLastPoll(ctx context.Context, id string, lastPoll time.Time) (*fireactions.Node, error) {
 	node := &fireactions.Node{}
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("nodes"))
@@ -136,7 +136,7 @@ func (s *Store) SetNodeLastHeartbeat(ctx context.Context, id string, lastHeartbe
 			return err
 		}
 
-		node.LastHeartbeat = lastHeartbeat
+		node.LastPoll = lastPoll
 		data, err := json.Marshal(node)
 		if err != nil {
 			return err

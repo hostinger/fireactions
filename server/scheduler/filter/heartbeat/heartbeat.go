@@ -28,8 +28,8 @@ func (f *Filter) Name() string {
 
 // Filter filters out nodes that didn't send a heartbeat for more than the configured heartbeat interval.
 func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
-	if time.Since(node.LastHeartbeat) > node.HeartbeatInterval {
-		return false, fmt.Errorf("node is not alive: last heartbeat was %s", timeago.Of(node.LastHeartbeat))
+	if time.Since(node.LastPoll) > node.PollInterval {
+		return false, fmt.Errorf("node is not alive: last heartbeat was %s", timeago.Of(node.LastPoll))
 	}
 
 	return true, nil

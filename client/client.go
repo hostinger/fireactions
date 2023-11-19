@@ -9,9 +9,9 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/hostinger/fireactions"
-	"github.com/hostinger/fireactions/client/heartbeater"
+	"github.com/hostinger/fireactions/client/firecracker"
 	"github.com/hostinger/fireactions/client/hostinfo"
-	"github.com/hostinger/fireactions/client/runnermanager"
+	"github.com/hostinger/fireactions/client/manager"
 	"github.com/hostinger/fireactions/version"
 	"github.com/rs/zerolog"
 )
@@ -20,54 +20,37 @@ import (
 type Client struct {
 	ID string
 
-	config             *Config
-	isConnected        bool
-	client             fireactions.Client
-	hostinfoCollector  hostinfo.Collector
-	manager            runnermanager.Manager
-	heartbeater        *heartbeater.Heartbeater
-	shutdownOnce       sync.Once
-	shutdownCh         chan struct{}
-	heartbeatFailureCh chan struct{}
-	heartbeatSuccessCh chan struct{}
-	logger             *zerolog.Logger
+	config            *Config
+	isConnected       bool
+	client            fireactions.Client
+	hostinfoCollector hostinfo.Collector
+	manager           manager.Manager
+	shutdownOnce      sync.Once
+	shutdownCh        chan struct{}
+	logger            *zerolog.Logger
 }
 
 // New creates a new Client.
 func New(config *Config) (*Client, error) {
 	err := config.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("error validating config: %w", err)
+		return nil, fmt.Errorf("config: %w", err)
 	}
 
 	logLevel, err := zerolog.ParseLevel(config.LogLevel)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing log level: %w", err)
+		return nil, fmt.Errorf("zerolog: %w", err)
 	}
 	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
 
 	c := &Client{
-		config:             config,
-		client:             fireactions.NewClient(nil, fireactions.WithEndpoint(config.FireactionsServerURL)),
-		hostinfoCollector:  hostinfo.NewCollector(),
-		shutdownOnce:       sync.Once{},
-		shutdownCh:         make(chan struct{}),
-		heartbeatSuccessCh: make(chan struct{}, 1),
-		heartbeatFailureCh: make(chan struct{}, 1),
-		isConnected:        false,
-		logger:             &logger,
-	}
-
-	c.heartbeater, err = heartbeater.New(&logger, &heartbeater.Config{
-		FailureThreshold: config.HeartbeatFailureThreshold,
-		SuccessThreshold: config.HeartbeatSuccessThreshold,
-		Interval:         config.HeartbeatInterval,
-		HeartbeatFunc:    func() error { _, err := c.client.HeartbeatNode(context.Background(), c.ID); return err },
-		FailureCh:        c.heartbeatFailureCh,
-		SuccessCh:        c.heartbeatSuccessCh,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating heartbeater: %w", err)
+		config:            config,
+		client:            fireactions.NewClient(nil, fireactions.WithEndpoint(config.FireactionsServerURL)),
+		hostinfoCollector: hostinfo.NewCollector(),
+		shutdownOnce:      sync.Once{},
+		shutdownCh:        make(chan struct{}),
+		isConnected:       false,
+		logger:            &logger,
 	}
 
 	containerdOpts := []containerd.ClientOpt{
@@ -78,16 +61,18 @@ func New(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("creating containerd client: %w", err)
 	}
 
-	c.manager, err = runnermanager.New(&logger, c.client, containerd, &c.ID, &runnermanager.Config{
-		PollInterval:               config.PollInterval,
-		StartTimeout:               60 * time.Second,
-		FirecrackerBinaryPath:      config.Firecracker.BinaryPath,
-		FirecrackerKernelImagePath: config.Firecracker.KernelImagePath,
-		FirecrackerKernelArgs:      config.Firecracker.KernelArgs,
-		FirecrackerLogFilePath:     config.Firecracker.LogFilePath,
-		FirecrackerLogLevel:        config.Firecracker.LogLevel,
-		CNIConfDir:                 config.CNI.ConfDir,
-		CNIBinDirs:                 config.CNI.BinDirs,
+	driver := firecracker.NewDriver(&firecracker.DriverConfig{
+		BinaryPath:      config.Firecracker.BinaryPath,
+		SocketPath:      config.Firecracker.SocketPath,
+		KernelImagePath: config.Firecracker.KernelImagePath,
+		KernelArgs:      config.Firecracker.KernelArgs,
+		CNIConfDir:      config.CNI.ConfDir,
+		CNIBinDirs:      config.CNI.BinDirs,
+	})
+
+	c.manager = manager.New(&logger, c.client, containerd, driver, &manager.Config{
+		PollInterval: config.PollInterval,
+		NodeID:       &c.ID,
 	})
 
 	return c, nil
@@ -106,8 +91,6 @@ func (c *Client) shutdown(ctx context.Context) {
 	if err != nil {
 		c.logger.Error().Err(err).Msg("Failed to stop Manager")
 	}
-
-	c.heartbeater.Stop()
 }
 
 func (c *Client) Start() {
@@ -129,10 +112,7 @@ func (c *Client) Start() {
 		break
 	}
 
-	go c.heartbeater.Run()
-	go c.handleHearbeats()
-	go c.manager.Run()
-
+	c.manager.Run()
 	c.logger.Info().Str("id", c.ID).Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msg("Started client")
 }
 
@@ -147,7 +127,7 @@ func (c *Client) register(ctx context.Context) error {
 		RamOvercommitRatio: c.config.Node.RamOvercommitRatio,
 		CpuCapacity:        int64(hostinfo.CpuInfo.NumCores),
 		RamCapacity:        int64(hostinfo.MemInfo.Total),
-		HeartbeatInterval:  c.config.HeartbeatInterval,
+		PollInterval:       c.config.PollInterval,
 	}
 
 	if c.config.Node.Name != "" {
@@ -169,25 +149,4 @@ func (c *Client) register(ctx context.Context) error {
 
 	c.ID = nodeRegistrationInfo.ID
 	return nil
-}
-
-func (c *Client) handleHearbeats() {
-	for {
-		select {
-		case <-c.heartbeatFailureCh:
-			c.handleHeartbeatFailure()
-		case <-c.heartbeatSuccessCh:
-			c.handleHeartbeatSuccess()
-		case <-c.shutdownCh:
-			return
-		}
-	}
-}
-
-func (c *Client) handleHeartbeatFailure() {
-	c.manager.Pause()
-}
-
-func (c *Client) handleHeartbeatSuccess() {
-	c.manager.Resume()
 }

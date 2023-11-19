@@ -68,16 +68,16 @@ type RunnerResources struct {
 // Node represents a bare metal server that can run GitHub runners in
 // Firecracker virtual machines.
 type Node struct {
-	ID                string            `json:"id"`
-	Name              string            `json:"name"`
-	Labels            map[string]string `json:"labels"`
-	Status            NodeStatus        `json:"status"`
-	CPU               NodeResource      `json:"cpu"`
-	RAM               NodeResource      `json:"ram"`
-	HeartbeatInterval time.Duration     `json:"heartbeat_interval"`
-	LastHeartbeat     time.Time         `json:"last_heartbeat"`
-	CreatedAt         time.Time         `json:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	Labels       map[string]string `json:"labels"`
+	Status       NodeStatus        `json:"status"`
+	CPU          NodeResource      `json:"cpu"`
+	RAM          NodeResource      `json:"ram"`
+	PollInterval time.Duration     `json:"poll_interval"`
+	LastPoll     time.Time         `json:"last_poll"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
 }
 
 // NodeStatus represents the status of a Node.
@@ -113,8 +113,8 @@ func (r *NodeResource) Release(amount int64) {
 }
 
 // Available returns the amount of available resource.
-func (r *NodeResource) Available() int64 {
-	return r.Capacity - r.Allocated
+func (r *NodeResource) Available() float64 {
+	return float64(r.Capacity)*r.OvercommitRatio - float64(r.Allocated)
 }
 
 // String returns a string representation of the resource.
@@ -125,7 +125,7 @@ func (r *NodeResource) String() string {
 // IsAvailable returns true if the given amount of resource is available. It
 // takes the overcommit ratio into account.
 func (r *NodeResource) IsAvailable(amount int64) bool {
-	return float64(r.Allocated+amount) <= float64(r.Capacity)*r.OvercommitRatio
+	return float64(amount) <= r.Available()
 }
 
 // IsFull returns true if the resource is fully allocated.

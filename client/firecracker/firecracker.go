@@ -4,176 +4,271 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
+	"net"
+	"os"
+	"sync"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
+	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
+	"github.com/hostinger/fireactions/client/microvm"
 	"github.com/sirupsen/logrus"
 )
 
-// MachineReadinessProbe is a function that checks if a virtual machine is ready
-// to accept connections.
-type MachineReadinessProbe func(ctx context.Context, address string) error
-
-// Machine represents a Firecracker virtual machine.
-type Machine struct {
-	machine        *firecracker.Machine
-	machineConfig  *Config
-	stdout         io.Writer
-	stderr         io.Writer
-	readinessProbe MachineReadinessProbe
-	exitCh         chan error
+// DriverConfig is the configuration for the Firecracker driver.
+type DriverConfig struct {
+	BinaryPath      string
+	SocketPath      string
+	KernelImagePath string
+	KernelArgs      string
+	CNIConfDir      string
+	CNIBinDirs      []string
 }
 
-// Opt is a functional option for configuring a Machine.
-type Opt func(*Machine)
-
-// WithStdout sets the stdout writer for logs emitted by the virtual machine.
-func WithStdout(w io.Writer) Opt {
-	f := func(m *Machine) {
-		m.stdout = w
-	}
-
-	return f
+// Driver is the Firecracker driver.
+type Driver struct {
+	microVMs map[string]*microvm.MicroVM
+	machines map[string]*firecracker.Machine
+	config   *DriverConfig
+	l        sync.RWMutex
 }
 
-// WithStderr sets the stderr writer for logs emitted by the virtual machine.
-func WithStderr(w io.Writer) Opt {
-	f := func(m *Machine) {
-		m.stderr = w
-	}
-
-	return f
-}
-
-// WithReadinessProbe sets the readiness probe for the virtual machine.
-func WithReadinessProbe(readinessProbe MachineReadinessProbe) Opt {
-	f := func(m *Machine) {
-		m.readinessProbe = readinessProbe
-	}
-
-	return f
-}
-
-// NewMachine creates a new Machine.
-func NewMachine(config *Config, opts ...Opt) *Machine {
-	m := &Machine{
-		machineConfig:  config,
-		machine:        nil,
-		readinessProbe: func(ctx context.Context, address string) error { return nil },
-		stdout:         io.Discard,
-		stderr:         io.Discard,
-		exitCh:         make(chan error),
-	}
-
-	for _, opt := range opts {
-		opt(m)
+// NewDriver creates a new Firecracker driver.
+func NewDriver(config *DriverConfig) *Driver {
+	m := &Driver{
+		microVMs: make(map[string]*microvm.MicroVM),
+		machines: make(map[string]*firecracker.Machine),
+		config:   config,
+		l:        sync.RWMutex{},
 	}
 
 	return m
 }
 
-// Start starts the virtual machine.
-func (m *Machine) Start(ctx context.Context) error {
-	if m.IsRunning() {
+// CreateVM creates a new Firecracker VM.
+func (c *Driver) CreateVM(ctx context.Context, microvm *microvm.MicroVM) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	_, ok := c.microVMs[microvm.ID]
+	if ok {
 		return nil
 	}
 
-	machineCmd := firecracker.VMCommandBuilder{}.
-		WithBin("firecracker").
-		WithSocketPath(m.machineConfig.SocketPath).
-		WithStdout(m.stdout).
-		WithStderr(m.stderr).
-		Build(context.TODO())
+	c.microVMs[microvm.ID] = microvm
+	return nil
+}
+
+// StartVM starts a Firecracker VM.
+func (c *Driver) StartVM(ctx context.Context, id string) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	if !c.exists(ctx, id) {
+		return microvm.ErrNotFound
+	}
+
+	_, ok := c.machines[id]
+	if ok {
+		return nil
+	}
+
+	fcMachine, err := c.createFirecrackerMachine(c.microVMs[id])
+	if err != nil {
+		return fmt.Errorf("creating Firecracker VM: %w", err)
+	}
+
+	// (konradasb): Socket might exist if the MicroVM was not properly stopped. Remove it to avoid errors.
+	err = os.Remove(fcMachine.Cfg.SocketPath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("removing socket file: %w", err)
+	}
+
+	if err := fcMachine.Start(context.Background()); err != nil {
+		return fmt.Errorf("starting Firecracker VM: %w", err)
+	}
+	c.machines[id] = fcMachine
+
+	ip := fcMachine.Cfg.NetworkInterfaces[0].StaticConfiguration.IPConfiguration.IPAddr.IP.String()
+	c.microVMs[id].Status = microvm.MicroVMStatus{State: microvm.MicroVMStateRunning, IP: ip}
+
+	go c.watchFirecrackerMachine(fcMachine)
+	return nil
+}
+
+// DeleteVM deletes a Firecracker VM.
+func (c *Driver) DeleteVM(ctx context.Context, id string) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	if !c.exists(ctx, id) {
+		return microvm.ErrNotFound
+	}
+
+	machine, ok := c.machines[id]
+	if !ok {
+		return nil
+	}
+
+	if err := machine.StopVMM(); err != nil {
+		return fmt.Errorf("stopping Firecracker VM: %w", err)
+	}
+
+	delete(c.microVMs, id)
+	return nil
+}
+
+// StopVM stops a Firecracker VM.
+func (c *Driver) StopVM(ctx context.Context, id string) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	if !c.exists(ctx, id) {
+		return microvm.ErrNotFound
+	}
+
+	machine, ok := c.machines[id]
+	if !ok {
+		return nil
+	}
+
+	if err := machine.StopVMM(); err != nil {
+		return fmt.Errorf("stopping Firecracker VM: %w", err)
+	}
+
+	c.microVMs[id].Status = microvm.MicroVMStatus{State: microvm.MicroVMStateStopped, IP: ""}
+	return nil
+}
+
+// WaitVM waits for a Firecracker VM to stop.
+func (c *Driver) WaitVM(ctx context.Context, id string) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	if !c.exists(ctx, id) {
+		return microvm.ErrNotFound
+	}
+
+	machine, ok := c.machines[id]
+	if !ok {
+		return nil
+	}
+
+	return machine.Wait(ctx)
+}
+
+// ListVMs lists all Firecracker VMs.
+func (c *Driver) ListVMs(ctx context.Context) ([]*microvm.MicroVM, error) {
+	c.l.RLock()
+	defer c.l.RUnlock()
+
+	microVMs := []*microvm.MicroVM{}
+	for _, m := range c.microVMs {
+		microVMs = append(microVMs, m)
+	}
+
+	return microVMs, nil
+}
+
+// GetVM gets a Firecracker VM.
+func (c *Driver) GetVM(ctx context.Context, id string) (*microvm.MicroVM, error) {
+	c.l.RLock()
+	defer c.l.RUnlock()
+
+	m, ok := c.microVMs[id]
+	if !ok {
+		return nil, microvm.ErrNotFound
+	}
+
+	return m, nil
+}
+
+func (c *Driver) exists(ctx context.Context, id string) bool {
+	_, ok := c.microVMs[id]
+	return ok
+}
+
+func (c *Driver) createFirecrackerMachine(microvm *microvm.MicroVM) (*firecracker.Machine, error) {
+	config := newFirecrackerConfigFromMicroVM(c.config, microvm)
+
+	fcMachineCmd := firecracker.VMCommandBuilder{}.
+		WithBin(c.config.BinaryPath).
+		WithSocketPath(fmt.Sprintf(c.config.SocketPath, microvm.ID)).
+		WithStdout(io.Discard).
+		WithStderr(io.Discard).
+		Build(context.Background())
 
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	machine, err := firecracker.NewMachine(ctx, *m.machineConfig.Config, firecracker.WithProcessRunner(machineCmd), firecracker.WithLogger(logrus.NewEntry(logger)))
+	fcMachineOpts := []firecracker.Opt{firecracker.WithProcessRunner(fcMachineCmd), firecracker.WithLogger(logrus.NewEntry(logger))}
+	fcMachine, err := firecracker.NewMachine(context.Background(), *config, fcMachineOpts...)
 	if err != nil {
-		return fmt.Errorf("firecracker: %w", err)
-	}
-	m.machine = machine
-	m.machine.Handlers.FcInit = machine.Handlers.FcInit.Append(firecracker.NewSetMetadataHandler(m.machineConfig.Metadata))
-
-	err = machine.Start(context.Background())
-	if err != nil {
-		return fmt.Errorf("firecracker: %w", err)
+		return nil, err
 	}
 
-	t := time.NewTicker(100 * time.Millisecond)
-	defer t.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-t.C:
+	metadata := map[string]interface{}{"latest": map[string]interface{}{"meta-data": map[string]interface{}{}}}
+	metadata["latest"].(map[string]interface{})["meta-data"] = microvm.Spec.Metadata
+
+	fcMachine.Handlers.FcInit = fcMachine.Handlers.FcInit.Append(firecracker.NewSetMetadataHandler(metadata))
+	return fcMachine, nil
+}
+
+func (c *Driver) watchFirecrackerMachine(machine *firecracker.Machine) {
+	machine.Wait(context.Background())
+
+	c.l.Lock()
+	defer c.l.Unlock()
+
+	m, ok := c.microVMs[machine.Cfg.VMID]
+	if !ok {
+		return
+	}
+
+	m.Status = microvm.MicroVMStatus{State: microvm.MicroVMStateStopped, IP: ""}
+	delete(c.machines, m.ID)
+}
+
+func newFirecrackerConfigFromMicroVM(config *DriverConfig, microvm *microvm.MicroVM) *firecracker.Config {
+	fc := firecracker.Config{
+		VMID:              microvm.ID,
+		SocketPath:        fmt.Sprintf(config.SocketPath, microvm.ID),
+		KernelImagePath:   config.KernelImagePath,
+		KernelArgs:        config.KernelArgs,
+		Drives:            []models.Drive{},
+		NetworkInterfaces: []firecracker.NetworkInterface{},
+		MmdsAddress:       net.IPv4(169, 254, 169, 254),
+		MmdsVersion:       firecracker.MMDSv2,
+		ForwardSignals:    []os.Signal{os.Interrupt},
+		LogLevel:          "debug",
+	}
+
+	memSizeMib := microvm.Spec.MemoryBytes / 1024 / 1024
+	fc.MachineCfg = models.MachineConfiguration{VcpuCount: &microvm.Spec.VCPU, MemSizeMib: &memSizeMib}
+
+	for _, networkInterface := range microvm.Spec.NetworkInterfaces {
+		n := firecracker.NetworkInterface{AllowMMDS: true, CNIConfiguration: &firecracker.CNIConfiguration{
+			NetworkName: networkInterface.NetworkName,
+			IfName:      networkInterface.IfName,
+			VMIfName:    networkInterface.VMIfName,
+			ConfDir:     config.CNIConfDir,
+			BinPath:     config.CNIBinDirs,
+		}}
+
+		if networkInterface.ConfDir == "" {
+			n.CNIConfiguration.ConfDir = config.CNIConfDir
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
-		defer cancel()
-		err := m.readinessProbe(ctx, m.machineConfig.NetworkInterfaces[0].StaticConfiguration.IPConfiguration.IPAddr.IP.String())
-		if err != nil {
-			continue
+		if networkInterface.BinPath == "" {
+			n.CNIConfiguration.BinPath = config.CNIBinDirs
 		}
 
-		break
+		fc.NetworkInterfaces = append(fc.NetworkInterfaces, n)
 	}
 
-	go func() {
-		m.exitCh <- m.machine.Wait(context.Background())
-	}()
-
-	return nil
-}
-
-// Stop stops the virtual machine.
-func (m *Machine) Stop(ctx context.Context) error {
-	if !m.IsRunning() {
-		return nil
+	for _, drive := range microvm.Spec.Drives {
+		d := models.Drive{DriveID: &drive.ID, PathOnHost: &drive.PathOnHost, IsReadOnly: &drive.IsReadOnly, IsRootDevice: &drive.IsRoot}
+		fc.Drives = append(fc.Drives, d)
 	}
 
-	err := m.machine.StopVMM()
-	if err != nil {
-		return fmt.Errorf("firecracker: %w", err)
-	}
-
-	err = m.machine.Wait(ctx)
-	if err != nil && err == context.DeadlineExceeded {
-		return fmt.Errorf("firecracker: %w", err)
-	}
-
-	return nil
-}
-
-// IsRunning returns true if the virtual machine is running.
-func (m *Machine) IsRunning() bool {
-	if m.machine == nil {
-		return false
-	}
-
-	_, err := m.machine.PID()
-	if err != nil {
-		return false
-	}
-
-	return true
-}
-
-// ExitCh returns a channel that will receive an error when the virtual machine exits.
-func (m *Machine) ExitCh() <-chan error {
-	return m.exitCh
-}
-
-// String returns a string representation of the Machine.
-func (m *Machine) String() string {
-	return m.ID()
-}
-
-// ID returns the ID of the Machine.
-func (m *Machine) ID() string {
-	return m.machineConfig.VMID
-}
-
-func (m *Machine) Config() *Config {
-	return m.machineConfig
+	return &fc
 }

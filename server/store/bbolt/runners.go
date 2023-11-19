@@ -206,7 +206,8 @@ func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) error {
+func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*fireactions.Node, error) {
+	node := &fireactions.Node{}
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		nodesBucket := tx.Bucket([]byte("nodes"))
 
@@ -215,7 +216,6 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) err
 			return store.ErrNotFound
 		}
 
-		node := &fireactions.Node{}
 		err := json.Unmarshal(v, node)
 		if err != nil {
 			return err
@@ -264,10 +264,10 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) err
 		return nodesBucket.Put([]byte(node.ID), data)
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return node, nil
 }
 
 func (s *Store) SetRunnerStatus(ctx context.Context, id string, status fireactions.RunnerStatus) (*fireactions.Runner, error) {

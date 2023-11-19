@@ -24,7 +24,6 @@ type Client interface {
 	SetClient(client *http.Client)
 	ListNodes(ctx context.Context, opts *NodesListOptions) ([]*Node, *Response, error)
 	GetNode(ctx context.Context, id string) (*Node, *Response, error)
-	HeartbeatNode(ctx context.Context, id string) (*Response, error)
 	RegisterNode(ctx context.Context, nodeRegisterRequest *NodeRegisterRequest) (*NodeRegistrationInfo, *Response, error)
 	DeregisterNode(ctx context.Context, id string) (*Response, error)
 	CordonNode(ctx context.Context, id string) (*Response, error)
@@ -257,7 +256,7 @@ func (c *clientImpl) GetNode(ctx context.Context, id string) (*Node, *Response, 
 // NodeRegisterRequest represents a request to register a Node.
 type NodeRegisterRequest struct {
 	Name               string            `json:"name" binding:"required"`
-	HeartbeatInterval  time.Duration     `json:"heartbeat_interval" binding:"required"`
+	PollInterval       time.Duration     `json:"poll_interval" binding:"required"`
 	Labels             map[string]string `json:"labels" binding:"required"`
 	CpuOvercommitRatio float64           `json:"cpu_overcommit_ratio" binding:"required"`
 	CpuCapacity        int64             `json:"cpu_capacity" binding:"required"`
@@ -310,16 +309,6 @@ func (c *clientImpl) CordonNode(ctx context.Context, id string) (*Response, erro
 // UncordonNode uncordons a Node by ID.
 func (c *clientImpl) UncordonNode(ctx context.Context, id string) (*Response, error) {
 	req, err := c.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/uncordon", id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Do(req, nil)
-}
-
-// HeartbeatNode sends a heartbeat for a Node by ID.
-func (c *clientImpl) HeartbeatNode(ctx context.Context, id string) (*Response, error) {
-	req, err := c.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("/api/v1/nodes/%s/heartbeat", id), nil)
 	if err != nil {
 		return nil, err
 	}

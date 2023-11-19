@@ -95,7 +95,6 @@ func New(config *Config) (*Server, error) {
 		v1.GET("/runners/:id/remove-token", s.handleGetRunnerRemoveToken)
 		v1.DELETE("/runners/:id", s.handleDeleteRunner)
 		v1.GET("/nodes/:id/runners", s.handleGetNodeRunners)
-		v1.POST("/nodes/:id/heartbeat", s.handleHeartbeatNode)
 		v1.DELETE("/nodes/:id", s.handleDeregisterNode)
 		v1.POST("/nodes/:id/cordon", s.handleCordonNode)
 		v1.POST("/nodes/:id/uncordon", s.handleUncordonNode)

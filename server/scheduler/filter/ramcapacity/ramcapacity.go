@@ -27,7 +27,7 @@ func (f *Filter) Name() string {
 // Filter filters nodes based on available RAM capacity.
 func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
 	if !node.RAM.IsAvailable(runner.Resources.MemoryBytes) {
-		return false, fmt.Errorf("node doesn't have enough RAM capacity: requested %d, available %d", runner.Resources.MemoryBytes, node.RAM.Available())
+		return false, fmt.Errorf("node doesn't have enough RAM capacity: requested %d, available %.1f", runner.Resources.MemoryBytes, node.RAM.Available())
 	}
 
 	return true, nil

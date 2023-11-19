@@ -26,7 +26,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{LastHeartbeat: time.Now(), HeartbeatInterval: 1 * time.Second},
+				node:   &fireactions.Node{LastPoll: time.Now(), PollInterval: 1 * time.Second},
 			},
 			want:    true,
 			wantErr: false,
@@ -36,7 +36,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{LastHeartbeat: time.Now().Add(-2 * time.Second), HeartbeatInterval: 1 * time.Second},
+				node:   &fireactions.Node{LastPoll: time.Now().Add(-2 * time.Second), PollInterval: 1 * time.Second},
 			},
 			want:    false,
 			wantErr: true,

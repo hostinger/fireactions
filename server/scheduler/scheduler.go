@@ -164,12 +164,13 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	err = s.store.AllocateRunner(context.Background(), bestNode.ID, runner.ID)
+	node, err := s.store.AllocateRunner(context.Background(), bestNode.ID, runner.ID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("error assigning runner to node")
 		return
 	}
 
+	s.cache.PutNode(node)
 	s.logger.Debug().Msgf("scheduler: assigned runner %s to node %s", runner.Name, bestNode.Name)
 }
 

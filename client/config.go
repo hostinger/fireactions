@@ -10,27 +10,20 @@ import (
 
 // Config is the configuration for the Client.
 type Config struct {
-	FireactionsServerURL      string             `mapstructure:"fireactions_server_url"`
-	HeartbeatInterval         time.Duration      `mapstructure:"heartbeat_interval"`
-	HeartbeatSuccessThreshold int                `mapstructure:"heartbeat_success_threshold"`
-	HeartbeatFailureThreshold int                `mapstructure:"heartbeat_failure_threshold"`
-	PollInterval              time.Duration      `mapstructure:"poll_interval"`
-	Node                      *NodeConfig        `mapstructure:"node"`
-	Firecracker               *FirecrackerConfig `mapstructure:"firecracker"`
-	CNI                       *CNIConfig         `mapstructure:"cni"`
-	Containerd                *ContainerdConfig  `mapstructure:"containerd"`
-	Metrics                   *MetricsConfig     `mapstructure:"metrics"`
-	LogLevel                  string             `mapstructure:"log_level"`
+	FireactionsServerURL string             `mapstructure:"fireactions_server_url"`
+	PollInterval         time.Duration      `mapstructure:"poll_interval"`
+	Node                 *NodeConfig        `mapstructure:"node"`
+	Firecracker          *FirecrackerConfig `mapstructure:"firecracker"`
+	CNI                  *CNIConfig         `mapstructure:"cni"`
+	Containerd           *ContainerdConfig  `mapstructure:"containerd"`
+	LogLevel             string             `mapstructure:"log_level"`
 }
 
 // NewDefaultConfig creates a new default Config.
 func NewDefaultConfig() *Config {
 	cfg := &Config{
-		FireactionsServerURL:      "http://127.0.0.1:8080",
-		PollInterval:              5 * time.Second,
-		HeartbeatSuccessThreshold: 3,
-		HeartbeatFailureThreshold: 3,
-		HeartbeatInterval:         1 * time.Second,
+		FireactionsServerURL: "http://127.0.0.1:8080",
+		PollInterval:         5 * time.Second,
 		Node: &NodeConfig{
 			Name:               "",
 			CpuOvercommitRatio: 1.0,
@@ -52,7 +45,6 @@ func NewDefaultConfig() *Config {
 		Containerd: &ContainerdConfig{
 			Address: "/run/containerd/containerd.sock",
 		},
-		Metrics:  &MetricsConfig{Enabled: true, ListenAddr: "127.0.0.1:8081"},
 		LogLevel: "info",
 	}
 
@@ -65,18 +57,6 @@ func (c *Config) Validate() error {
 
 	if c.FireactionsServerURL == "" {
 		errs = multierror.Append(errs, errors.New("fireactions_server_url is required"))
-	}
-
-	if c.HeartbeatInterval < 1*time.Second {
-		errs = multierror.Append(errs, errors.New("heartbeat_interval must be >= 1s"))
-	}
-
-	if c.HeartbeatSuccessThreshold < 1 {
-		errs = multierror.Append(errs, errors.New("heartbeat_success_threshold must be >= 1"))
-	}
-
-	if c.HeartbeatFailureThreshold < 1 {
-		errs = multierror.Append(errs, errors.New("heartbeat_failure_threshold must be >= 1"))
 	}
 
 	if c.PollInterval < 1*time.Second {
@@ -116,15 +96,6 @@ func (c *Config) Validate() error {
 		err := c.Containerd.Validate()
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("error validating containerd config: %w", err))
-		}
-	}
-
-	if c.Metrics == nil {
-		errs = multierror.Append(errs, errors.New("metrics config is required"))
-	} else {
-		err := c.Metrics.Validate()
-		if err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("error validating metrics config: %w", err))
 		}
 	}
 
@@ -231,21 +202,6 @@ func (c *ContainerdConfig) Validate() error {
 
 	if c.Address == "" {
 		errs = multierror.Append(errs, errors.New("address is required"))
-	}
-
-	return errs
-}
-
-type MetricsConfig struct {
-	Enabled    bool   `mapstructure:"enabled"`
-	ListenAddr string `mapstructure:"listen_addr"`
-}
-
-func (c *MetricsConfig) Validate() error {
-	var errs error
-
-	if c.Enabled && c.ListenAddr == "" {
-		errs = multierror.Append(errs, errors.New("listen_addr is required"))
 	}
 
 	return errs

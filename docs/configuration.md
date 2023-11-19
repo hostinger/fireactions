@@ -23,10 +23,6 @@ node:
 
 poll_interval: 5s
 
-heartbeat_success_threshold: 1
-heartbeat_failure_threshold: 1
-heartbeat_interval: 1s
-
 firecracker:
   binary_path: ./firecracker
   kernel_image_path: vmlinux.bin
@@ -42,10 +38,6 @@ cni:
   conf_dir: ./cni/conf.d
   bin_dirs:
   - ./cni/bin
-
-metrics:
-  listen_addr: 127.0.0.1:8080
-  enabled: true
 
 log_level: debug
 ```
