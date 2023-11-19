@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0](https://github.com/hostinger/fireactions/compare/v1.2.0...v1.3.0) (2023-11-19)
+
+
+### Features
+
+* Ability to set metadata for MMDS ([948ef5b](https://github.com/hostinger/fireactions/commit/948ef5b912a1af460b373056efcdd462f3ac9de2))
+* **images:** Set default /etc/resolv.conf ([0686427](https://github.com/hostinger/fireactions/commit/06864276a9641773c4f33594c9b569b035fa3c3a))
+* **images:** Set metadata.fireactions.internal alias for MMDS ([fa1e4e8](https://github.com/hostinger/fireactions/commit/fa1e4e8ef2ec9a56ea103f8308ff7ff31f161e7c))
+* Rearchitecture fireactions-agent into HTTP service ([0c3809c](https://github.com/hostinger/fireactions/commit/0c3809cbb7c9193ca64ea23f0443af8259051aee))
+
+
+### Bug Fixes
+
+* **server:** Add missing JSON tags ([479b4d5](https://github.com/hostinger/fireactions/commit/479b4d540634e3906f24f711e24410308845989d))
+* **server:** Validate Config.GitHub.JobLabel.AllowedRepositories regexp ([1176e92](https://github.com/hostinger/fireactions/commit/1176e92f30c8ff1062ecb005333bef18512b05b0))
+
 ## [1.2.0](https://github.com/hostinger/fireactions/compare/v1.1.0...v1.2.0) (2023-11-08)
 
 
