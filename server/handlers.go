@@ -215,6 +215,7 @@ func (s *Server) handleCreateRunner(ctx *gin.Context) {
 			Status:          fireactions.RunnerStatus{Phase: fireactions.RunnerPhasePending},
 			Organisation:    request.Organisation,
 			Labels:          []string{"self-hosted", fmt.Sprintf("%s%s", s.config.GitHubConfig.JobLabelPrefix, jobLabel.Name)},
+			Metadata:        map[string]interface{}{},
 			CreatedAt:       time.Now(),
 			UpdatedAt:       time.Now(),
 			DeletedAt:       nil,
@@ -233,6 +234,10 @@ func (s *Server) handleCreateRunner(ctx *gin.Context) {
 
 		for _, affinity := range jobLabel.Runner.Affinity {
 			runner.Affinity = append(runner.Affinity, &fireactions.RunnerAffinityExpression{Key: affinity.Key, Operator: affinity.Operator, Values: affinity.Values})
+		}
+
+		if jobLabel.Runner.Metadata != nil {
+			runner.Metadata = jobLabel.Runner.Metadata
 		}
 
 		runners = append(runners, runner)
@@ -569,6 +574,7 @@ func newRunnerFromJobPayload(j *webhooks.WorkflowJobPayload, jobLabelConfig *Git
 		Organisation: j.Organization.Login,
 		Labels:       j.WorkflowJob.Labels,
 		Resources:    fireactions.RunnerResources{VCPUs: jobLabelConfig.Runner.Resources.VCPUs, MemoryBytes: jobLabelConfig.Runner.Resources.MemoryMB * 1024 * 1024},
+		Metadata:     map[string]interface{}{},
 		CreatedAt:    j.WorkflowJob.StartedAt,
 		UpdatedAt:    j.WorkflowJob.StartedAt,
 		DeletedAt:    nil,
@@ -583,6 +589,10 @@ func newRunnerFromJobPayload(j *webhooks.WorkflowJobPayload, jobLabelConfig *Git
 	for _, expression := range jobLabelConfig.Runner.Affinity {
 		affinity := &fireactions.RunnerAffinityExpression{Key: expression.Key, Operator: expression.Operator, Values: expression.Values}
 		runner.Affinity = append(runner.Affinity, affinity)
+	}
+
+	if jobLabelConfig.Runner.Metadata != nil {
+		runner.Metadata = jobLabelConfig.Runner.Metadata
 	}
 
 	return runner

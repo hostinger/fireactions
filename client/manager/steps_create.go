@@ -96,15 +96,15 @@ func (s *createMicroVMStep) Do(ctx context.Context) ([]planner.Procedure, error)
 	}
 
 	rootDrivePath := mounts[0].Source
-	metadata := map[string]interface{}{
-		"runner-id": s.runner.ID,
+	s.runner.Metadata["fireactions"] = map[string]interface{}{
+		"runner_id": s.runner.ID,
 	}
 
 	err = s.driver.CreateVM(ctx, &microvm.MicroVM{ID: s.runner.ID, Status: microvm.MicroVMStatus{State: microvm.MicroVMStateUnknown}, Spec: microvm.MicroVMSpec{
 		Name:              s.runner.Name,
 		VCPU:              s.runner.Resources.VCPUs,
 		MemoryBytes:       s.runner.Resources.MemoryBytes,
-		Metadata:          metadata,
+		Metadata:          s.runner.Metadata,
 		Drives:            []microvm.Drive{{ID: "rootfs", PathOnHost: rootDrivePath, IsRoot: true, IsReadOnly: false}},
 		NetworkInterfaces: []microvm.NetworkInterface{{AllowMMDS: true, NetworkName: "fireactions", IfName: "veth0"}},
 	}})

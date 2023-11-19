@@ -12,6 +12,7 @@ type Runner struct {
 	NodeID          *string                     `json:"node_id"`
 	ImagePullPolicy RunnerImagePullPolicy       `json:"image_pull_policy"`
 	Image           string                      `json:"image"`
+	Metadata        map[string]interface{}      `json:"metadata"`
 	Affinity        []*RunnerAffinityExpression `json:"affinity"`
 	Status          RunnerStatus                `json:"status"`
 	Organisation    string                      `json:"organisation"`

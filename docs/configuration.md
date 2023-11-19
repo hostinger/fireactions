@@ -68,6 +68,8 @@ github:
         vcpus: 2
       affinity:
       - { key: fireactions/region, operator: In, values: [default] }
+      metadata:
+        example: value
   app_id: 123456
   app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----

@@ -72,8 +72,8 @@ func (c *Config) Validate() error {
 type RunnerConfig struct {
 	Image           string                  `mapstructure:"image"`
 	ImagePullPolicy string                  `mapstructure:"image_pull_policy"`
-	Affinity        []*RunnerAffinityConfig `mapstructure:"affinity"`
 	Metadata        map[string]interface{}  `mapstructure:"metadata"`
+	Affinity        []*RunnerAffinityConfig `mapstructure:"affinity"`
 	Resources       *RunnerResourcesConfig  `mapstructure:"resources"`
 }
 
