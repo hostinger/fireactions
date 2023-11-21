@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/hostinger/fireactions/compare/v1.3.0...v1.3.1) (2023-11-21)
+
+
+### Bug Fixes
+
+* Bind env variables with BindEnv() instead of AutomaticEnv() due to viper bug ([19da70b](https://github.com/hostinger/fireactions/commit/19da70bd2ccc4d4745231aba75390dd2c2c52f3f))
+
 ## [1.3.0](https://github.com/hostinger/fireactions/compare/v1.2.0...v1.3.0) (2023-11-19)
 
 
