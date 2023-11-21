@@ -20,8 +20,8 @@ type Config struct {
 func NewDefaultConfig() *Config {
 	cfg := &Config{
 		HTTP:         &HTTPConfig{ListenAddress: ":8080"},
-		DataDir:      "/var/lib/fireactions",
-		GitHubConfig: &GitHubConfig{JobLabelPrefix: "fireactions-"},
+		DataDir:      "",
+		GitHubConfig: &GitHubConfig{JobLabelPrefix: "fireactions-", WebhookSecret: "", AppID: 0, AppPrivateKey: ""},
 		LogLevel:     "info",
 	}
 

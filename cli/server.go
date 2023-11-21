@@ -15,36 +15,51 @@ import (
 )
 
 func newServerCmd() *cobra.Command {
+	v := viper.New()
+
 	cmd := &cobra.Command{
 		Use:     "server",
 		Short:   "Start the Fireactions server",
 		Args:    cobra.NoArgs,
-		RunE:    runServerCmd,
 		GroupID: "main",
+		RunE:    func(cmd *cobra.Command, args []string) error { return runServerCmd(cmd, v, args) },
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			config, err := cmd.Flags().GetString("config")
+			configFile, _ := cmd.Flags().GetString("config")
+
+			if configFile != "" {
+				v.SetConfigFile(configFile)
+			}
+
+			err := v.ReadInConfig()
 			if err != nil {
-				return err
+				return fmt.Errorf("config: %w", err)
 			}
 
-			if config != "" {
-				viper.SetConfigFile(config)
-			}
-
-			return viper.ReadInConfig()
+			return nil
 		},
 	}
 
-	cmd.Flags().StringP("config", "c", "", "Sets the configuration file path.")
+	v.SetConfigType("yaml")
+	v.SetConfigName("config")
+	v.AddConfigPath("$HOME/.fireactions")
+	v.AddConfigPath("/etc/fireactions")
+	v.AddConfigPath(".")
+
+	v.MustBindEnv("github.webhook_secret", "FIREACTIONS_GITHUB_WEBHOOK_SECRET")
+	v.MustBindEnv("github.app_id", "FIREACTIONS_GITHUB_APP_ID")
+	v.MustBindEnv("github.app_private_key", "FIREACTIONS_GITHUB_APP_PRIVATE_KEY")
+
+	cmd.Flags().SortFlags = false
+	cmd.Flags().StringP("config", "c", "", "Sets the configuration file path. Defaults are $HOME/.fireactions/config.yaml, /etc/fireactions/config.yaml and ./config.yaml.")
 
 	return cmd
 }
 
-func runServerCmd(cmd *cobra.Command, args []string) error {
+func runServerCmd(cmd *cobra.Command, v *viper.Viper, args []string) error {
 	config := server.NewDefaultConfig()
-	err := viper.Unmarshal(&config)
+	err := v.Unmarshal(config)
 	if err != nil {
-		return fmt.Errorf("unmarshal: %w", err)
+		return fmt.Errorf("config: %w", err)
 	}
 
 	err = config.Validate()
@@ -71,10 +86,5 @@ func runServerCmd(cmd *cobra.Command, args []string) error {
 		server.Shutdown(context.Background())
 	}()
 
-	err = server.Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return server.Start()
 }
