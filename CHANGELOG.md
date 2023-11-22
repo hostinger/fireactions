@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/hostinger/fireactions/compare/v1.3.1...v1.3.2) (2023-11-22)
+
+
+### Bug Fixes
+
+* **server:** Deregistering a node should remove assigned runners as well ([016adff](https://github.com/hostinger/fireactions/commit/016adffae55a68ef10de00e72d0867260eb03f09))
+
 ## [1.3.1](https://github.com/hostinger/fireactions/compare/v1.3.0...v1.3.1) (2023-11-21)
 
 
