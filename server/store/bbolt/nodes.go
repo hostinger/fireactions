@@ -83,7 +83,37 @@ func (s *Store) GetNodeByName(ctx context.Context, name string) (*fireactions.No
 
 func (s *Store) DeleteNode(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		return tx.Bucket([]byte("nodes")).Delete([]byte(id))
+		nodesBucket := tx.Bucket([]byte("nodes"))
+
+		var runners []*fireactions.Runner
+		runnersBucket := tx.Bucket([]byte("runners"))
+		c := runnersBucket.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			runner := &fireactions.Runner{}
+			err := json.Unmarshal(v, runner)
+			if err != nil {
+				return err
+			}
+
+			if runner.NodeID == nil {
+				continue
+			}
+
+			if *runner.NodeID != id {
+				continue
+			}
+
+			runners = append(runners, runner)
+		}
+
+		for _, runner := range runners {
+			err := runnersBucket.Delete([]byte(runner.ID))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nodesBucket.Delete([]byte(id))
 	})
 	if err != nil {
 		return err
