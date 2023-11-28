@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/hostinger/fireactions/compare/v2.0.0...v2.0.1) (2023-11-28)
+
+
+### Bug Fixes
+
+* **client:** Invalidate reconciler queue cache on status changes ([50c8021](https://github.com/hostinger/fireactions/commit/50c80215983ce94d89cfd9ad2858829f9da91acb))
+
 ## [2.0.0](https://github.com/hostinger/fireactions/compare/v1.3.2...v2.0.0) (2023-11-28)
 
 
