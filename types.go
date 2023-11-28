@@ -25,12 +25,18 @@ type Runner struct {
 	DeletedAt       *time.Time             `json:"deleted_at"`
 }
 
+// GetNodeID returns the Node ID of the Runner or an empty string.
 func (r Runner) GetNodeID() string {
 	if r.NodeID == nil {
 		return ""
 	}
 
 	return *r.NodeID
+}
+
+// Equals returns true if the given Runner is equal to the current Runner.
+func (r Runner) Equals(other Runner) bool {
+	return r.ID == other.ID && r.Status.State == other.Status.State
 }
 
 type RunnerAffinityRule struct {

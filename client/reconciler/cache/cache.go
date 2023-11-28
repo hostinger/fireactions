@@ -43,6 +43,10 @@ type queuedRunner struct {
 	Attempts    int
 }
 
+func (q *queuedRunner) GetRunner() *fireactions.Runner {
+	return q.runner
+}
+
 // Get returns a queued runner.
 func (q *queuedRunnersCache) Get(key string) (*queuedRunner, bool) {
 	q.mu.Lock()

@@ -8,6 +8,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/mount"
+	"github.com/containerd/log"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/client/firecracker"
@@ -335,4 +336,8 @@ func (r *runtimeImpl) deleteContainerImageSnapshotLease(ctx context.Context, lea
 	}
 
 	return nil
+}
+
+func init() {
+	log.SetLevel("panic")
 }
