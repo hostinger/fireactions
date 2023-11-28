@@ -3,26 +3,30 @@ package server
 import (
 	"fmt"
 	"os"
-	"regexp"
+	"strings"
+	"text/template"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/hostinger/fireactions"
 )
 
 // Config is the configuration for the Server.
 type Config struct {
-	HTTP         *HTTPConfig   `mapstructure:"http"`
-	DataDir      string        `mapstructure:"data_dir"`
-	GitHubConfig *GitHubConfig `mapstructure:"github"`
-	LogLevel     string        `mapstructure:"log_level"`
+	HTTP      *HTTPConfig       `mapstructure:"http"`
+	DataDir   string            `mapstructure:"data_dir"`
+	GitHub    *GitHubConfig     `mapstructure:"github"`
+	JobLabels []*JobLabelConfig `mapstructure:"job_labels"`
+	LogLevel  string            `mapstructure:"log_level"`
 }
 
-// NewDefaultConfig creates a new default Config.
-func NewDefaultConfig() *Config {
+// NewConfig creates a new Config with default values.
+func NewConfig() *Config {
 	cfg := &Config{
-		HTTP:         &HTTPConfig{ListenAddress: ":8080"},
-		DataDir:      "",
-		GitHubConfig: &GitHubConfig{JobLabelPrefix: "fireactions-", WebhookSecret: "", AppID: 0, AppPrivateKey: ""},
-		LogLevel:     "info",
+		HTTP:      &HTTPConfig{ListenAddress: ":8080"},
+		DataDir:   "",
+		GitHub:    &GitHubConfig{WebhookSecret: "", AppID: 0, AppPrivateKey: ""},
+		JobLabels: []*JobLabelConfig{},
+		LogLevel:  "info",
 	}
 
 	return cfg
@@ -49,11 +53,17 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.GitHubConfig == nil {
+	if c.GitHub == nil {
 		errs = multierror.Append(errs, fmt.Errorf("github config is required"))
 	} else {
-		if err := c.GitHubConfig.Validate(); err != nil {
+		if err := c.GitHub.Validate(); err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("invalid github config: %w", err))
+		}
+	}
+
+	for _, label := range c.JobLabels {
+		if err := label.Validate(); err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("invalid job_label (%s): %w", label.Name, err))
 		}
 	}
 
@@ -68,99 +78,17 @@ func (c *Config) Validate() error {
 	return errs
 }
 
-// RunnerConfig is the configuration for the Runner.
-type RunnerConfig struct {
-	Image           string                  `mapstructure:"image"`
-	ImagePullPolicy string                  `mapstructure:"image_pull_policy"`
-	Metadata        map[string]interface{}  `mapstructure:"metadata"`
-	Affinity        []*RunnerAffinityConfig `mapstructure:"affinity"`
-	Resources       *RunnerResourcesConfig  `mapstructure:"resources"`
-}
-
-// RunnerResourcesConfig is the configuration for the Runner resources.
-type RunnerResourcesConfig struct {
-	VCPUs    int64 `mapstructure:"vcpus"`
-	MemoryMB int64 `mapstructure:"memory_mb"`
-}
-
-// RunnerAffinityConfig is the configuration for the Runner affinity.
-type RunnerAffinityConfig struct {
-	Key      string   `mapstructure:"key"`
-	Operator string   `mapstructure:"operator"`
-	Values   []string `mapstructure:"values"`
-}
-
-// Validate validates the configuration.
-func (c *RunnerConfig) Validate() error {
-	var errs error
-
-	if c.Image == "" {
-		errs = multierror.Append(errs, fmt.Errorf("image is required"))
-	}
-
-	switch c.ImagePullPolicy {
-	case "Always", "IfNotPresent", "Never":
-	default:
-		errs = multierror.Append(errs, fmt.Errorf("image_pull_policy must be one of: Always, IfNotPresent, Never"))
-	}
-
-	for _, affinity := range c.Affinity {
-		if err := affinity.Validate(); err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("invalid affinity config: %w", err))
+// FindJobLabel finds a JobLabel by name.
+func (c *Config) FindJobLabel(name string) (*JobLabelConfig, bool) {
+	for _, label := range c.JobLabels {
+		if label.Name != name {
+			continue
 		}
+
+		return label, true
 	}
 
-	if c.Resources == nil {
-		errs = multierror.Append(errs, fmt.Errorf("resources config is required"))
-	} else {
-		if err := c.Resources.Validate(); err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("invalid resources config: %w", err))
-		}
-	}
-
-	return errs
-}
-
-// Validate validates the configuration.
-func (c *RunnerAffinityConfig) Validate() error {
-	var errs error
-
-	if c.Key == "" {
-		errs = multierror.Append(errs, fmt.Errorf("key is required"))
-	}
-
-	switch c.Operator {
-	case "In", "NotIn":
-	default:
-		errs = multierror.Append(errs, fmt.Errorf("operator must be one of: In, NotIn"))
-	}
-
-	if len(c.Values) == 0 {
-		errs = multierror.Append(errs, fmt.Errorf("values is required"))
-	}
-
-	for _, value := range c.Values {
-		if value == "" {
-			errs = multierror.Append(errs, fmt.Errorf("values must not contain empty strings"))
-		}
-	}
-
-	return errs
-}
-
-// Validate validates the configuration.
-func (c *RunnerResourcesConfig) Validate() error {
-	var errs error
-
-	if c.VCPUs <= 0 {
-		errs = multierror.Append(errs, fmt.Errorf("vcpus must be greater than 0"))
-	}
-
-	if c.MemoryMB <= 0 {
-		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be greater than 0"))
-	}
-
-	return errs
+	return nil, false
 }
 
 // HTTPConfig is the configuration for the HTTP server.
@@ -181,91 +109,113 @@ func (c *HTTPConfig) Validate() error {
 
 // GitHubConfig is the configuration for the GitHub integration.
 type GitHubConfig struct {
-	JobLabelPrefix string                  `mapstructure:"job_label_prefix"`
-	JobLabels      []*GitHubJobLabelConfig `mapstructure:"job_labels"`
-	WebhookSecret  string                  `mapstructure:"webhook_secret"`
-	AppID          int64                   `mapstructure:"app_id"`
-	AppPrivateKey  string                  `mapstructure:"app_private_key"`
-}
-
-// GitHubJobLabelConfig is the configuration for a single job label. The label defines which repositories are allowed
-// to use the label and how the jobs are executed.
-type GitHubJobLabelConfig struct {
-	Name                string   `mapstructure:"name"`
-	AllowedRepositories []string `mapstructure:"allowed_repositories"`
-	Runner              *RunnerConfig
+	WebhookSecret string `mapstructure:"webhook_secret"`
+	AppPrivateKey string `mapstructure:"app_private_key"`
+	AppID         int64  `mapstructure:"app_id"`
 }
 
 // Validate validates the configuration.
 func (c *GitHubConfig) Validate() error {
 	var errs error
 
-	if c.JobLabelPrefix == "" {
-		errs = multierror.Append(errs, fmt.Errorf("job_label_prefix is required"))
-	}
-
-	if len(c.JobLabels) == 0 {
-		errs = multierror.Append(errs, fmt.Errorf("at least one job_label is required"))
-	}
-
-	for _, label := range c.JobLabels {
-		if err := label.Validate(); err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("invalid job_label config: %w", err))
-		}
-	}
-
 	if c.WebhookSecret == "" {
 		errs = multierror.Append(errs, fmt.Errorf("webhook_secret is required"))
-	}
-
-	if c.AppID == 0 {
-		errs = multierror.Append(errs, fmt.Errorf("app_id is required"))
 	}
 
 	if c.AppPrivateKey == "" {
 		errs = multierror.Append(errs, fmt.Errorf("app_private_key is required"))
 	}
 
+	if c.AppID == 0 {
+		errs = multierror.Append(errs, fmt.Errorf("app_id is required"))
+	}
+
 	return errs
 }
 
-// GetJobLabelConfig returns the job label config for the given label. If the label is not configured, the second
-// return value is false.
-func (c *GitHubConfig) GetJobLabelConfig(label string) (*GitHubJobLabelConfig, bool) {
-	for _, c := range c.JobLabels {
-		if c.Name != label {
-			continue
-		}
-
-		return c, true
-	}
-
-	return nil, false
+// JobLabelConfig is the configuration for a single job label. The label defines which repositories are allowed
+// to use the label and how the jobs are executed.
+type JobLabelConfig struct {
+	Name                  string                            `mapstructure:"name"`
+	AllowedRepositories   []string                          `mapstructure:"allowed_repositories"`
+	RunnerLabels          []string                          `mapstructure:"runner_labels"`
+	RunnerNameTemplate    string                            `mapstructure:"runner_name_template"`
+	RunnerImage           string                            `mapstructure:"runner_image"`
+	RunnerImagePullPolicy fireactions.RunnerImagePullPolicy `mapstructure:"runner_image_pull_policy"`
+	RunnerResources       fireactions.RunnerResources       `mapstructure:"runner_resources"`
+	RunnerAffinity        []*fireactions.RunnerAffinityRule `mapstructure:"runner_affinity"`
+	RunnerMetadata        map[string]interface{}            `mapstructure:"runner_metadata"`
 }
 
 // Validate validates the configuration.
-func (c *GitHubJobLabelConfig) Validate() error {
+func (c *JobLabelConfig) Validate() error {
 	var errs error
 
 	if c.Name == "" {
 		errs = multierror.Append(errs, fmt.Errorf("name is required"))
 	}
 
-	if len(c.AllowedRepositories) > 0 {
-		for _, repo := range c.AllowedRepositories {
-			if _, err := regexp.Compile(repo); err != nil {
-				errs = multierror.Append(errs, fmt.Errorf("allowed_repositories regexp is invalid: %w", err))
-			}
-		}
+	if len(c.AllowedRepositories) == 0 {
+		errs = multierror.Append(errs, fmt.Errorf("allowed_repositories is required"))
 	}
 
-	if c.Runner == nil {
-		errs = multierror.Append(errs, fmt.Errorf("runner config is required"))
-	} else {
-		if err := c.Runner.Validate(); err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("invalid runner config: %w", err))
-		}
+	if c.RunnerNameTemplate == "" {
+		errs = multierror.Append(errs, fmt.Errorf("runner_name_template is required"))
+	}
+
+	if _, err := template.New("runner_name").Parse(c.RunnerNameTemplate); err != nil {
+		errs = multierror.Append(errs, fmt.Errorf("invalid runner_name_template: %w", err))
+	}
+
+	if c.RunnerImage == "" {
+		errs = multierror.Append(errs, fmt.Errorf("runner_image is required"))
+	}
+
+	if c.RunnerImagePullPolicy == "" {
+		errs = multierror.Append(errs, fmt.Errorf("runner_image_pull_policy is required"))
+	}
+
+	if err := c.RunnerResources.Validate(); err != nil {
+		errs = multierror.Append(errs, fmt.Errorf("invalid runner_resources: %w", err))
 	}
 
 	return errs
+}
+
+// MustGetRunnerName renders the runner name from the template. It panics if the template is invalid.
+func (c *JobLabelConfig) MustGetRunnerName(runnerID string) string {
+	name, err := c.GetRunnerName(runnerID)
+	if err != nil {
+		panic(err)
+	}
+
+	return name
+}
+
+// GetRunnerName renders the runner name from the template.
+func (c *JobLabelConfig) GetRunnerName(runnerID string) (string, error) {
+	templ, err := template.New("runner_name").Parse(c.RunnerNameTemplate)
+	if err != nil {
+		return "", fmt.Errorf("invalid runner_name_template: %w", err)
+	}
+
+	var buf strings.Builder
+	err = templ.Execute(&buf, map[string]interface{}{
+		"ID": runnerID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to execute runner_name_template: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
+// GetRunnerLabels returns the labels for the runner. It includes the fireactions label, the job label and
+// the self-hosted label.
+func (c *JobLabelConfig) GetRunnerLabels() []string {
+	labels := []string{}
+	labels = append(labels, "fireactions", c.Name, "self-hosted")
+	labels = append(labels, c.RunnerLabels...)
+
+	return labels
 }

@@ -22,21 +22,21 @@ func TestFilter(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "returns true when last heartbeat is less than heartbeat interval",
+			name: "returns true when last reconcile is less than reconcile interval",
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{LastPoll: time.Now(), PollInterval: 1 * time.Second},
+				node:   &fireactions.Node{LastReconcileAt: time.Now(), ReconcileInterval: 1 * time.Second},
 			},
 			want:    true,
 			wantErr: false,
 		},
 		{
-			name: "returns false when last heartbeat is more than heartbeat interval",
+			name: "returns false when last reconcile is more than reconcile interval",
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{LastPoll: time.Now().Add(-2 * time.Second), PollInterval: 1 * time.Second},
+				node:   &fireactions.Node{LastReconcileAt: time.Now().Add(-2 * time.Second), ReconcileInterval: 1 * time.Second},
 			},
 			want:    false,
 			wantErr: true,

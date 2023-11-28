@@ -1,12 +1,10 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/server"
@@ -56,7 +54,7 @@ func newServerCmd() *cobra.Command {
 }
 
 func runServerCmd(cmd *cobra.Command, v *viper.Viper, args []string) error {
-	config := server.NewDefaultConfig()
+	config := server.NewConfig()
 	err := v.Unmarshal(config)
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
@@ -72,19 +70,13 @@ func runServerCmd(cmd *cobra.Command, v *viper.Viper, args []string) error {
 		os.Exit(1)
 	}
 
+	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+	defer cancel()
+
 	server, err := server.New(config)
 	if err != nil {
-		return fmt.Errorf("creating server: %w", err)
+		return fmt.Errorf("could not create server: %w", err)
 	}
 
-	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	go func() {
-		<-signalCh
-		cmd.Println("\nCaught interrupt signal. Shutting down...")
-		server.Shutdown(context.Background())
-	}()
-
-	return server.Start()
+	return server.Run(ctx)
 }

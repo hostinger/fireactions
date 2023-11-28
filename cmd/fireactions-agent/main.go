@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/hostinger/fireactions/agent"
 	"github.com/spf13/cobra"
@@ -42,25 +39,13 @@ func runRootCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("getting --log-level flag: %w", err)
 	}
 
+	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+	defer cancel()
+
 	agent, err := agent.New(&agent.Config{LogLevel: logLevel})
 	if err != nil {
 		return err
 	}
 
-	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	go agent.Start()
-
-	<-signalCh
-	cmd.Println("\nCaught interrupt signal. Shutting down...Press Ctrl+C again to force shutdown.")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	err = agent.Stop(ctx)
-	if err != nil {
-		return fmt.Errorf("stopping agent: %w", err)
-	}
-
-	return nil
+	return agent.Run(ctx)
 }

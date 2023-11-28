@@ -1,12 +1,11 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions/client"
@@ -46,13 +45,40 @@ func newClientCmd() *cobra.Command {
 	v.AddConfigPath(".")
 
 	cmd.Flags().SortFlags = false
-	cmd.Flags().StringP("config", "c", "", "Sets the configuration file path. Defaults are $HOME/.fireactions/config.yaml, /etc/fireactions/config.yaml and ./config.yaml.")
+	cmd.Flags().StringP("config", "f", "", "Sets the configuration file path. Defaults are $HOME/.fireactions/config.yaml, /etc/fireactions/config.yaml and ./config.yaml.")
+
+	cmd.Flags().StringP("server-url", "s", "https://127.0.0.1:8080", "Sets the Fireactions server address")
+	v.BindPFlag("fireactions_server_url", cmd.Flags().Lookup("server"))
+
+	cmd.Flags().StringP("server-key", "k", "", "Sets the Fireactions server key")
+	v.BindPFlag("fireactions_server_key", cmd.Flags().Lookup("server-key"))
+
+	cmd.Flags().StringP("name", "n", os.Getenv("HOSTNAME"), "Sets the client name.")
+	v.BindPFlag("name", cmd.Flags().Lookup("name"))
+
+	cmd.Flags().Float64P("cpu-overcommit-ratio", "c", 1.0, "Sets the CPU overcommit ratio.")
+	v.BindPFlag("cpu_overcommit_ratio", cmd.Flags().Lookup("cpu-overcommit-ratio"))
+
+	cmd.Flags().Float64P("ram-overcommit-ratio", "r", 1.0, "Sets the RAM overcommit ratio.")
+	v.BindPFlag("ram_overcommit_ratio", cmd.Flags().Lookup("ram-overcommit-ratio"))
+
+	cmd.Flags().DurationP("reconcile-interval", "i", 5*time.Second, "Sets the reconcile interval.")
+	v.BindPFlag("reconcile_interval", cmd.Flags().Lookup("reconcile-interval"))
+
+	cmd.Flags().IntP("reconcile-concurrency", "C", 100, "Sets the reconcile concurrency. This is the maximum number of micro VMs that can be reconciled at the same time.")
+	v.BindPFlag("reconcile_concurrency", cmd.Flags().Lookup("reconcile-concurrency"))
+
+	cmd.Flags().StringToStringP("label", "L", map[string]string{}, "Sets a label. Can be used multiple times.")
+	v.BindPFlag("labels", cmd.Flags().Lookup("label"))
+
+	cmd.Flags().StringP("log-level", "l", "info", "Sets the log level. Valid values are: debug, info, warn, error, fatal, panic and trace.")
+	v.BindPFlag("log_level", cmd.Flags().Lookup("log-level"))
 
 	return cmd
 }
 
 func runClientCmd(cmd *cobra.Command, v *viper.Viper, args []string) error {
-	config := client.NewDefaultConfig()
+	config := client.NewConfig()
 	err := v.Unmarshal(&config)
 	if err != nil {
 		return fmt.Errorf("unmarshal: %w", err)
@@ -68,27 +94,13 @@ func runClientCmd(cmd *cobra.Command, v *viper.Viper, args []string) error {
 		os.Exit(1)
 	}
 
-	client, err := client.New(config)
+	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+	defer cancel()
+
+	client, err := client.New(ctx, config)
 	if err != nil {
-		return fmt.Errorf("creating client: %w", err)
+		return fmt.Errorf("could not create client: %w", err)
 	}
 
-	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	go client.Start()
-
-	<-signalCh
-	cmd.Println("\nCaught interrupt signal. Shutting down...Press Ctrl+C again to force shutdown.")
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		<-ctx.Done()
-		cmd.Println("\nForcing shutdown...")
-		cancel()
-	}()
-
-	client.Shutdown(ctx)
-
-	return nil
+	return client.Run(ctx)
 }

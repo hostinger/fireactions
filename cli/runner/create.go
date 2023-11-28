@@ -22,14 +22,11 @@ func Create() *cobra.Command {
 	}
 
 	cmd.Flags().SortFlags = false
-
-	cmd.Flags().StringP("organisation", "o", "", "Sets the organisation to use. (required)")
-	cmd.MarkFlagRequired("organisation")
-
 	cmd.Flags().StringP("job-label", "j", "", `Sets the job label to use. The job label must be already configured in the server config file. (required)`)
 	cmd.MarkFlagRequired("job-label")
-
-	cmd.Flags().IntP("count", "c", 1, "Sets the number of runners to create")
+	cmd.Flags().StringP("organisation", "o", "", "Sets the target organisation of the GitHub runner (required)")
+	cmd.MarkFlagRequired("organisation")
+	cmd.Flags().IntP("count", "c", 1, "Sets the number of GitHub runners to create")
 
 	cmd.Flags().StringP("server-url", "", os.Getenv("FIREACTIONS_SERVER_URL"), "Sets the server URL (FIREACTIONS_SERVER_URL) (required)")
 
@@ -42,7 +39,7 @@ func runCreateCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	client := fireactions.NewClient(nil, fireactions.WithEndpoint(serverURL))
+	client := fireactions.NewClient(fireactions.WithEndpoint(serverURL))
 
 	organisation, err := cmd.Flags().
 		GetString("organisation")

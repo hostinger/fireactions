@@ -39,7 +39,7 @@ func runListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	client := fireactions.NewClient(nil, fireactions.WithEndpoint(serverURL))
+	client := fireactions.NewClient(fireactions.WithEndpoint(serverURL))
 
 	runners, _, err := client.ListRunners(cmd.Context(), nil)
 	if err != nil {

@@ -32,8 +32,6 @@ type Client interface {
 	GetRunner(ctx context.Context, id string) (*Runner, *Response, error)
 	CreateRunner(ctx context.Context, createRunnerRequest CreateRunnerRequest) ([]*Runner, *Response, error)
 	ListRunners(ctx context.Context, opts *RunnersListOptions) ([]*Runner, *Response, error)
-	GetRunnerRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error)
-	GetRunnerRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error)
 	SetRunnerStatus(ctx context.Context, id string, setRunnerStatusRequest SetRunnerStatusRequest) (*Response, error)
 	DeleteRunner(ctx context.Context, id string) (*Response, error)
 }
@@ -83,15 +81,11 @@ func WithUserAgent(userAgent string) ClientOpt {
 }
 
 // NewClient returns a new Fireactions Client implementation.
-func NewClient(client *http.Client, opts ...ClientOpt) *clientImpl {
-	if client == nil {
-		client = http.DefaultClient
-	}
-
+func NewClient(opts ...ClientOpt) *clientImpl {
 	c := &clientImpl{
 		Endpoint:  defaultEndpoint,
 		UserAgent: defaultUserAgent,
-		client:    client,
+		client:    http.DefaultClient,
 	}
 
 	for _, opt := range opts {
@@ -256,7 +250,7 @@ func (c *clientImpl) GetNode(ctx context.Context, id string) (*Node, *Response, 
 // NodeRegisterRequest represents a request to register a Node.
 type NodeRegisterRequest struct {
 	Name               string            `json:"name" binding:"required"`
-	PollInterval       time.Duration     `json:"poll_interval" binding:"required"`
+	ReconcileInterval  time.Duration     `json:"reconcile_interval" binding:"required"`
 	Labels             map[string]string `json:"labels" binding:"required"`
 	CpuOvercommitRatio float64           `json:"cpu_overcommit_ratio" binding:"required"`
 	CpuCapacity        int64             `json:"cpu_capacity" binding:"required"`
@@ -378,54 +372,11 @@ func (c *clientImpl) ListRunners(ctx context.Context, opts *RunnersListOptions) 
 	return root.Runners, response, nil
 }
 
-// RunnerRegistrationToken represents a response from the
-// RunnersClient.GetRegistrationToken method.
-type RunnerRegistrationToken struct {
-	Token string `json:"token"`
-}
-
-// GetRegistrationToken returns a GitHub registration token for a Runner by ID.
-func (c *clientImpl) GetRunnerRegistrationToken(ctx context.Context, id string) (*RunnerRegistrationToken, *Response, error) {
-	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/registration-token", id), nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var token RunnerRegistrationToken
-	response, err := c.Do(req, &token)
-	if err != nil {
-		return nil, response, err
-	}
-
-	return &token, response, nil
-}
-
-// RunnerRemoveToken represents a response from the
-// RunnersClient.GetRemoveToken method.
-type RunnerRemoveToken struct {
-	Token string `json:"token"`
-}
-
-// GetRemoveToken returns a GitHub removal token for a Runner by ID.
-func (c *clientImpl) GetRunnerRemoveToken(ctx context.Context, id string) (*RunnerRemoveToken, *Response, error) {
-	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/runners/%s/remove-token", id), nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var token RunnerRemoveToken
-	response, err := c.Do(req, &token)
-	if err != nil {
-		return nil, response, err
-	}
-
-	return &token, response, nil
-}
-
 // RunnerSetStatusRequest represents a request to set the status of a Runner by
 // ID.
 type SetRunnerStatusRequest struct {
-	Phase RunnerPhase `json:"phase" binding:"required"`
+	State       RunnerState `json:"phase" binding:"required"`
+	Description string      `json:"description"`
 }
 
 // SetRunnerStatus sets the status of a Runner by ID.

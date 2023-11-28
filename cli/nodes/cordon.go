@@ -31,7 +31,7 @@ func runCordonCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	client := fireactions.NewClient(nil, fireactions.WithEndpoint(serverURL))
+	client := fireactions.NewClient(fireactions.WithEndpoint(serverURL))
 
 	_, err = client.CordonNode(cmd.Context(), args[0])
 	if err != nil {

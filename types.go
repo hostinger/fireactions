@@ -3,37 +3,69 @@ package fireactions
 import (
 	"fmt"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // Runner represents a GitHub Actions self-hosted runner instance.
 type Runner struct {
-	ID              string                      `json:"id"`
-	Name            string                      `json:"name"`
-	NodeID          *string                     `json:"node_id"`
-	ImagePullPolicy RunnerImagePullPolicy       `json:"image_pull_policy"`
-	Image           string                      `json:"image"`
-	Metadata        map[string]interface{}      `json:"metadata"`
-	Affinity        []*RunnerAffinityExpression `json:"affinity"`
-	Status          RunnerStatus                `json:"status"`
-	Organisation    string                      `json:"organisation"`
-	Labels          []string                    `json:"labels"`
-	Resources       RunnerResources             `json:"resources"`
-	CreatedAt       time.Time                   `json:"created_at"`
-	UpdatedAt       time.Time                   `json:"updated_at"`
-	DeletedAt       *time.Time                  `json:"deleted_at"`
+	ID              string                 `json:"id"`
+	NodeID          *string                `json:"node_id"`
+	Name            string                 `json:"name"`
+	Organisation    string                 `json:"organisation"`
+	Image           string                 `json:"image"`
+	ImagePullPolicy RunnerImagePullPolicy  `json:"image_pull_policy"`
+	Metadata        map[string]interface{} `json:"metadata"`
+	Affinity        []*RunnerAffinityRule  `json:"affinity"`
+	Resources       RunnerResources        `json:"resources"`
+	Labels          []string               `json:"labels"`
+	Status          RunnerStatus           `json:"status"`
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
+	DeletedAt       *time.Time             `json:"deleted_at"`
 }
 
-type RunnerAffinityExpression struct {
-	Key      string   `json:"key"`
-	Operator string   `json:"operator"`
-	Values   []string `json:"values"`
+func (r Runner) GetNodeID() string {
+	if r.NodeID == nil {
+		return ""
+	}
+
+	return *r.NodeID
 }
 
-func (r *RunnerAffinityExpression) String() string {
+type RunnerAffinityRule struct {
+	Key      string   `json:"key" mapstructure:"key"`
+	Operator string   `json:"operator" mapstructure:"operator"`
+	Values   []string `json:"values" mapstructure:"values"`
+}
+
+func (r *RunnerAffinityRule) String() string {
 	return fmt.Sprintf("%s %s %v", r.Key, r.Operator, r.Values)
 }
 
+func (r *RunnerAffinityRule) Validate() error {
+	var errs error
+
+	if r.Key == "" {
+		errs = multierror.Append(errs, fmt.Errorf("key is required"))
+	}
+
+	if r.Operator == "" {
+		errs = multierror.Append(errs, fmt.Errorf("operator is required"))
+	}
+
+	if len(r.Values) == 0 {
+		errs = multierror.Append(errs, fmt.Errorf("values is required"))
+	}
+
+	return errs
+}
+
 type RunnerImagePullPolicy string
+
+func (r RunnerImagePullPolicy) String() string {
+	return string(r)
+}
 
 const (
 	RunnerImagePullPolicyAlways       RunnerImagePullPolicy = "Always"
@@ -41,17 +73,26 @@ const (
 	RunnerImagePullPolicyNever        RunnerImagePullPolicy = "Never"
 )
 
-type RunnerPhase string
+type RunnerState string
+
+func (r RunnerState) String() string {
+	return string(r)
+}
 
 const (
-	RunnerPhasePending   RunnerPhase = "Pending"
-	RunnerPhaseIdle      RunnerPhase = "Idle"
-	RunnerPhaseActive    RunnerPhase = "Active"
-	RunnerPhaseCompleted RunnerPhase = "Completed"
+	RunnerStatePending   RunnerState = "Pending"
+	RunnerStateIdle      RunnerState = "Idle"
+	RunnerStateActive    RunnerState = "Active"
+	RunnerStateCompleted RunnerState = "Completed"
 )
 
 type RunnerStatus struct {
-	Phase RunnerPhase `json:"phase"`
+	State       RunnerState `json:"state"`
+	Description string      `json:"description"`
+}
+
+func (r *RunnerStatus) String() string {
+	return r.State.String()
 }
 
 // RunnerFilterFunc is a function that filters a Runner. It returns true if the
@@ -62,23 +103,38 @@ type RunnerFilterFunc func(*Runner) bool
 // calculate the amount of resources that a Node needs to have available in
 // order to run the Runner.
 type RunnerResources struct {
-	VCPUs       int64 `json:"vcpus"`
-	MemoryBytes int64 `json:"memory_bytes"`
+	VCPUs    int64 `json:"vcpus" mapstructure:"vcpus"`
+	MemoryMB int64 `json:"memory_mb" mapstructure:"memory_mb"`
+}
+
+// Validate validates the configuration.
+func (c *RunnerResources) Validate() error {
+	var errs error
+
+	if c.VCPUs <= 0 {
+		errs = multierror.Append(errs, fmt.Errorf("vcpus must be greater than 0"))
+	}
+
+	if c.MemoryMB <= 0 {
+		errs = multierror.Append(errs, fmt.Errorf("memory_mb must be greater than 0"))
+	}
+
+	return errs
 }
 
 // Node represents a bare metal server that can run GitHub runners in
 // Firecracker virtual machines.
 type Node struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	Labels       map[string]string `json:"labels"`
-	Status       NodeStatus        `json:"status"`
-	CPU          NodeResource      `json:"cpu"`
-	RAM          NodeResource      `json:"ram"`
-	PollInterval time.Duration     `json:"poll_interval"`
-	LastPoll     time.Time         `json:"last_poll"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
+	ID                string            `json:"id"`
+	Name              string            `json:"name"`
+	Labels            map[string]string `json:"labels"`
+	Status            NodeStatus        `json:"status"`
+	CPU               NodeResource      `json:"cpu"`
+	RAM               NodeResource      `json:"ram"`
+	ReconcileInterval time.Duration     `json:"reconcile_interval"`
+	LastReconcileAt   time.Time         `json:"last_reconcile_at"`
+	CreatedAt         time.Time         `json:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at"`
 }
 
 // NodeStatus represents the status of a Node.

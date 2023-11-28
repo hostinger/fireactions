@@ -27,7 +27,7 @@ To start using self-hosted GitHub runners, add the label to your workflow jobs:
 runs-on:
 - self-hosted
 # e.g. fireactions-2vcpu-4gb
-- <PREFIX><JOB_LABEL>
+- <JOB_LABEL>
 ```
 
 See [Configuration](./docs//configuration.md) for more information on how to configure job labels.
