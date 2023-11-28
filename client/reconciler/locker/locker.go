@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/hostinger/fireactions"
 )
 
 // Locker is responsible for locking runners.
 type Locker interface {
 	// Acquire acquires a lock for the runner.
-	Acquire(ctx context.Context, runner *fireactions.Runner) error
+	Acquire(ctx context.Context, runnerID string) error
 	// Release releases a lock for the runner.
-	Release(ctx context.Context, runner *fireactions.Runner) error
+	Release(ctx context.Context, runnerID string) error
 }
 
 type memoryLocker struct {
@@ -31,24 +29,24 @@ func NewMemoryLocker() *memoryLocker {
 	return l
 }
 
-// Acquire acquires a lock for the runner.
-func (m *memoryLocker) Acquire(ctx context.Context, runner *fireactions.Runner) error {
+// Acquire acquires a lock for the runner ID.
+func (m *memoryLocker) Acquire(ctx context.Context, runnerID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, ok := m.runners[runner.ID]; ok {
-		return fmt.Errorf("lock for runner %s is already acquired", runner.ID)
+	if _, ok := m.runners[runnerID]; ok {
+		return fmt.Errorf("lock for runner %s is already acquired", runnerID)
 	}
 
-	m.runners[runner.ID] = struct{}{}
+	m.runners[runnerID] = struct{}{}
 	return nil
 }
 
-// Release releases a lock for the runner.
-func (m *memoryLocker) Release(ctx context.Context, runner *fireactions.Runner) error {
+// Release releases a lock for the runner ID.
+func (m *memoryLocker) Release(ctx context.Context, runnerID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	delete(m.runners, runner.ID)
+	delete(m.runners, runnerID)
 	return nil
 }

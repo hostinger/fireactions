@@ -32,7 +32,7 @@ type Reconciler struct {
 	interval      time.Duration
 	syncer        Syncer
 	maxConcurrent int
-	queue         chan *fireactions.Runner
+	queue         chan string
 	cache         cache.Cache
 	logger        *zerolog.Logger
 }
@@ -95,7 +95,7 @@ func NewReconciler(lister Lister, syncer Syncer, opts ...Opt) *Reconciler {
 		interval:      10 * time.Second,
 		maxConcurrent: 10,
 		cache:         cache.NewCache(),
-		queue:         make(chan *fireactions.Runner, 500),
+		queue:         make(chan string, 500),
 		logger:        &logger,
 	}
 
@@ -140,20 +140,13 @@ func (r *Reconciler) reconcile(ctx context.Context) {
 
 	queued := 0
 	for _, runner := range runners {
-		_, ok := r.cache.Get(runner.ID)
-		if ok {
-			r.logger.Debug().Msgf("reconciler: runner %s already queued, skipping", runner.ID)
+		cached, ok := r.cache.Get(runner.ID)
+		if ok && cached.GetRunner().Equals(*runner) {
 			continue
 		}
 
 		r.cache.Set(runner.ID, runner)
-
-		ok = r.tryEnqueue(runner)
-		if !ok {
-			r.logger.Debug().Msgf("reconciler: queue full, skipping runner %s", runner.ID)
-			continue
-		}
-
+		r.queue <- runner.ID
 		queued++
 	}
 
@@ -162,55 +155,50 @@ func (r *Reconciler) reconcile(ctx context.Context) {
 
 func (r *Reconciler) runWorker(ctx context.Context) {
 	for {
-		var runner *fireactions.Runner
+		var runnerID string
 		select {
 		case <-ctx.Done():
 			return
-		case runner = <-r.queue:
+		case runnerID = <-r.queue:
 		}
 
-		r.syncRunner(ctx, runner)
+		r.syncRunner(ctx, runnerID)
 	}
 }
 
-func (r *Reconciler) syncRunner(ctx context.Context, runner *fireactions.Runner) {
-	if err := r.locker.Acquire(ctx, runner); err != nil {
+func (r *Reconciler) syncRunner(ctx context.Context, runnerID string) {
+	if err := r.locker.Acquire(ctx, runnerID); err != nil {
 		return
 	}
-	defer r.locker.Release(ctx, runner)
+	defer r.locker.Release(ctx, runnerID)
 
-	err := r.syncer.Sync(ctx, runner)
+	runner, ok := r.cache.Get(runnerID)
+	if !ok {
+		return
+	}
+
+	err := r.syncer.Sync(ctx, runner.GetRunner())
 	switch errors.Unwrap(err) {
 	case context.Canceled:
 		return
 	case nil:
-		r.cache.Delete(runner.ID)
-		r.logger.Debug().Msgf("reconciler: runner %s synced", runner.ID)
+		r.cache.Delete(runnerID)
+		r.logger.Debug().Msgf("reconciler: runner %s synced", runnerID)
 		return
 	}
 
-	r.cache.IncAttempts(runner.ID)
-	attempts := r.cache.GetAttempts(runner.ID)
+	r.cache.IncAttempts(runnerID)
+	attempts := r.cache.GetAttempts(runnerID)
 
 	go func() {
 		select {
 		case <-time.After(time.Duration(attempts) * time.Second):
-			r.queue <- runner
 		case <-ctx.Done():
 			return
 		}
 
-		r.queue <- runner
+		r.queue <- runnerID
 	}()
 
-	r.logger.Err(err).Msgf("reconciler: failed to sync runner %s, requeueing in %d seconds (attempt %d)", runner.ID, attempts, r.cache.GetAttempts(runner.ID))
-}
-
-func (r *Reconciler) tryEnqueue(runner *fireactions.Runner) bool {
-	select {
-	case r.queue <- runner:
-		return true
-	default:
-		return false
-	}
+	r.logger.Err(err).Msgf("reconciler: failed to sync runner %s, requeueing in %d seconds (attempt %d)", runnerID, attempts, r.cache.GetAttempts(runnerID))
 }
