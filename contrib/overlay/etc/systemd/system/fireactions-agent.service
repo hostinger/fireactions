@@ -2,6 +2,7 @@
 Description=Fireactions Agent
 Documentation=https://github.com/hostinger/fireactions
 After=network.target
+SuccessAction=reboot
 
 [Service]
 Type=simple

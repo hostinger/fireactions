@@ -32,10 +32,14 @@ func runCompleteCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	client := fireactions.NewClient(nil, fireactions.WithEndpoint(serverURL))
-
+	client := fireactions.NewClient(fireactions.WithEndpoint(serverURL))
 	_, err = client.SetRunnerStatus(cmd.Context(), args[0], fireactions.SetRunnerStatusRequest{
-		Phase: fireactions.RunnerPhaseCompleted})
+		State:       fireactions.RunnerStateCompleted,
+		Description: "Completed by CLI",
+	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }

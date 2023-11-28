@@ -35,7 +35,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				runner: &fireactions.Runner{
-					Affinity: []*fireactions.RunnerAffinityExpression{
+					Affinity: []*fireactions.RunnerAffinityRule{
 						{
 							Key:      "region",
 							Operator: "In",
@@ -57,7 +57,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				runner: &fireactions.Runner{
-					Affinity: []*fireactions.RunnerAffinityExpression{
+					Affinity: []*fireactions.RunnerAffinityRule{
 						{
 							Key:      "region",
 							Operator: "NotIn",
@@ -79,7 +79,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				runner: &fireactions.Runner{
-					Affinity: []*fireactions.RunnerAffinityExpression{
+					Affinity: []*fireactions.RunnerAffinityRule{
 						{
 							Key:      "region",
 							Operator: "In",
@@ -101,7 +101,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				runner: &fireactions.Runner{
-					Affinity: []*fireactions.RunnerAffinityExpression{
+					Affinity: []*fireactions.RunnerAffinityRule{
 						{
 							Key:      "region",
 							Operator: "NotIn",
@@ -121,7 +121,7 @@ func TestFilter(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				runner: &fireactions.Runner{
-					Affinity: []*fireactions.RunnerAffinityExpression{
+					Affinity: []*fireactions.RunnerAffinityRule{
 						{
 							Key:      "region",
 							Operator: "Equals",

@@ -14,31 +14,22 @@ Example configuration for a client:
 ---
 fireactions_server_url: http://127.0.0.1:8080
 
-node:
-  name: ""
-  cpu_overcommit_ratio: 1.0
-  ram_overcommit_ratio: 1.0
-  labels:
-    fireactions/region: default
+# Name of the client. This is used to identify the client on the server.
+# Defaults to the $HOSTNAME environment variable.
+name: ""
 
-poll_interval: 5s
+# CPU and RAM overcommit ratios. These are used to calculate the resources required for a job.
+cpu_overcommit_ratio: 1.0
+ram_overcommit_ratio: 1.0
 
-firecracker:
-  binary_path: ./firecracker
-  kernel_image_path: vmlinux.bin
-  kernel_args: console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw
-  socket_path: /var/run/fireactions/%s.sock
-  log_file_path: /var/log/fireactions/%s.log
-  log_level: debug
+# Labels to apply for the client. These are used for affinity rules.
+labels:
+  fireactions/region: default
 
-containerd:
-  address: /run/containerd/containerd.sock
+# The client will reconcile the state of the server with the local state every `reconcile_interval` seconds.
+reconcile_interval: 5s
 
-cni:
-  conf_dir: ./cni/conf.d
-  bin_dirs:
-  - ./cni/bin
-
+# Log level. Can be one of: debug, info, warn, error, fatal, panic, trace.
 log_level: debug
 ```
 
@@ -48,31 +39,56 @@ Example configuration for a server:
 
 ```yaml
 ---
+# Path to the directory where the server will store its data.
 data-dir: /var/lib/fireactions
 
+# HTTP server configuration.
 http:
+# The address to listen on for HTTP requests.
   listen_addr: 0.0.0.0:8081
 
+# GitHub configuration.
 github:
+# The GitHub webhook secret. This should be the same as the one configured in the GitHub App settings.
   webhook_secret: SECRET
-  job_label_prefix: fireactions-
-  job_labels:
-  - name: 2vcpu-2gb
-    allowed_repositories:
-    - *
-    runner:
-      image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
-      image_pull_policy: IfNotPresent
-      resources:
-        memory_mb: 2048
-        vcpus: 2
-      affinity:
-      - { key: fireactions/region, operator: In, values: [default] }
-      metadata:
-        example: value
+# The GitHub App ID and key. This can be found in the GitHub App settings.
   app_id: 123456
   app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----
 
+# List of job labels.
+job_labels:
+- name: fireactions-2vcpu-2gb
+# List of allowed repositories. Regular expressions are supported.
+  allowed_repositories:
+  - ".*"
+# Template for the GitHub runner name. The following variables are supported:
+# - {{ .ID }}: The ID of the runner.
+  runner_name_template: fireactions-2vcpu-2gb-{{ .ID }}
+# Additional labels to apply to the GitHub runner. Default labels are:
+# - fireactions
+# - <job_label.name>
+# - self-hosted
+  runner_labels:
+  - ubuntu-22.04
+# The GitHub runner image to use. This should be a Docker image that contains the GitHub runner and the Fireactions agent.
+  runner_image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
+# The GitHub runner image pull policy. Can be one of: Always, Never, IfNotPresent.
+  runner_image_pull_policy: IfNotPresent
+# The GitHub runner resources. These are used to calculate the resources required for a job.
+  runner_resources:
+    memory_mb: 2048
+    vcpus: 2
+# Affinity rules. These are used to schedule GitHub runners to specific clients. The following operators are supported:
+# - NotIn: The value must not be in the list of values.
+# - In: The value must be in the list of values.
+  runner_affinity:
+  - { key: fireactions/region, operator: In, values: [default] }
+# Metadata to apply to the GitHub runner. Use with MMDS service to provide metadata to the virtual machine.
+  runner_metadata:
+    example1: value1
+    example2: value2
+
+# Log level. Can be one of: debug, info, warn, error, fatal, panic, trace.
 log_level: debug
 ```

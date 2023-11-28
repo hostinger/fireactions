@@ -24,8 +24,8 @@ func TestFilter(t *testing.T) {
 			name: "returns true when node has enough RAM capacity",
 			args: args{
 				ctx:    context.Background(),
-				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryBytes: 1}},
-				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 2, OvercommitRatio: 1.0}},
+				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryMB: 1}},
+				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 2 * 1024 * 1024, OvercommitRatio: 1.0}},
 			},
 			want:    true,
 			wantErr: false,
@@ -34,8 +34,8 @@ func TestFilter(t *testing.T) {
 			name: "returns false when node doesn't have enough RAM capacity",
 			args: args{
 				ctx:    context.Background(),
-				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryBytes: 2}},
-				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 1, OvercommitRatio: 1.0}},
+				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryMB: 2}},
+				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 1 * 1024 * 1024, OvercommitRatio: 1.0}},
 			},
 			want:    false,
 			wantErr: true,
@@ -44,8 +44,8 @@ func TestFilter(t *testing.T) {
 			name: "returns true when node has enough RAM capacity with overcommit",
 			args: args{
 				ctx:    context.Background(),
-				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryBytes: 2}},
-				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 1, OvercommitRatio: 2.0}},
+				runner: &fireactions.Runner{Resources: fireactions.RunnerResources{MemoryMB: 2}},
+				node:   &fireactions.Node{RAM: fireactions.NodeResource{Capacity: 1 * 1024 * 1024, OvercommitRatio: 2.0}},
 			},
 			want:    true,
 			wantErr: false,

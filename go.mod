@@ -4,17 +4,16 @@ go 1.20
 
 require (
 	github.com/caarlos0/timea.go v1.2.0
+	github.com/cbrgm/githubevents v1.8.0
 	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-playground/webhooks/v6 v6.3.0
+	github.com/google/go-github/v50 v50.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.3
 	go.etcd.io/bbolt v1.3.7
-	go.uber.org/mock v0.3.0
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -82,6 +81,7 @@ require (
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runc v1.1.7 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect

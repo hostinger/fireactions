@@ -26,10 +26,10 @@ func (f *Filter) Name() string {
 	return "heartbeat"
 }
 
-// Filter filters out nodes that didn't send a heartbeat for more than the configured heartbeat interval.
+// Filter filters out nodes that didn't reconcile for more than the configured reconcile interval.
 func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
-	if time.Since(node.LastPoll) > node.PollInterval {
-		return false, fmt.Errorf("node is not alive: last heartbeat was %s", timeago.Of(node.LastPoll))
+	if time.Since(node.LastReconcileAt) > node.ReconcileInterval {
+		return false, fmt.Errorf("node is not alive: last reconcile was %s", timeago.Of(node.LastReconcileAt))
 	}
 
 	return true, nil
