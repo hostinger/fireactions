@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/helper/stringid"
 	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/stringid"
 )
 
 func (s *Server) handleRegisterNode(ctx *gin.Context) {

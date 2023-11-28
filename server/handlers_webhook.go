@@ -11,7 +11,8 @@ import (
 	githubv50 "github.com/google/go-github/v50/github"
 	githubv53 "github.com/google/go-github/v53/github"
 	"github.com/hostinger/fireactions"
-	"github.com/hostinger/fireactions/server/stringid"
+	"github.com/hostinger/fireactions/helper/deepcopy"
+	"github.com/hostinger/fireactions/helper/stringid"
 	"github.com/samber/lo"
 )
 
@@ -207,7 +208,7 @@ func (s *Server) newRunnerFromJobLabelConfig(config *JobLabelConfig, organisatio
 		Resources:       config.RunnerResources,
 		ImagePullPolicy: config.RunnerImagePullPolicy,
 		Image:           config.RunnerImage,
-		Metadata:        config.RunnerMetadata,
+		Metadata:        deepcopy.Map(config.RunnerMetadata),
 		Affinity:        config.RunnerAffinity,
 		Status:          fireactions.RunnerStatus{State: fireactions.RunnerStatePending, Description: "Created"},
 		CreatedAt:       time.Now(),
