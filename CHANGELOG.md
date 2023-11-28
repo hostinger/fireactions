@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/hostinger/fireactions/compare/v2.0.1...v2.0.2) (2023-11-28)
+
+
+### Bug Fixes
+
+* **server:** Fix sneaky race condition in runner metadata ([29a2619](https://github.com/hostinger/fireactions/commit/29a2619b918839c35ae00e888fc472053b202cf1))
+
 ## [2.0.1](https://github.com/hostinger/fireactions/compare/v2.0.0...v2.0.1) (2023-11-28)
 
 
