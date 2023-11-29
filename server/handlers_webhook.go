@@ -41,7 +41,7 @@ func (s *Server) handleWorkflowJobCompleted(deliveryID string, eventName string,
 
 	_, ok := s.findWorkflowJobLabel(event)
 	if !ok {
-		logger.Debug().Msgf("skipping workflow job %d: no matching label found", *event.WorkflowJob.ID)
+		logger.Debug().Msgf("skipping workflow job %d: no matching label found", event.GetWorkflowJob().GetID())
 		return nil
 	}
 
@@ -56,20 +56,20 @@ func (s *Server) handleWorkflowJobCompleted(deliveryID string, eventName string,
 	}
 
 	if len(runners) == 0 {
-		logger.Debug().Msgf("skipped updating GitHub runner %s for workflow job %d: not found", *event.WorkflowJob.RunnerName, *event.WorkflowJob.ID)
+		logger.Debug().Msgf("skipped updating GitHub runner %s for workflow job %d: not found", event.GetWorkflowJob().GetRunnerName(), event.GetWorkflowJob().GetID())
 		return nil
 	}
 
 	runner := runners[0]
 	_, err = s.store.UpdateRunner(ctx, runner.ID, func(r *fireactions.Runner) error {
-		r.Status = fireactions.RunnerStatus{State: fireactions.RunnerStateCompleted, Description: fmt.Sprintf("Job %d is completed", *event.WorkflowJob.ID)}
+		r.Status = fireactions.RunnerStatus{State: fireactions.RunnerStateCompleted, Description: fmt.Sprintf("Job %d is completed", event.WorkflowJob.GetID())}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	logger.Info().Msgf("updated GitHub runner %s for workflow job %d (job is completed)", *event.WorkflowJob.RunnerName, *event.WorkflowJob.ID)
+	logger.Info().Msgf("updated GitHub runner %s for workflow job %d (job is completed)", event.GetWorkflowJob().GetRunnerName(), event.GetWorkflowJob().GetID())
 	return nil
 }
 
@@ -78,7 +78,7 @@ func (s *Server) handleWorkflowJobInProgress(deliveryID string, eventName string
 
 	_, ok := s.findWorkflowJobLabel(event)
 	if !ok {
-		logger.Debug().Msgf("skipping workflow job %d: no matching label found", *event.WorkflowJob.ID)
+		logger.Debug().Msgf("skipping workflow job %d: no matching label found", event.WorkflowJob.GetID())
 		return nil
 	}
 
@@ -93,20 +93,20 @@ func (s *Server) handleWorkflowJobInProgress(deliveryID string, eventName string
 	}
 
 	if len(runners) == 0 {
-		logger.Debug().Msgf("skipped updating GitHub runner %s for workflow job %d: not found", *event.WorkflowJob.RunnerName, *event.WorkflowJob.ID)
+		logger.Debug().Msgf("skipped updating GitHub runner %s for workflow job %d: not found", event.GetWorkflowJob().GetRunnerName(), event.GetWorkflowJob().GetID())
 		return nil
 	}
 
 	runner := runners[0]
 	_, err = s.store.UpdateRunner(ctx, runner.ID, func(r *fireactions.Runner) error {
-		r.Status = fireactions.RunnerStatus{State: fireactions.RunnerStateActive, Description: fmt.Sprintf("Job %d is in progress", *event.WorkflowJob.ID)}
+		r.Status = fireactions.RunnerStatus{State: fireactions.RunnerStateActive, Description: fmt.Sprintf("Job %d is in progress", event.WorkflowJob.GetID())}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	logger.Info().Msgf("updated GitHub runner %s for workflow job %d (job is in progress)", *event.WorkflowJob.RunnerName, *event.WorkflowJob.ID)
+	logger.Info().Msgf("updated GitHub runner %s for workflow job %d (job is in progress)", event.GetWorkflowJob().GetRunnerName(), event.GetWorkflowJob().GetID())
 	return nil
 }
 
@@ -122,7 +122,7 @@ func (s *Server) handleWorkflowJobQueued(deliveryID string, eventName string, ev
 	validator := newWorkflowJobEventValidator(event, jobLabel)
 	err := validator.Validate()
 	if err != nil {
-		logger.Debug().Msgf("skipping workflow job %d: %s", *event.WorkflowJob.ID, err.Error())
+		logger.Debug().Msgf("skipping workflow job %d: %s", event.WorkflowJob.GetID(), err.Error())
 		return nil
 	}
 
@@ -130,7 +130,7 @@ func (s *Server) handleWorkflowJobQueued(deliveryID string, eventName string, ev
 	defer cancel()
 
 	if event.GetRepo().GetOwner().GetType() != "Organization" {
-		logger.Debug().Msgf("skipping workflow job %d: repository owner is not an organization", *event.WorkflowJob.ID)
+		logger.Debug().Msgf("skipping workflow job %d: repository owner is not an organization", event.WorkflowJob.GetID())
 		return nil
 	}
 
@@ -155,7 +155,7 @@ func (s *Server) handleWorkflowJobQueued(deliveryID string, eventName string, ev
 	}
 
 	s.scheduler.AddToQueue(runner)
-	logger.Info().Msgf("created GitHub runner %s for workflow job %d", runner.Name, *event.WorkflowJob.ID)
+	logger.Info().Msgf("created GitHub runner %s for workflow job %d", runner.Name, event.WorkflowJob.GetID())
 	return nil
 }
 
