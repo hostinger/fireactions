@@ -4,7 +4,7 @@ name: build-agent
 on:
   push:
     tags:
-    - "agent-**"
+    - "agent**"
 
 permissions:
   packages: write
