@@ -94,68 +94,6 @@ func (s *Store) SaveRunner(ctx context.Context, runner *fireactions.Runner) erro
 	return nil
 }
 
-func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		runnersBucket := tx.Bucket([]byte("runners"))
-		runnerBucket := runnersBucket.Bucket([]byte(id))
-		if runnerBucket == nil {
-			return store.ErrNotFound
-		}
-
-		v := runnerBucket.Get([]byte("runner"))
-		if v == nil {
-			return store.ErrNotFound
-		}
-
-		runner := &fireactions.Runner{}
-		err := json.Unmarshal(v, runner)
-		if err != nil {
-			return err
-		}
-
-		nodesBucket := tx.Bucket([]byte("nodes"))
-		v = nodesBucket.Get([]byte(*runner.NodeID))
-		if v == nil {
-			return store.ErrNotFound
-		}
-
-		node := &fireactions.Node{}
-		err = json.Unmarshal(v, node)
-		if err != nil {
-			return err
-		}
-
-		node.CPU.Release(runner.Resources.VCPUs)
-		node.RAM.Release(runner.Resources.MemoryMB * 1024 * 1024)
-		node.UpdatedAt = time.Now()
-
-		data, err := json.Marshal(node)
-		if err != nil {
-			return err
-		}
-
-		err = nodesBucket.Put([]byte(node.ID), data)
-		if err != nil {
-			return err
-		}
-
-		runner.NodeID = nil
-		runner.UpdatedAt = time.Now()
-
-		data, err = json.Marshal(runner)
-		if err != nil {
-			return err
-		}
-
-		return runnerBucket.Put([]byte("runner"), data)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*fireactions.Node, error) {
 	node := &fireactions.Node{}
 	err := s.db.Update(func(tx *bbolt.Tx) error {
@@ -223,39 +161,39 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*f
 	return node, nil
 }
 
-func (s *Store) UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error) {
+func (s *Store) UpdateRunnerWithTransaction(ctx context.Context, txn store.Tx, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error) {
+	tx := txn.(*bbolt.Tx)
+
 	runner := &fireactions.Runner{}
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
+	root := tx.Bucket([]byte("runners"))
 
-		b := root.Bucket([]byte(id))
-		if b == nil {
-			return store.ErrNotFound
-		}
+	b := root.Bucket([]byte(id))
+	if b == nil {
+		return nil, store.ErrNotFound
+	}
 
-		v := b.Get([]byte("runner"))
-		if v == nil {
-			return store.ErrNotFound
-		}
+	v := b.Get([]byte("runner"))
+	if v == nil {
+		return nil, store.ErrNotFound
+	}
 
-		err := json.Unmarshal(v, runner)
-		if err != nil {
-			return err
-		}
+	err := json.Unmarshal(v, runner)
+	if err != nil {
+		return nil, err
+	}
 
-		err = runnerUpdateFn(runner)
-		if err != nil {
-			return err
-		}
+	err = runnerUpdateFn(runner)
+	if err != nil {
+		return nil, err
+	}
 
-		runner.UpdatedAt = time.Now()
-		data, err := json.Marshal(runner)
-		if err != nil {
-			return err
-		}
+	runner.UpdatedAt = time.Now()
+	data, err := json.Marshal(runner)
+	if err != nil {
+		return nil, err
+	}
 
-		return b.Put([]byte("runner"), data)
-	})
+	err = b.Put([]byte("runner"), data)
 	if err != nil {
 		return nil, err
 	}
@@ -263,44 +201,27 @@ func (s *Store) UpdateRunner(ctx context.Context, id string, runnerUpdateFn func
 	return runner, nil
 }
 
-func (s *Store) SoftDeleteRunner(ctx context.Context, id string) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
-
-		b := root.Bucket([]byte(id))
-		if b == nil {
-			return store.ErrNotFound
-		}
-
-		v := b.Get([]byte("runner"))
-		if v == nil {
-			return store.ErrNotFound
-		}
-
-		runner := &fireactions.Runner{}
-		err := json.Unmarshal(v, runner)
-		if err != nil {
-			return err
-		}
-
-		deletedAt := time.Now()
-		runner.DeletedAt = &deletedAt
-		runner.UpdatedAt = time.Now()
-		data, err := json.Marshal(runner)
-		if err != nil {
-			return err
-		}
-
-		return b.Put([]byte("runner"), data)
-	})
+func (s *Store) UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error) {
+	tx, err := s.db.Begin(true)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	runner, err := s.UpdateRunnerWithTransaction(ctx, tx, id, runnerUpdateFn)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return runner, nil
 }
 
-func (s *Store) HardDeleteRunner(ctx context.Context, id string) error {
+func (s *Store) DeleteRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		root := tx.Bucket([]byte("runners"))
 

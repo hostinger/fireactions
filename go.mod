@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/caarlos0/timea.go v1.2.0
 	github.com/cbrgm/githubevents v1.8.0
+	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/go-github/v50 v50.0.0
@@ -32,7 +33,6 @@ require (
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
-	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/ttrpc v1.2.2 // indirect
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect

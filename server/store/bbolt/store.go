@@ -1,6 +1,7 @@
 package bbolt
 
 import (
+	"github.com/hostinger/fireactions/server/store"
 	"go.etcd.io/bbolt"
 )
 
@@ -45,6 +46,10 @@ func New(path string) (*Store, error) {
 	}
 
 	return s, nil
+}
+
+func (s *Store) BeginTransaction() (store.Tx, error) {
+	return s.db.Begin(true)
 }
 
 // Close closes the Store.

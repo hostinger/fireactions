@@ -164,9 +164,35 @@ func (s *Scheduler) schedule() {
 		return
 	}
 
-	node, err := s.store.AllocateRunner(context.Background(), bestNode.ID, runner.ID)
+	tx, err := s.store.BeginTransaction()
 	if err != nil {
-		s.logger.Error().Err(err).Msg("error assigning runner to node")
+		s.logger.Error().Err(err).Msg("error beginning transaction")
+		return
+	}
+	defer tx.Rollback()
+
+	_, err = s.store.UpdateRunnerWithTransaction(context.Background(), tx, runner.ID, func(r *fireactions.Runner) error {
+		r.NodeID = &bestNode.ID
+		return nil
+	})
+	if err != nil {
+		s.logger.Error().Err(err).Msg("error updating runner")
+		return
+	}
+
+	node, err := s.store.UpdateNodeWithTransaction(context.Background(), tx, bestNode.ID, func(n *fireactions.Node) error {
+		n.CPU.Reserve(runner.Resources.VCPUs)
+		n.RAM.Reserve(runner.Resources.MemoryMB * 1024 * 1024)
+		return nil
+	})
+	if err != nil {
+		s.logger.Error().Err(err).Msg("error updating node")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		s.logger.Error().Err(err).Msg("error committing transaction")
 		return
 	}
 

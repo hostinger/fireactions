@@ -151,34 +151,54 @@ func (s *Store) GetNodes(ctx context.Context, filter fireactions.NodeFilterFunc)
 	return nodes, nil
 }
 
-func (s *Store) UpdateNode(ctx context.Context, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error) {
+func (s *Store) UpdateNodeWithTransaction(ctx context.Context, txn store.Tx, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error) {
+	tx := txn.(*bbolt.Tx)
+
 	node := &fireactions.Node{}
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("nodes"))
+	b := tx.Bucket([]byte("nodes"))
 
-		v := b.Get([]byte(id))
-		if v == nil {
-			return store.ErrNotFound
-		}
+	v := b.Get([]byte(id))
+	if v == nil {
+		return nil, store.ErrNotFound
+	}
 
-		err := json.Unmarshal(v, node)
-		if err != nil {
-			return err
-		}
+	err := json.Unmarshal(v, node)
+	if err != nil {
+		return nil, err
+	}
 
-		err = updateFunc(node)
-		if err != nil {
-			return err
-		}
+	err = updateFunc(node)
+	if err != nil {
+		return nil, err
+	}
 
-		node.UpdatedAt = time.Now()
-		data, err := json.Marshal(node)
-		if err != nil {
-			return err
-		}
+	node.UpdatedAt = time.Now()
+	data, err := json.Marshal(node)
+	if err != nil {
+		return nil, err
+	}
 
-		return b.Put([]byte(id), data)
-	})
+	err = b.Put([]byte(node.ID), data)
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
+func (s *Store) UpdateNode(ctx context.Context, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error) {
+	tx, err := s.db.Begin(true)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	node, err := s.UpdateNodeWithTransaction(ctx, tx, id, updateFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
