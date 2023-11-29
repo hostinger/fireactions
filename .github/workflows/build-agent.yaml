@@ -1,0 +1,49 @@
+---
+name: build-agent
+
+on:
+  push:
+    tags:
+    - "agent-**"
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: stable
+
+    - name: Install dependencies
+      run: |
+        go mod download
+
+    - name: Build
+      run: |
+        GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o fireactions-agent-amd64 ./cmd/fireactions-agent
+        GO111MODULE=on CGO_ENABLED=0  GOOS=linux GOARCH=arm64 go build -v -o fireactions-agent-arm64 ./cmd/fireactions-agent
+
+    - name: Sign
+      run: |
+        echo "${{ hashFiles('fireactions-agent-amd64') }}" > fireactions-agent-amd64.sha256
+        echo "${{ hashFiles('fireactions-agent-arm64') }}" > fireactions-agent-arm64.sha256
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: |
+          fireactions-agent-amd64
+          fireactions-agent-arm64
+          fireactions-agent-amd64.sha256
+          fireactions-agent-arm64.sha256
