@@ -6,8 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// New returns a new cobra command for `fireactions` root command.
-func New() *cobra.Command {
+func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "fireactions",
 		Short:         "BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines.",
@@ -38,7 +37,6 @@ func New() *cobra.Command {
 
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Application Commands:"})
 	cmd.AddCommand(newServerCmd())
-	cmd.AddCommand(newClientCmd())
 
 	return cmd
 }
