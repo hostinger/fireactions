@@ -2,11 +2,15 @@
 name: build-runner
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version of the GitHub runner to build'
-        required: true
+  push:
+    branches:
+    - main
+    paths:
+    - contrib/**
+  workflow_run:
+    workflows: ["build-agent"]
+    types:
+      - completed
 
 permissions:
   packages: write
@@ -20,11 +24,34 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-20.04", "ubuntu-22.04"]
-        platform: ["linux/amd64", "linux/arm64"]
+        arch: ["amd64", "arm64"]
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Setup GH CLI
+      uses: sersoft-gmbh/setup-gh-cli-action@v2
+      with:
+        version: stable
+
+    - name: Get latest agent release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "AGENT_VERSION=$(gh release list | grep 'agent' | awk {'print $1'} | head -1)" >> $GITHUB_ENV
+
+    - name: Download fireactions-agent
+      uses: robinraju/release-downloader@v1.8
+      with:
+        tag: ${{ env.AGENT_VERSION }}
+        fileName: "fireactions-agent*"
+        tarBall: false
+        zipBall: false
+
+    - name: Get Github runner version
+      run: |
+        echo RUNNER_VERSION=$(cat contrib/runner_version) >> $GITHUB_ENV
 
     - name: Log in to the Container registry
       uses: docker/login-action@v3
@@ -33,16 +60,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set platform name
-      run: |
-        if [ "${{ matrix.platform }}" == "linux/amd64" ]; then
-          echo "PLATFORM=x64" >> $GITHUB_ENV
-        elif [ "${{ matrix.platform }}" == "linux/arm64" ]; then
-          echo "PLATFORM=arm64" >> $GITHUB_ENV
-        fi
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+
+    - name: Set docker tags
+      run: |
+        echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+        echo "RUNNER_TAG=$(echo runner_v${RUNNER_VERSION})" >> $GITHUB_ENV
+        echo "AGENT_TAG=$(echo ${AGENT_VERSION} | tr "/" _)" >> $GITHUB_ENV
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -51,10 +76,12 @@ jobs:
         context: .
         file: contrib/${{ matrix.os }}.Dockerfile
         push: ${{ github.event_name != 'pull_request' }}
-        tags: |
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ env.PLATFORM }}-${{ github.event.inputs.version }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ env.PLATFORM }}
-        platforms: ${{ matrix.platform }}
         build-args: |
-          TARGETPLATFORM=${{ matrix.platform }}
-          RUNNER_VERSION=${{ github.event.inputs.version }}
+          ARCH=${{ matrix.arch }}
+          RUNNER_VERSION=${{ env.RUNNER_VERSION }}
+        tags: |
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }}-${{ env.TIMESTAMP }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}
+        platforms: linux/${{ matrix.arch }}
