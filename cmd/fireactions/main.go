@@ -10,6 +10,6 @@ import (
 func main() {
 	cli := cli.New()
 	if err := cli.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error executing CLI command: %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Error executing command: %s\n", err.Error())
 	}
 }

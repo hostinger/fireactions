@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/gin-contrib/requestid"
@@ -23,15 +22,12 @@ import (
 
 // Server struct.
 type Server struct {
-	store        store.Store
-	scheduler    *scheduler.Scheduler
-	server       *http.Server
-	config       *Config
-	github       *github.Client
-	shutdownOnce sync.Once
-	shutdownMu   sync.Mutex
-	shutdownCh   chan struct{}
-	logger       *zerolog.Logger
+	store     store.Store
+	scheduler *scheduler.Scheduler
+	server    *http.Server
+	config    *Config
+	github    *github.Client
+	logger    *zerolog.Logger
 
 	up       prometheus.Gauge
 	registry *prometheus.Registry
@@ -46,12 +42,9 @@ func New(config *Config) (*Server, error) {
 	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
 
 	s := &Server{
-		config:       config,
-		shutdownOnce: sync.Once{},
-		shutdownCh:   make(chan struct{}),
-		shutdownMu:   sync.Mutex{},
-		registry:     prometheus.NewRegistry(),
-		logger:       &logger,
+		config:   config,
+		registry: prometheus.NewRegistry(),
+		logger:   &logger,
 	}
 
 	mux := gin.New()
@@ -70,7 +63,7 @@ func New(config *Config) (*Server, error) {
 	}
 	s.scheduler = scheduler
 
-	github, err := github.NewClient(&github.ClientConfig{AppID: config.GitHubConfig.AppID, AppPrivateKey: config.GitHubConfig.AppPrivateKey})
+	github, err := github.NewClient(&github.ClientConfig{AppID: config.GitHub.AppID, AppPrivateKey: config.GitHub.AppPrivateKey})
 	if err != nil {
 		return nil, fmt.Errorf("creating GitHub client: %w", err)
 	}
@@ -80,7 +73,7 @@ func New(config *Config) (*Server, error) {
 	mux.GET("/version", s.handleGetVersion)
 	mux.GET("/healthz", s.handleGetHealthz)
 
-	mux.POST("/webhook", s.handleGitHubWebhook())
+	mux.POST("/webhook", s.handleWebhook())
 	v1 := mux.Group("/api/v1")
 	{
 		v1.GET("/healthz", s.handleGetHealthz)
@@ -91,8 +84,6 @@ func New(config *Config) (*Server, error) {
 		v1.GET("/nodes/:id", s.handleGetNode)
 		v1.POST("/runners", s.handleCreateRunner)
 		v1.PATCH("/runners/:id/status", s.handleSetRunnerStatus)
-		v1.GET("/runners/:id/registration-token", s.handleGetRunnerRegistrationToken)
-		v1.GET("/runners/:id/remove-token", s.handleGetRunnerRemoveToken)
 		v1.DELETE("/runners/:id", s.handleDeleteRunner)
 		v1.GET("/nodes/:id/runners", s.handleGetNodeRunners)
 		v1.DELETE("/nodes/:id", s.handleDeregisterNode)
@@ -115,40 +106,38 @@ func New(config *Config) (*Server, error) {
 	})
 
 	s.registry.MustRegister(s)
-
 	return s, nil
 }
 
-// Shutdown attempts to gracefully shutdown the Server. It blocks until the Server is shutdown or the context is
-// cancelled.
-func (s *Server) Shutdown(ctx context.Context) {
-	s.shutdownOnce.Do(func() {
-		s.logger.Info().Msg("Stopping server")
-
-		err := s.server.Shutdown(ctx)
-		if err != nil {
-			s.logger.Error().Err(err).Msg("error shutting down server")
-		}
-
-		s.scheduler.Shutdown()
-		s.store.Close()
-
-		close(s.shutdownCh)
-	})
-}
-
-// Start starts the Server. It blocks until Shutdown() is called.
-func (s *Server) Start() error {
+// Run starts the server. It blocks until the context is cancelled.
+func (s *Server) Run(ctx context.Context) error {
 	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("Starting server on %s", s.config.HTTP.ListenAddress)
 
 	var err error
-
 	err = s.scheduler.Start()
 	if err != nil {
 		return fmt.Errorf("scheduler: %w", err)
 	}
+	defer s.scheduler.Shutdown()
 
 	s.up.Set(1)
+
+	go func() {
+		<-ctx.Done()
+		fmt.Println()
+
+		s.logger.Info().Msg("Stopping server")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := s.server.Shutdown(ctx)
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Failed to shutdown server")
+		}
+
+		s.logger.Info().Msg("Server stopped")
+	}()
 
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

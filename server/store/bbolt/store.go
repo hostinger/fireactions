@@ -9,7 +9,8 @@ Store is a bbolt implementation of the Store interface using BoltDB.
 
 Current BoltDB schema:
 |-- runners
-|   |-- <ID> -> models.Runner
+|   |-- <ID>
+|	  |   |-- runner -> models.Runner
 |-- nodes
 |   |-- <ID> -> models.Node
 */

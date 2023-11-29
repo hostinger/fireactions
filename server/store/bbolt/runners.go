@@ -14,10 +14,16 @@ import (
 func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterFunc) ([]*fireactions.Runner, error) {
 	runners := make([]*fireactions.Runner, 0)
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
+		root := tx.Bucket([]byte("runners"))
 
-		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		return root.ForEachBucket(func(k []byte) error {
+			b := root.Bucket(k)
+
+			v := b.Get([]byte("runner"))
+			if v == nil {
+				return nil
+			}
+
 			runner := &fireactions.Runner{}
 			err := json.Unmarshal(v, runner)
 			if err != nil {
@@ -25,13 +31,12 @@ func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterF
 			}
 
 			if filter != nil && !filter(runner) {
-				continue
+				return nil
 			}
 
 			runners = append(runners, runner)
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -43,61 +48,35 @@ func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterF
 func (s *Store) GetRunner(ctx context.Context, id string) (*fireactions.Runner, error) {
 	runner := &fireactions.Runner{}
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
+		root := tx.Bucket([]byte("runners"))
+
+		b := root.Bucket([]byte(id))
 		if b == nil {
-			return nil
+			return store.ErrNotFound
 		}
 
-		v := b.Get([]byte(id))
+		v := b.Get([]byte("runner"))
 		if v == nil {
 			return store.ErrNotFound
 		}
 
-		err := json.Unmarshal(v, runner)
+		return json.Unmarshal(v, runner)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return runner, nil
+}
+
+func (s *Store) SaveRunner(ctx context.Context, runner *fireactions.Runner) error {
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		root := tx.Bucket([]byte("runners"))
+
+		b, err := root.CreateBucketIfNotExists([]byte(runner.ID))
 		if err != nil {
 			return err
 		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return runner, nil
-}
-
-func (s *Store) GetRunnerByName(ctx context.Context, name string) (*fireactions.Runner, error) {
-	runner := &fireactions.Runner{}
-	err := s.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
-
-		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			err := json.Unmarshal(v, runner)
-			if err != nil {
-				return err
-			}
-
-			if runner.Name != name {
-				continue
-			}
-
-			return nil
-		}
-
-		return store.ErrNotFound
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return runner, nil
-}
-
-func (s *Store) CreateRunner(ctx context.Context, runner *fireactions.Runner) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
 
 		runner.CreatedAt = time.Now()
 		runner.UpdatedAt = time.Now()
@@ -106,35 +85,7 @@ func (s *Store) CreateRunner(ctx context.Context, runner *fireactions.Runner) er
 			return err
 		}
 
-		return b.Put([]byte(runner.ID), data)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Store) CreateRunners(ctx context.Context, runners []*fireactions.Runner) error {
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
-
-		for _, runner := range runners {
-			runner.CreatedAt = time.Now()
-			runner.UpdatedAt = time.Now()
-
-			data, err := json.Marshal(runner)
-			if err != nil {
-				return err
-			}
-
-			err = b.Put([]byte(runner.ID), data)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return b.Put([]byte("runner"), data)
 	})
 	if err != nil {
 		return err
@@ -146,8 +97,12 @@ func (s *Store) CreateRunners(ctx context.Context, runners []*fireactions.Runner
 func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		runnersBucket := tx.Bucket([]byte("runners"))
+		runnerBucket := runnersBucket.Bucket([]byte(id))
+		if runnerBucket == nil {
+			return store.ErrNotFound
+		}
 
-		v := runnersBucket.Get([]byte(id))
+		v := runnerBucket.Get([]byte("runner"))
 		if v == nil {
 			return store.ErrNotFound
 		}
@@ -171,7 +126,7 @@ func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 		}
 
 		node.CPU.Release(runner.Resources.VCPUs)
-		node.RAM.Release(runner.Resources.MemoryBytes)
+		node.RAM.Release(runner.Resources.MemoryMB * 1024 * 1024)
 		node.UpdatedAt = time.Now()
 
 		data, err := json.Marshal(node)
@@ -192,12 +147,7 @@ func (s *Store) DeallocateRunner(ctx context.Context, id string) error {
 			return err
 		}
 
-		err = runnersBucket.Put([]byte(runner.ID), data)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return runnerBucket.Put([]byte("runner"), data)
 	})
 	if err != nil {
 		return err
@@ -222,8 +172,12 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*f
 		}
 
 		runnersBucket := tx.Bucket([]byte("runners"))
+		runnerBucket := runnersBucket.Bucket([]byte(runnerID))
+		if runnerBucket == nil {
+			return store.ErrNotFound
+		}
 
-		v = runnersBucket.Get([]byte(runnerID))
+		v = runnerBucket.Get([]byte("runner"))
 		if v == nil {
 			return store.ErrNotFound
 		}
@@ -239,11 +193,10 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*f
 		}
 
 		runner.NodeID = &node.ID
-		runner.Status = fireactions.RunnerStatus{Phase: fireactions.RunnerPhasePending}
 		runner.UpdatedAt = time.Now()
 
 		node.CPU.Reserve(runner.Resources.VCPUs)
-		node.RAM.Reserve(runner.Resources.MemoryBytes)
+		node.RAM.Reserve(runner.Resources.MemoryMB * 1024 * 1024)
 		node.UpdatedAt = time.Now()
 
 		data, err := json.Marshal(runner)
@@ -251,7 +204,7 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*f
 			return err
 		}
 
-		err = runnersBucket.Put([]byte(runner.ID), data)
+		err = runnerBucket.Put([]byte("runner"), data)
 		if err != nil {
 			return err
 		}
@@ -270,12 +223,17 @@ func (s *Store) AllocateRunner(ctx context.Context, nodeID, runnerID string) (*f
 	return node, nil
 }
 
-func (s *Store) SetRunnerStatus(ctx context.Context, id string, status fireactions.RunnerStatus) (*fireactions.Runner, error) {
+func (s *Store) UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error) {
 	runner := &fireactions.Runner{}
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
+		root := tx.Bucket([]byte("runners"))
 
-		v := b.Get([]byte(id))
+		b := root.Bucket([]byte(id))
+		if b == nil {
+			return store.ErrNotFound
+		}
+
+		v := b.Get([]byte("runner"))
 		if v == nil {
 			return store.ErrNotFound
 		}
@@ -285,14 +243,18 @@ func (s *Store) SetRunnerStatus(ctx context.Context, id string, status fireactio
 			return err
 		}
 
-		runner.Status = status
+		err = runnerUpdateFn(runner)
+		if err != nil {
+			return err
+		}
+
 		runner.UpdatedAt = time.Now()
 		data, err := json.Marshal(runner)
 		if err != nil {
 			return err
 		}
 
-		return b.Put([]byte(id), data)
+		return b.Put([]byte("runner"), data)
 	})
 	if err != nil {
 		return nil, err
@@ -303,9 +265,14 @@ func (s *Store) SetRunnerStatus(ctx context.Context, id string, status fireactio
 
 func (s *Store) SoftDeleteRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
+		root := tx.Bucket([]byte("runners"))
 
-		v := b.Get([]byte(id))
+		b := root.Bucket([]byte(id))
+		if b == nil {
+			return store.ErrNotFound
+		}
+
+		v := b.Get([]byte("runner"))
 		if v == nil {
 			return store.ErrNotFound
 		}
@@ -324,7 +291,7 @@ func (s *Store) SoftDeleteRunner(ctx context.Context, id string) error {
 			return err
 		}
 
-		return b.Put([]byte(id), data)
+		return b.Put([]byte("runner"), data)
 	})
 	if err != nil {
 		return err
@@ -335,14 +302,14 @@ func (s *Store) SoftDeleteRunner(ctx context.Context, id string) error {
 
 func (s *Store) HardDeleteRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("runners"))
+		root := tx.Bucket([]byte("runners"))
 
-		v := b.Get([]byte(id))
-		if v == nil {
+		b := root.Bucket([]byte(id))
+		if b == nil {
 			return store.ErrNotFound
 		}
 
-		return b.Delete([]byte(id))
+		return b.DeleteBucket([]byte(id))
 	})
 	if err != nil {
 		return err

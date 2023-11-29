@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.0.2](https://github.com/hostinger/fireactions/compare/v2.0.1...v2.0.2) (2023-11-28)
+
+
+### Bug Fixes
+
+* **server:** Fix sneaky race condition in runner metadata ([29a2619](https://github.com/hostinger/fireactions/commit/29a2619b918839c35ae00e888fc472053b202cf1))
+
+## [2.0.1](https://github.com/hostinger/fireactions/compare/v2.0.0...v2.0.1) (2023-11-28)
+
+
+### Bug Fixes
+
+* **client:** Invalidate reconciler queue cache on status changes ([50c8021](https://github.com/hostinger/fireactions/commit/50c80215983ce94d89cfd9ad2858829f9da91acb))
+
+## [2.0.0](https://github.com/hostinger/fireactions/compare/v1.3.2...v2.0.0) (2023-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* Simplify configuration for both server and client
+* Multiple refactorings
+
+### Features
+
+* **client:** Add optional CLI flags ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+* Reconcile assigned runners with adjustable concurrency. ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+* Simplify configuration for both server and client ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+* Use a shorter string ID instead of UUID ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+* Use cbrgm/githubevents instead of go-playground/webhooks ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+* Use Just-In-Time(JIT) runner configuration instead of registration/removal tokens. ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+
+
+### Code Refactoring
+
+* Multiple refactorings ([8a19dd9](https://github.com/hostinger/fireactions/commit/8a19dd9647c997e3ab5d345c156838f4048201ae))
+
 ## [1.3.2](https://github.com/hostinger/fireactions/compare/v1.3.1...v1.3.2) (2023-11-22)
 
 

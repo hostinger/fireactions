@@ -16,7 +16,7 @@ var _ Printable = &Runner{}
 
 func (r *Runner) Cols() []string {
 	cols := []string{
-		"ID", "Name", "Phase", "Organisation", "Node", "Labels", "CPU", "RAM", "Created", "Updated",
+		"ID", "Name", "Organisation", "Status", "Node", "Labels", "CPU", "RAM", "Created", "Updated",
 	}
 
 	return cols
@@ -24,16 +24,8 @@ func (r *Runner) Cols() []string {
 
 func (r *Runner) ColsMap() map[string]string {
 	cols := map[string]string{
-		"ID":           "ID",
-		"Name":         "Name",
-		"Phase":        "Phase",
-		"Organisation": "Organisation",
-		"Node":         "Node",
-		"Labels":       "Labels",
-		"CPU":          "CPU",
-		"RAM":          "RAM",
-		"Created":      "Created",
-		"Updated":      "Updated",
+		"ID": "ID", "Name": "Name", "Organisation": "Organisation", "Status": "Status", "Node": "Node", "Labels": "Labels",
+		"CPU": "CPU", "RAM": "RAM", "Created": "Created", "Updated": "Updated",
 	}
 
 	return cols
@@ -43,7 +35,7 @@ func (r *Runner) KV() []map[string]interface{} {
 	kv := make([]map[string]interface{}, 0, len(r.Runners))
 	for _, runner := range r.Runners {
 		cpu := fmt.Sprintf("%d VCPUs", runner.Resources.VCPUs)
-		ram := fmt.Sprintf("%d MB", runner.Resources.MemoryBytes/1024/1024)
+		ram := fmt.Sprintf("%d MB", runner.Resources.MemoryMB)
 		created := timeago.Of(runner.CreatedAt)
 		updated := timeago.Of(runner.UpdatedAt)
 		labels := strings.Join(runner.Labels, ",")
@@ -57,8 +49,8 @@ func (r *Runner) KV() []map[string]interface{} {
 		kv = append(kv, map[string]interface{}{
 			"ID":           runner.ID,
 			"Name":         runner.Name,
-			"Phase":        runner.Status.Phase,
 			"Organisation": runner.Organisation,
+			"Status":       runner.Status.String(),
 			"Node":         node,
 			"Labels":       labels,
 			"CPU":          cpu,

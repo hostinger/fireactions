@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"time"
 )
 
 const (
@@ -16,22 +16,9 @@ const (
 	DefaultRunnerDir = "/opt/runner"
 )
 
-var (
-	// ErrNotConfigured is returned when the GitHub runner is attepmted to be
-	// started without being configured.
-	ErrNotConfigured = fmt.Errorf("runner is not configured")
-)
-
 // Runner represents the actual GitHub runner.
 type Runner struct {
-	Name          string
-	URL           string
-	WorkDir       string
-	Labels        []string
-	Ephemeral     bool
-	Replace       bool
-	DisableUpdate bool
-
+	config   string
 	runCmd   *exec.Cmd
 	exitCh   chan struct{}
 	fatalErr error
@@ -60,57 +47,15 @@ func WithStderr(stderr io.Writer) Opt {
 	return f
 }
 
-// WithEphemeral sets the ephemeral flag of the GitHub runner.
-func WithEphemeral(ephemeral bool) Opt {
-	f := func(r *Runner) {
-		r.Ephemeral = ephemeral
-	}
-
-	return f
-}
-
-// WithReplace sets the replace flag of the GitHub runner.
-func WithReplace(replace bool) Opt {
-	f := func(r *Runner) {
-		r.Replace = replace
-	}
-
-	return f
-}
-
-// WithDisableUpdate sets the disable update flag of the GitHub runner.
-func WithDisableUpdate(disableUpdate bool) Opt {
-	f := func(r *Runner) {
-		r.DisableUpdate = disableUpdate
-	}
-
-	return f
-}
-
-// WithWorkDir sets the work directory of the GitHub runner.
-func WithWorkDir(workDir string) Opt {
-	f := func(r *Runner) {
-		r.WorkDir = workDir
-	}
-
-	return f
-}
-
 // New creates a new Runner.
-func New(name, url string, labels []string, opts ...Opt) *Runner {
+func New(config string, opts ...Opt) *Runner {
 	r := &Runner{
-		Name:          name,
-		URL:           url,
-		Labels:        labels,
-		WorkDir:       "/home/runner/work",
-		Ephemeral:     true,
-		DisableUpdate: true,
-		Replace:       true,
-		runCmd:        nil,
-		stdout:        os.Stdout,
-		stderr:        os.Stderr,
-		fatalErr:      nil,
-		exitCh:        make(chan struct{}),
+		config:   config,
+		runCmd:   nil,
+		stdout:   os.Stdout,
+		stderr:   os.Stderr,
+		fatalErr: nil,
+		exitCh:   make(chan struct{}),
 	}
 
 	for _, opt := range opts {
@@ -120,18 +65,14 @@ func New(name, url string, labels []string, opts ...Opt) *Runner {
 	return r
 }
 
-// Run starts the GitHub runner. This requires the GitHub runner to be configured first.
+// Start starts the GitHub runner. This requires the GitHub runner to be configured first.
 // If the GitHub runner is already running, this is a no-op.
-func (r *Runner) Run(ctx context.Context) error {
-	if !r.IsConfigured() {
-		return ErrNotConfigured
-	}
-
+func (r *Runner) Start(ctx context.Context) error {
 	if r.IsRunning() {
 		return nil
 	}
 
-	runCmd := exec.CommandContext(ctx, filepath.Join(DefaultRunnerDir, "run.sh"))
+	runCmd := exec.CommandContext(ctx, filepath.Join(DefaultRunnerDir, "run.sh"), "--jitconfig", r.config)
 	runCmd.Stdout = r.stdout
 	runCmd.Stderr = r.stderr
 	err := setCommandUser(runCmd, "runner")
@@ -140,83 +81,36 @@ func (r *Runner) Run(ctx context.Context) error {
 	}
 
 	if err := runCmd.Start(); err != nil {
-		close(r.exitCh)
-		return fmt.Errorf("run.sh: %w", err)
+		return err
+	}
+
+	startCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(100 * time.Millisecond):
+		case <-startCtx.Done():
+			return startCtx.Err()
+		}
+
+		if _, err := os.Stat(filepath.Join(DefaultRunnerDir, ".runner")); err != nil {
+			continue
+		}
+
+		break
 	}
 
 	go func() {
 		err := runCmd.Wait()
 		if err != nil {
-			r.fatalErr = fmt.Errorf("run.sh: %w", err)
+			r.fatalErr = err
 		}
 
-		close(r.exitCh)
+		r.exitCh <- struct{}{}
 	}()
 
 	r.runCmd = runCmd
 	return nil
-}
-
-// Configure configures the GitHub runner. This requires the GitHub
-// organisation self-hosted runner remove token.
-func (r *Runner) Configure(ctx context.Context, token string) error {
-	if r.IsConfigured() {
-		return nil
-	}
-
-	configArgs := []string{"--url", r.URL, "--name", r.Name, "--work", r.WorkDir,
-		"--labels", strings.Join(r.Labels, ","), "--token", token, "--unattended", "--no-default-labels"}
-
-	if r.Ephemeral {
-		configArgs = append(configArgs, "--ephemeral")
-	}
-
-	if r.Replace {
-		configArgs = append(configArgs, "--replace")
-	}
-
-	if r.DisableUpdate {
-		configArgs = append(configArgs, "--disableupdate")
-	}
-
-	configCmd := exec.CommandContext(ctx, filepath.Join(DefaultRunnerDir, "config.sh"), configArgs...)
-	configCmd.Stdout = r.stdout
-	configCmd.Stderr = r.stderr
-	err := setCommandUser(configCmd, "runner")
-	if err != nil {
-		return fmt.Errorf("setCommandUser: %w", err)
-	}
-
-	return configCmd.Run()
-}
-
-// Unconfigure unconfigures the GitHub runner. This requires the GitHub
-// organisation self-hosted runner registration token.
-func (r *Runner) Unconfigure(ctx context.Context, token string) error {
-	if !r.IsConfigured() {
-		return nil
-	}
-
-	configCmd := exec.CommandContext(ctx, filepath.Join(DefaultRunnerDir, "config.sh"), "remove", "--token", token)
-	configCmd.Stdout = r.stdout
-	configCmd.Stderr = r.stderr
-	err := setCommandUser(configCmd, "runner")
-	if err != nil {
-		return fmt.Errorf("setCommandUser: %w", err)
-	}
-
-	return configCmd.Run()
-}
-
-// IsConfigured returns true if the GitHub runner is configured (i.e. the
-// .runner file exists).
-func (r *Runner) IsConfigured() bool {
-	_, err := os.Stat(filepath.Join(DefaultRunnerDir, ".runner"))
-	if err != nil && os.IsNotExist(err) {
-		return false
-	}
-
-	return true
 }
 
 // IsRunning returns true if the GitHub runner is running.

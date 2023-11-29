@@ -151,7 +151,7 @@ func (s *Store) GetNodes(ctx context.Context, filter fireactions.NodeFilterFunc)
 	return nodes, nil
 }
 
-func (s *Store) SetNodeLastPoll(ctx context.Context, id string, lastPoll time.Time) (*fireactions.Node, error) {
+func (s *Store) UpdateNode(ctx context.Context, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error) {
 	node := &fireactions.Node{}
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("nodes"))
@@ -166,37 +166,11 @@ func (s *Store) SetNodeLastPoll(ctx context.Context, id string, lastPoll time.Ti
 			return err
 		}
 
-		node.LastPoll = lastPoll
-		data, err := json.Marshal(node)
+		err = updateFunc(node)
 		if err != nil {
 			return err
 		}
 
-		return b.Put([]byte(id), data)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return node, nil
-}
-
-func (s *Store) SetNodeStatus(ctx context.Context, id string, status fireactions.NodeStatus) (*fireactions.Node, error) {
-	node := &fireactions.Node{}
-	err := s.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte("nodes"))
-
-		v := b.Get([]byte(id))
-		if v == nil {
-			return store.ErrNotFound
-		}
-
-		err := json.Unmarshal(v, node)
-		if err != nil {
-			return err
-		}
-
-		node.Status = status
 		node.UpdatedAt = time.Now()
 		data, err := json.Marshal(node)
 		if err != nil {

@@ -17,7 +17,7 @@ var _ Printable = &Node{}
 // Cols returns the columns for the Printable
 func (n *Node) Cols() []string {
 	cols := []string{
-		"ID", "Name", "Status", "Cpu Usage", "Mem Usage", "Last Poll", "Created", "Updated",
+		"ID", "Name", "Status", "Cpu Usage", "Mem Usage", "Last Reconcile", "Created", "Updated",
 	}
 
 	return cols
@@ -26,16 +26,8 @@ func (n *Node) Cols() []string {
 // ColsMap returns the columns map for the Printable
 func (n *Node) ColsMap() map[string]string {
 	cols := map[string]string{
-		"ID":        "ID",
-		"Name":      "Name",
-		"Status":    "Status",
-		"State":     "State",
-		"Region":    "Region",
-		"Cpu Usage": "Cpu Usage",
-		"Mem Usage": "Mem Usage",
-		"Last Poll": "Last Poll",
-		"Created":   "Created",
-		"Updated":   "Updated",
+		"ID": "ID", "Name": "Name", "Status": "Status", "State": "State", "Region": "Region", "Cpu Usage": "Cpu Usage", "Mem Usage": "Mem Usage",
+		"Last Reconcile": "Last Reconcile", "Created": "Created", "Updated": "Updated",
 	}
 
 	return cols
@@ -48,19 +40,19 @@ func (n *Node) KV() []map[string]interface{} {
 		cpuUsage := fmt.Sprintf("%d/%d Cores (%.0f%%)", node.CPU.Allocated, node.CPU.Capacity, float64(node.CPU.Allocated)/float64(node.CPU.Capacity)*100)
 		memUsage := fmt.Sprintf("%.2f/%.2f GB (%.0f%%)", float64(node.RAM.Allocated)/1024/1024/1024,
 			float64(node.RAM.Capacity)/1024/1024/1024, float64(node.RAM.Allocated)/float64(node.RAM.Capacity)*100)
-		lastHeartbeat := timeago.Of(node.LastPoll)
+		lastReconcile := timeago.Of(node.LastReconcileAt)
 		created := timeago.Of(node.CreatedAt)
 		updated := timeago.Of(node.UpdatedAt)
 
 		kv = append(kv, map[string]interface{}{
-			"ID":        node.ID,
-			"Name":      node.Name,
-			"Status":    node.Status,
-			"Cpu Usage": cpuUsage,
-			"Mem Usage": memUsage,
-			"Last Poll": lastHeartbeat,
-			"Created":   created,
-			"Updated":   updated,
+			"ID":             node.ID,
+			"Name":           node.Name,
+			"Status":         node.Status,
+			"Cpu Usage":      cpuUsage,
+			"Mem Usage":      memUsage,
+			"Last Reconcile": lastReconcile,
+			"Created":        created,
+			"Updated":        updated,
 		})
 	}
 
