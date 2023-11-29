@@ -1,24 +1,6 @@
-FROM golang:1.20 AS fireactions-agent
-
-WORKDIR /app
-
-COPY go.mod ./
-COPY go.sum ./
-
-RUN go mod download
-
-COPY . .
-
-ENV GO111MODULE=on \
-    CGO_ENABLED=0  \
-    GOOS=linux     \
-    GOARCH=amd64
-
-RUN go build -v -o fireactions-agent ./cmd/fireactions-agent
-
 FROM ubuntu:20.04
 
-ARG TARGETPLATFORM
+ARG ARCH
 ARG RUNNER_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -61,18 +43,17 @@ RUN adduser --disabled-password --gecos "" --uid 1001 runner  \
     && usermod -aG sudo runner                                \
     && echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers
 
-RUN export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2)                                                                                                    \
-    && if [ "$ARCH" = "amd64" ] || [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "i386" ]; then export ARCH=x64 ; fi                                                \
-    && mkdir -p /opt/runner && cd /opt/runner                                                                                                               \
-    && curl -fLo runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${ARCH}-${RUNNER_VERSION}.tar.gz \
-    && tar xzf ./runner.tar.gz && rm -rf runner.tar.gz                                                                                                      \
-    && ./bin/installdependencies.sh                                                                                                                         \
+RUN case "$ARCH" in amd64|x86_64|i386) export RUNNER_ARCH="x64";; arm64) export RUNNER_ARCH="arm64";; esac                                                         \
+    && mkdir -p /opt/runner && cd /opt/runner                                                                                                                      \
+    && curl -fLo runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz \
+    && tar xzf ./runner.tar.gz && rm -rf runner.tar.gz                                                                                                             \
+    && ./bin/installdependencies.sh                                                                                                                                \
     && chown -R runner:docker /opt/runner
 
 RUN install -m 0755 -d /etc/apt/keyrings                                                                            \
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg      \
     && chmod a+r /etc/apt/keyrings/docker.gpg                                                                       \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg]                         \
             https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable"         \
         | tee /etc/apt/sources.list.d/docker.list > /dev/null                                                       \
     && apt-get update && apt-get install --no-install-recommends -y                                                 \
@@ -90,7 +71,9 @@ RUN echo 'root:root' | chpasswd                                                 
 
 RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 
-COPY --from=fireactions-agent /app/fireactions-agent /usr/bin/fireactions-agent
+COPY fireactions-agent-* /tmp/
 COPY contrib/overlay/etc /etc
+
+RUN mv /tmp/fireactions-agent-${ARCH} /usr/bin/fireactions-agent
 
 RUN systemctl enable fireactions-agent.service
