@@ -77,7 +77,7 @@ func (c *Config) Validate() error {
 	}
 
 	switch c.LogLevel {
-	case "debug", "info", "warn", "error", "fatal", "panic":
+	case "debug", "info", "warn", "error", "fatal", "panic", "trace":
 	default:
 		errs = multierror.Append(errs, fmt.Errorf("log_level (%s) is invalid", c.LogLevel))
 	}
