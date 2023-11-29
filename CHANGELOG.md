@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/hostinger/fireactions/compare/v2.0.2...v2.0.3) (2023-11-29)
+
+
+### Bug Fixes
+
+* **server:** Don't allow deleting not completed runners ([350007d](https://github.com/hostinger/fireactions/commit/350007dc318ca6f35746de401e1a60e92d49d0ca))
+* **server:** Get workflow job event details by value ([8932175](https://github.com/hostinger/fireactions/commit/8932175bc31f86d6fc9e77580af32bc358236bbf))
+
 ## [2.0.2](https://github.com/hostinger/fireactions/compare/v2.0.1...v2.0.2) (2023-11-28)
 
 
