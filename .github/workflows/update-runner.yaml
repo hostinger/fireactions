@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build:
@@ -38,8 +39,8 @@ jobs:
         body: |
           New version of Github actions self-hosted was [released](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_LATEST }})
 
-          **Current** : [v${{ steps.versions.outputs.current }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_CURRENT }})
-          **Latest**  : [v${{ steps.versions.outputs.latest }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_LATEST }})
+          **Current** : [v${{ env.RUNNER_CURRENT }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_CURRENT }})
+          **Latest**  : [v${{ env.RUNNER_LATEST }}](https://github.com/actions/runner/releases/tag/v${{ env.RUNNER_LATEST }})
         base: main
         branch: fix/bump_runner_version
         delete-branch: true
@@ -52,6 +53,6 @@ jobs:
 
     - name: Enable Pull Request Automerge
       if: ${{ steps.pr.outputs.pull-request-number }}
-      run: gh pr merge --rebase --auto "${{ steps.pr.outputs.pull-request-number }}"
+      run: gh pr merge --squash --auto "${{ steps.pr.outputs.pull-request-number }}"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

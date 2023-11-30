@@ -14,16 +14,21 @@ type Store interface {
 	SaveNode(ctx context.Context, node *fireactions.Node) error
 	GetNodeByName(ctx context.Context, name string) (*fireactions.Node, error)
 	DeleteNode(ctx context.Context, id string) error
+	UpdateNodeWithTransaction(ctx context.Context, tx Tx, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error)
 	UpdateNode(ctx context.Context, id string, updateFunc func(*fireactions.Node) error) (*fireactions.Node, error)
 
 	GetRunners(ctx context.Context, filter fireactions.RunnerFilterFunc) ([]*fireactions.Runner, error)
 	GetRunner(ctx context.Context, id string) (*fireactions.Runner, error)
 	SaveRunner(ctx context.Context, runner *fireactions.Runner) error
+	UpdateRunnerWithTransaction(ctx context.Context, tx Tx, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error)
 	UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error)
-	AllocateRunner(ctx context.Context, nodeID string, runnerID string) (*fireactions.Node, error)
-	DeallocateRunner(ctx context.Context, runnerID string) error
-	SoftDeleteRunner(ctx context.Context, id string) error
-	HardDeleteRunner(ctx context.Context, id string) error
+	DeleteRunner(ctx context.Context, id string) error
 
+	BeginTransaction() (Tx, error)
 	Close() error
+}
+
+type Tx interface {
+	Commit() error
+	Rollback() error
 }
