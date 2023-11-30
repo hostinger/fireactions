@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hostinger/fireactions/server/store"
@@ -24,6 +25,7 @@ type PrometheusCollector struct {
 	runnersTotalMetric *prometheus.GaugeVec
 	nodesTotalMetric   *prometheus.GaugeVec
 	infoMetric         *prometheus.GaugeVec
+	nodeInfoMetric     *prometheus.GaugeVec
 
 	logger *zerolog.Logger
 }
@@ -55,6 +57,13 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 		Name:      "nodes_total",
 	}, []string{"state"})
 
+	nodesInfoMetric := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "Information about the Fireactions node",
+		Name:      "node_info",
+	}, []string{"id", "name", "labels", "state", "cpu_overcommit_ratio", "ram_overcommit_ratio", "reconcile_interval"})
+
 	infoMetric := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -68,6 +77,7 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 		store:              store,
 		runnersTotalMetric: runnersTotalMetric,
 		nodesTotalMetric:   nodesTotalMetric,
+		nodeInfoMetric:     nodesInfoMetric,
 		infoMetric:         infoMetric,
 		logger:             &logger,
 	}
@@ -83,6 +93,7 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 func (c *PrometheusCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.infoMetric.Describe(ch)
 	c.runnersTotalMetric.Describe(ch)
+	c.nodeInfoMetric.Describe(ch)
 	c.nodesTotalMetric.Describe(ch)
 }
 
@@ -99,6 +110,7 @@ func (c *PrometheusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	c.infoMetric.Collect(ch)
 	c.runnersTotalMetric.Collect(ch)
+	c.nodeInfoMetric.Collect(ch)
 	c.nodesTotalMetric.Collect(ch)
 }
 
@@ -143,6 +155,21 @@ func (c *PrometheusCollector) updateNodesTotalMetric(ctx context.Context) error 
 
 	for _, node := range nodes {
 		c.nodesTotalMetric.With(prometheus.Labels{"state": node.Status.State.String()}).Inc()
+
+		labels := make([]string, 0, len(node.Labels))
+		for k, v := range node.Labels {
+			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+		}
+
+		c.nodeInfoMetric.With(prometheus.Labels{
+			"id":                   node.ID,
+			"name":                 node.Name,
+			"labels":               strings.Join(labels, ","),
+			"state":                node.Status.State.String(),
+			"cpu_overcommit_ratio": fmt.Sprintf("%v", node.CPU.OvercommitRatio),
+			"ram_overcommit_ratio": fmt.Sprintf("%v", node.RAM.OvercommitRatio),
+			"reconcile_interval":   fmt.Sprintf("%v", node.ReconcileInterval),
+		}).Set(1)
 	}
 
 	return nil
