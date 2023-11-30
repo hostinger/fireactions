@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions/server/github"
+	"github.com/hostinger/fireactions/server/metric"
 	"github.com/hostinger/fireactions/server/scheduler"
 	"github.com/hostinger/fireactions/server/store"
 	"github.com/hostinger/fireactions/server/store/bbolt"
@@ -28,9 +29,6 @@ type Server struct {
 	config    *Config
 	github    *github.Client
 	logger    *zerolog.Logger
-
-	up       prometheus.Gauge
-	registry *prometheus.Registry
 }
 
 // New creates a new Server.
@@ -41,39 +39,52 @@ func New(config *Config) (*Server, error) {
 	}
 	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
 
-	s := &Server{
-		config:   config,
-		registry: prometheus.NewRegistry(),
-		logger:   &logger,
+	store, err := bbolt.New(filepath.Join(config.DataDir, "fireactions.db"))
+	if err != nil {
+		return nil, fmt.Errorf("error creating store: %w", err)
+	}
+
+	scheduler, err := scheduler.New(logger, store)
+	if err != nil {
+		return nil, fmt.Errorf("error creating scheduler: %w", err)
+	}
+
+	github, err := github.NewClient(&github.ClientConfig{
+		AppID: config.GitHub.AppID, AppPrivateKey: config.GitHub.AppPrivateKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating GitHub client: %w", err)
 	}
 
 	mux := gin.New()
 	mux.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
 	mux.Use(gin.Recovery())
 
-	store, err := bbolt.New(filepath.Join(config.DataDir, "fireactions.db"))
-	if err != nil {
-		return nil, fmt.Errorf("error creating store: %w", err)
+	server := &http.Server{
+		Addr:         config.HTTP.ListenAddress,
+		Handler:      mux,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
-	s.store = store
 
-	scheduler, err := scheduler.New(logger, store)
-	if err != nil {
-		return nil, fmt.Errorf("error creating scheduler: %w", err)
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(metric.NewPrometheusCollector(store, metric.WithLogger(&logger)))
+
+	s := &Server{
+		config:    config,
+		github:    github,
+		scheduler: scheduler,
+		store:     store,
+		server:    server,
+		logger:    &logger,
 	}
-	s.scheduler = scheduler
 
-	github, err := github.NewClient(&github.ClientConfig{AppID: config.GitHub.AppID, AppPrivateKey: config.GitHub.AppPrivateKey})
-	if err != nil {
-		return nil, fmt.Errorf("creating GitHub client: %w", err)
-	}
-	s.github = github
-
-	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})))
+	mux.POST("/webhook", s.handleWebhook())
+	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 	mux.GET("/version", s.handleGetVersion)
 	mux.GET("/healthz", s.handleGetHealthz)
 
-	mux.POST("/webhook", s.handleWebhook())
 	v1 := mux.Group("/api/v1")
 	{
 		v1.GET("/healthz", s.handleGetHealthz)
@@ -91,21 +102,6 @@ func New(config *Config) (*Server, error) {
 		v1.POST("/nodes/:id/uncordon", s.handleUncordonNode)
 	}
 
-	s.server = &http.Server{
-		Addr:         config.HTTP.ListenAddress,
-		Handler:      mux,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	s.up = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "up",
-		Help:      "Whether the server is up.",
-		Namespace: "fireactions",
-	})
-
-	s.registry.MustRegister(s)
 	return s, nil
 }
 
@@ -119,8 +115,6 @@ func (s *Server) Run(ctx context.Context) error {
 		return fmt.Errorf("scheduler: %w", err)
 	}
 	defer s.scheduler.Shutdown()
-
-	s.up.Set(1)
 
 	go func() {
 		<-ctx.Done()
@@ -145,16 +139,6 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// Collect implements the prometheus.Collector interface.
-func (s *Server) Collect(ch chan<- prometheus.Metric) {
-	s.up.Collect(ch)
-}
-
-// Describe implements the prometheus.Collector interface.
-func (s *Server) Describe(ch chan<- *prometheus.Desc) {
-	s.up.Describe(ch)
 }
 
 func init() {
