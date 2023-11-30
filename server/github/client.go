@@ -13,8 +13,7 @@ type ClientConfig struct {
 	AppPrivateKey string `mapstructure:"app-private-key"`
 }
 
-// Client is a wrapper around GitHub client. Primary purpose is to fetch registration or
-// removal tokens for GitHub Actions self-hosted runners.
+// Client is a wrapper around GitHub client that supports GitHub App authentication for multiple installations.
 type Client struct {
 	*github.Client
 
