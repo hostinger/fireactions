@@ -65,10 +65,7 @@ job_labels:
 # Template for the GitHub runner name. The following variables are supported:
 # - {{ .ID }}: The ID of the runner.
   runner_name_template: fireactions-2vcpu-2gb-{{ .ID }}
-# Additional labels to apply to the GitHub runner. Default labels are:
-# - fireactions
-# - <job_label.name>
-# - self-hosted
+# Additional labels to apply to the GitHub runner. The default labels include only the job_label name.
   runner_labels:
   - ubuntu-22.04
 # The GitHub runner image to use. This should be a Docker image that contains the GitHub runner and the Fireactions agent.

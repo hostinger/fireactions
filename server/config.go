@@ -210,11 +210,10 @@ func (c *JobLabelConfig) GetRunnerName(runnerID string) (string, error) {
 	return buf.String(), nil
 }
 
-// GetRunnerLabels returns the labels for the runner. It includes the fireactions label, the job label and
-// the self-hosted label.
+// GetRunnerLabels returns the labels for the runner. It includes the fireactions label and the job label.
 func (c *JobLabelConfig) GetRunnerLabels() []string {
 	labels := []string{}
-	labels = append(labels, "fireactions", c.Name, "self-hosted")
+	labels = append(labels, c.Name)
 	labels = append(labels, c.RunnerLabels...)
 
 	return labels
