@@ -25,7 +25,7 @@ func TestFiler(t *testing.T) {
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{Status: fireactions.NodeStatusReady},
+				node:   &fireactions.Node{Status: fireactions.NodeStatus{State: fireactions.NodeStatusReady}},
 			},
 			want:    true,
 			wantErr: false,
@@ -35,7 +35,7 @@ func TestFiler(t *testing.T) {
 			args: args{
 				ctx:    context.Background(),
 				runner: &fireactions.Runner{},
-				node:   &fireactions.Node{Status: fireactions.NodeStatusCordoned},
+				node:   &fireactions.Node{Status: fireactions.NodeStatus{State: fireactions.NodeStateNotReady}},
 			},
 			want:    false,
 			wantErr: true,

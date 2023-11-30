@@ -144,14 +144,29 @@ type Node struct {
 }
 
 // NodeStatus represents the status of a Node.
-type NodeStatus string
+type NodeStatus struct {
+	State NodeState `json:"state"`
+}
+
+// String returns a string representation of the status.
+func (s NodeStatus) String() string {
+	return s.State.String()
+}
+
+// NodeState represents the state of a Node.
+type NodeState string
+
+// String returns a string representation of the state.
+func (s NodeState) String() string {
+	return string(s)
+}
 
 const (
-	// NodeStatusCordoned means that the Node is not available for scheduling.
-	NodeStatusCordoned NodeStatus = "Cordoned"
+	// NodeStateNotReady means that the node is not available for scheduling.
+	NodeStateNotReady NodeState = "NotReady"
 
-	// NodeStatusReady means that the Node is available for scheduling.
-	NodeStatusReady NodeStatus = "Ready"
+	// NodeStatusReady means that the node is available for scheduling.
+	NodeStatusReady NodeState = "Ready"
 )
 
 // NodeFilterFunc is a function that filters a Node. It returns true if the

@@ -22,6 +22,7 @@ type PrometheusCollector struct {
 	store store.Store
 
 	runnersTotalMetric *prometheus.GaugeVec
+	nodesTotalMetric   *prometheus.GaugeVec
 	infoMetric         *prometheus.GaugeVec
 
 	logger *zerolog.Logger
@@ -47,6 +48,13 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 		Name:      "runners_total",
 	}, []string{"state"})
 
+	nodesTotalMetric := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "Total number of nodes by state.",
+		Name:      "nodes_total",
+	}, []string{"state"})
+
 	infoMetric := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -59,6 +67,7 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 	c := &PrometheusCollector{
 		store:              store,
 		runnersTotalMetric: runnersTotalMetric,
+		nodesTotalMetric:   nodesTotalMetric,
 		infoMetric:         infoMetric,
 		logger:             &logger,
 	}
@@ -74,6 +83,7 @@ func NewPrometheusCollector(store store.Store, opts ...PrometheusCollectorOpt) *
 func (c *PrometheusCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.infoMetric.Describe(ch)
 	c.runnersTotalMetric.Describe(ch)
+	c.nodesTotalMetric.Describe(ch)
 }
 
 // Collect implements prometheus.Collector interface.
@@ -89,6 +99,7 @@ func (c *PrometheusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	c.infoMetric.Collect(ch)
 	c.runnersTotalMetric.Collect(ch)
+	c.nodesTotalMetric.Collect(ch)
 }
 
 func (c *PrometheusCollector) updateRunnersTotalMetric(ctx context.Context) error {
@@ -117,10 +128,35 @@ func (c *PrometheusCollector) updateRunnersTotalMetric(ctx context.Context) erro
 	return nil
 }
 
+func (c *PrometheusCollector) updateNodesTotalMetric(ctx context.Context) error {
+	nodes, err := c.store.GetNodes(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	c.nodesTotalMetric.
+		With(prometheus.Labels{"state": "Ready"}).
+		Set(0)
+	c.nodesTotalMetric.
+		With(prometheus.Labels{"state": "NotReady"}).
+		Set(0)
+
+	for _, node := range nodes {
+		c.nodesTotalMetric.With(prometheus.Labels{"state": node.Status.State.String()}).Inc()
+	}
+
+	return nil
+}
+
 func (c *PrometheusCollector) updateMetrics(ctx context.Context) error {
 	err := c.updateRunnersTotalMetric(ctx)
 	if err != nil {
 		return fmt.Errorf("runners_total: %w", err)
+	}
+
+	err = c.updateNodesTotalMetric(ctx)
+	if err != nil {
+		return fmt.Errorf("nodes_total: %w", err)
 	}
 
 	return nil

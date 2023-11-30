@@ -71,7 +71,7 @@ func (s *Server) handleRegisterNode(ctx *gin.Context) {
 		Name:              req.Name,
 		CPU:               fireactions.NodeResource{Allocated: 0, Capacity: req.CpuCapacity, OvercommitRatio: req.CpuOvercommitRatio},
 		RAM:               fireactions.NodeResource{Allocated: 0, Capacity: req.RamCapacity, OvercommitRatio: req.RamOvercommitRatio},
-		Status:            fireactions.NodeStatusCordoned,
+		Status:            fireactions.NodeStatus{State: fireactions.NodeStateNotReady},
 		Labels:            req.Labels,
 		ReconcileInterval: req.ReconcileInterval,
 		LastReconcileAt:   time.Now(),
@@ -92,7 +92,7 @@ func (s *Server) handleRegisterNode(ctx *gin.Context) {
 
 func (s *Server) handleCordonNode(ctx *gin.Context) {
 	node, err := s.store.UpdateNode(ctx, ctx.Param("id"), func(n *fireactions.Node) error {
-		n.Status = fireactions.NodeStatusCordoned
+		n.Status.State = fireactions.NodeStateNotReady
 		return nil
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *Server) handleCordonNode(ctx *gin.Context) {
 
 func (s *Server) handleUncordonNode(ctx *gin.Context) {
 	node, err := s.store.UpdateNode(ctx, ctx.Param("id"), func(n *fireactions.Node) error {
-		n.Status = fireactions.NodeStatusReady
+		n.Status.State = fireactions.NodeStatusReady
 		return nil
 	})
 	if err != nil {
