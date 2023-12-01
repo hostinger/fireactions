@@ -12,6 +12,7 @@ builds:
   - -X github.com/hostinger/{{ .ProjectName }}/version.Date={{ .Date }}
   - -X github.com/hostinger/{{ .ProjectName }}/version.Commit={{ .Commit }}
   goos:
+  - darwin
   - linux
   goarch:
   - amd64
