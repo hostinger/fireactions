@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.1.0](https://github.com/hostinger/fireactions/compare/v2.0.3...v2.1.0) (2023-12-01)
+
+
+### Features
+
+* Add fireactions_server_node_info metric ([542fd12](https://github.com/hostinger/fireactions/commit/542fd12c0d361d829eb144ce7f151a505e6cb1f9))
+* Add fireactions_server_nodes_total metric ([931f6cf](https://github.com/hostinger/fireactions/commit/931f6cf306bae750f36448bca2642f11837b229e))
+* Add support for Darwin builds ([d5bf3ab](https://github.com/hostinger/fireactions/commit/d5bf3aba99b4f78850f3b1f8848ba64f817f3927))
+* Expose metrics server on separate port ([4f05071](https://github.com/hostinger/fireactions/commit/4f050713cd09d38b5e81354590fe769fa262fee3))
+* **server:** Add initial Prometheus metrics ([c7c8a56](https://github.com/hostinger/fireactions/commit/c7c8a56646836f2ed7a7e5a6466212c2c7c3e7f9))
+
+
+### Bug Fixes
+
+* **server:** Remove fireactions,self-hosted labels from defaults ([d306b59](https://github.com/hostinger/fireactions/commit/d306b59d50b76e2344362e285bee6035091791b6))
+
 ## [2.0.3](https://github.com/hostinger/fireactions/compare/v2.0.2...v2.0.3) (2023-11-29)
 
 
