@@ -15,6 +15,7 @@ type Config struct {
 	HTTP      *HTTPConfig       `mapstructure:"http"`
 	DataDir   string            `mapstructure:"data_dir"`
 	GitHub    *GitHubConfig     `mapstructure:"github"`
+	Metrics   *MetricsConfig    `mapstructure:"metrics"`
 	JobLabels []*JobLabelConfig `mapstructure:"job_labels"`
 	LogLevel  string            `mapstructure:"log_level"`
 }
@@ -25,6 +26,7 @@ func NewConfig() *Config {
 		HTTP:      &HTTPConfig{ListenAddress: ":8080"},
 		DataDir:   "",
 		GitHub:    &GitHubConfig{WebhookSecret: "", AppID: 0, AppPrivateKey: ""},
+		Metrics:   &MetricsConfig{Enabled: true, Address: ":8081"},
 		JobLabels: []*JobLabelConfig{},
 		LogLevel:  "info",
 	}
@@ -58,6 +60,14 @@ func (c *Config) Validate() error {
 	} else {
 		if err := c.GitHub.Validate(); err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("invalid github config: %w", err))
+		}
+	}
+
+	if c.Metrics == nil {
+		errs = multierror.Append(errs, fmt.Errorf("metrics config is required"))
+	} else {
+		if err := c.Metrics.Validate(); err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("invalid metrics config: %w", err))
 		}
 	}
 
@@ -217,4 +227,21 @@ func (c *JobLabelConfig) GetRunnerLabels() []string {
 	labels = append(labels, c.RunnerLabels...)
 
 	return labels
+}
+
+// MetricsConfig is the configuration for the metrics server.
+type MetricsConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Address string `mapstructure:"address"`
+}
+
+// Validate validates the configuration.
+func (c *MetricsConfig) Validate() error {
+	var errs error
+
+	if c.Address == "" {
+		errs = multierror.Append(errs, fmt.Errorf("address is required"))
+	}
+
+	return errs
 }

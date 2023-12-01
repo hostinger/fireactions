@@ -23,12 +23,13 @@ import (
 
 // Server struct.
 type Server struct {
-	store     store.Store
-	scheduler *scheduler.Scheduler
-	server    *http.Server
-	config    *Config
-	github    *github.Client
-	logger    *zerolog.Logger
+	store         store.Store
+	scheduler     *scheduler.Scheduler
+	server        *http.Server
+	metricsServer *http.Server
+	config        *Config
+	github        *github.Client
+	logger        *zerolog.Logger
 }
 
 // New creates a new Server.
@@ -68,9 +69,6 @@ func New(config *Config) (*Server, error) {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(metric.NewPrometheusCollector(store, metric.WithLogger(&logger)))
-
 	s := &Server{
 		config:    config,
 		github:    github,
@@ -80,8 +78,24 @@ func New(config *Config) (*Server, error) {
 		logger:    &logger,
 	}
 
+	if config.Metrics.Enabled {
+		registry := prometheus.NewRegistry()
+		registry.MustRegister(metric.NewPrometheusCollector(store, metric.WithLogger(&logger)))
+
+		metricsHandler := http.NewServeMux()
+		metricsHandler.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+		metricsServer := &http.Server{
+			Addr:         config.Metrics.Address,
+			Handler:      metricsHandler,
+			WriteTimeout: 15 * time.Second,
+			ReadTimeout:  15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
+
+		s.metricsServer = metricsServer
+	}
+
 	mux.POST("/webhook", s.handleWebhook())
-	mux.GET("/metrics", gin.WrapH(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 	mux.GET("/version", s.handleGetVersion)
 	mux.GET("/healthz", s.handleGetHealthz)
 
@@ -130,8 +144,28 @@ func (s *Server) Run(ctx context.Context) error {
 			s.logger.Error().Err(err).Msg("Failed to shutdown server")
 		}
 
+		if s.config.Metrics.Enabled {
+			err := s.metricsServer.Shutdown(ctx)
+			if err != nil {
+				s.logger.Error().Err(err).Msg("Failed to shutdown metrics server")
+			}
+		}
+
 		s.logger.Info().Msg("Server stopped")
 	}()
+
+	if s.config.Metrics.Enabled {
+		go func() {
+			s.logger.Info().Msgf("Starting metrics server on %s", s.config.Metrics.Address)
+
+			err := s.metricsServer.ListenAndServe()
+			if err != nil && err != http.ErrServerClosed {
+				s.logger.Error().Err(err).Msg("Failed to start metrics server")
+			}
+
+			s.logger.Info().Msg("Metrics server stopped")
+		}()
+	}
 
 	err = s.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

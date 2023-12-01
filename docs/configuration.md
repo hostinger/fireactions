@@ -56,6 +56,13 @@ github:
   app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----
 
+# Metrics server configuration. This is used to expose Prometheus metrics on endpoint `/metrics`.
+metrics:
+# Whether to enable the metrics server.
+  enabled: true
+# The address to listen on for HTTP requests.
+  address: 0.0.0.0:8082
+
 # List of job labels.
 job_labels:
 - name: fireactions-2vcpu-2gb
