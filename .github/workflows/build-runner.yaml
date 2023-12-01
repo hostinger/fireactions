@@ -85,3 +85,17 @@ jobs:
           ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }},
           ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}
         platforms: linux/${{ matrix.arch }}
+
+    - name: Trigger hostinger runner image update workflow
+      env:
+        GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+      run: |
+        echo '
+          {
+            "os":"${{ matrix.os }}",
+            "tag": "${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }}-${{ env.TIMESTAMP }}",
+            "runner_version":"${{ env.RUNNER_TAG }}",
+            "agent_version": "${{ env.AGENT_TAG }}"
+          }
+        ' | \
+        gh workflow run update.yml --repo hostinger/fireactions-runner-images --json
