@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -160,6 +161,7 @@ func (c *PrometheusCollector) updateNodesTotalMetric(ctx context.Context) error 
 		for k, v := range node.Labels {
 			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
+		sort.Strings(labels)
 
 		c.nodeInfoMetric.With(prometheus.Labels{
 			"id":                   node.ID,
