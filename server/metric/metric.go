@@ -147,6 +147,7 @@ func (c *PrometheusCollector) updateNodesTotalMetric(ctx context.Context) error 
 		return err
 	}
 
+	c.nodeInfoMetric.Reset()
 	c.nodesTotalMetric.
 		With(prometheus.Labels{"state": "Ready"}).
 		Set(0)

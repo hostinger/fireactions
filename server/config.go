@@ -3,11 +3,13 @@ package server
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions"
+	"github.com/samber/lo"
 )
 
 // Config is the configuration for the Server.
@@ -96,6 +98,19 @@ func (c *Config) FindJobLabel(name string) (*JobLabelConfig, bool) {
 		}
 
 		return label, true
+	}
+
+	return nil, false
+}
+
+func (c *Config) FindMatchingJobLabel(labels []string) (*JobLabelConfig, bool) {
+	for _, label := range labels {
+		jobLabel, ok := c.FindJobLabel(label)
+		if !ok {
+			continue
+		}
+
+		return jobLabel, true
 	}
 
 	return nil, false
@@ -200,6 +215,17 @@ func (c *JobLabelConfig) MustGetRunnerName(runnerID string) string {
 	}
 
 	return name
+}
+
+func (c *JobLabelConfig) IsAllowedRepository(repository string) bool {
+	return lo.ContainsBy(c.AllowedRepositories, func(repository string) bool {
+		regexp, err := regexp.Compile(repository)
+		if err != nil {
+			return false
+		}
+
+		return regexp.MatchString(repository)
+	})
 }
 
 // GetRunnerName renders the runner name from the template.

@@ -4,6 +4,7 @@ package store
 import (
 	"context"
 
+	"github.com/google/go-github/v50/github"
 	"github.com/hostinger/fireactions"
 )
 
@@ -23,6 +24,16 @@ type Store interface {
 	UpdateRunnerWithTransaction(ctx context.Context, tx Tx, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error)
 	UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error)
 	DeleteRunner(ctx context.Context, id string) error
+
+	SaveWorkflowJob(ctx context.Context, org string, workflowJob *github.WorkflowJob) error
+	GetWorkflowJobs(ctx context.Context, org string, filter func(*github.WorkflowJob) bool) ([]*github.WorkflowJob, error)
+	GetWorkflowJob(ctx context.Context, org string, id int64) (*github.WorkflowJob, error)
+	DeleteWorkflowJob(ctx context.Context, org string, id int64) error
+
+	SaveWorkflowRun(ctx context.Context, org string, workflowRun *github.WorkflowRun) error
+	GetWorkflowRuns(ctx context.Context, org string, filter func(*github.WorkflowRun) bool) ([]*github.WorkflowRun, error)
+	GetWorkflowRun(ctx context.Context, org string, id int64) (*github.WorkflowRun, error)
+	DeleteWorkflowRun(ctx context.Context, org string, id int64) error
 
 	BeginTransaction() (Tx, error)
 	Close() error

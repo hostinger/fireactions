@@ -38,7 +38,7 @@ func (s *Server) handleCreateRunner(ctx *gin.Context) {
 	client := s.github.InstallationClient(installation.GetID())
 	var runners []*fireactions.Runner
 	for i := 0; i < request.Count; i++ {
-		runner := s.newRunnerFromJobLabelConfig(jobLabel, request.Organisation)
+		runner := convertJobLabelConfigToRunner(jobLabel, request.Organisation)
 		runners = append(runners, runner)
 
 		var config *github.JITRunnerConfig
