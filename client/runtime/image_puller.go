@@ -42,7 +42,11 @@ func (i *containerdImagePuller) Pull(ctx context.Context, imageRef string) (cont
 	}
 
 	refDomain := docker.Domain(ref)
-	resolver, _ := dockerconfigresolver.New(ctx, refDomain)
+	resolver, err := dockerconfigresolver.New(ctx, refDomain)
+	if err != nil {
+		return nil, fmt.Errorf("creating docker config resolver: %w", err)
+	}
+
 	image, err = i.containerd.Pull(ctx, imageRef,
 		containerd.WithPullUnpack, containerd.WithResolver(resolver), containerd.WithPullSnapshotter(defaultSnapshotter))
 	if err != nil {
