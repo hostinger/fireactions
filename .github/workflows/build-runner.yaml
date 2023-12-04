@@ -87,7 +87,7 @@ jobs:
         platforms: linux/${{ matrix.arch }}
 
     - name: Trigger hostinger runner image update workflow
-      if: ${{ matrix.os == "amd64" }}
+      if: ${{ matrix.os == 'amd64' }}
       env:
         GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
       run: |
