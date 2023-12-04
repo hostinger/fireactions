@@ -6,7 +6,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -75,10 +78,37 @@ func (r *Runner) Start(ctx context.Context) error {
 	runCmd := exec.CommandContext(ctx, filepath.Join(DefaultRunnerDir, "run.sh"), "--jitconfig", r.config)
 	runCmd.Stdout = r.stdout
 	runCmd.Stderr = r.stderr
-	err := setCommandUser(runCmd, "runner")
+
+	owner, err := user.Lookup("runner")
 	if err != nil {
-		return fmt.Errorf("setCommandUser: %w", err)
+		return fmt.Errorf("lookup: %w", err)
 	}
+
+	uid, err := strconv.Atoi(owner.Uid)
+	if err != nil {
+		return fmt.Errorf("owner: uid: atoi: %w", err)
+	}
+
+	group, err := user.LookupGroup("docker")
+	if err != nil {
+		return fmt.Errorf("group: lookup: %w", err)
+	}
+
+	gid, err := strconv.Atoi(group.Gid)
+	if err != nil {
+		return fmt.Errorf("group: gid: atoi: %w", err)
+	}
+
+	runCmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}}
+	runCmd.Env = append(
+		runCmd.Env,
+		fmt.Sprintf("PATH=%s", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"),
+		fmt.Sprintf("LOGNAME=%s", owner.Username),
+		fmt.Sprintf("HOME=%s", owner.HomeDir),
+		fmt.Sprintf("USER=%s", owner.Username),
+		fmt.Sprintf("UID=%d", uid),
+		fmt.Sprintf("GID=%d", gid),
+	)
 
 	if err := runCmd.Start(); err != nil {
 		return err
