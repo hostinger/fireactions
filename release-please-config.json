@@ -1,5 +1,6 @@
 {
   "group-pull-request-title-pattern": "chore: Release ${branch}",
+  "last-release-sha": "d9a72bfa23571b20f73e1a931c986f32e73e9782",
   "packages": {
     ".": {
       "release-type": "go",
