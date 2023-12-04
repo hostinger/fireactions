@@ -8,7 +8,6 @@ on:
     - "!fireactions-agent-**"
 
 permissions:
-  pull-requests: write
   contents: write
   packages: write
 
@@ -49,15 +48,23 @@ jobs:
 
     - name: Build
       run: |
-        cd agent && go mod download
-        GO111MODULE=on CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o fireactions cmd/fireactions
-        echo "${{ hashFiles('fireactions') }}" > fireactions-v${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
+        mkdir -p dist
+        GO111MODULE=on CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }} ./cmd/fireactions/main.go
+        echo "${{ hashFiles('dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}') }}" > dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
 
     - name: Create .tar.gz
       run: |
-        tar -czvf fireactions-v${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz fireactions fireactions-v${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
+        tar -czvf dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }} dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
 
-    - name: Release
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist
+        if-no-files-found: error
+        retention-days: 1
+
+    - name: Create release
       uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,5 +72,119 @@ jobs:
         generate_release_notes: false
         name: "fireactions: ${{ env.TAG }}"
         files: |
-          fireactions-v${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
-          fireactions-v${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
+          dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          dist/fireactions-${{ env.TAG }}-${{ matrix.os }}-${{ matrix.arch }}.sha256
+
+  build-docker:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+        - linux
+        arch:
+        - amd64
+        - arm64
+    needs: build
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        install: true
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ github.actor }}
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
+        flavor: |
+          latest=auto
+        tags: |
+          type=match,pattern=fireactions-(.*),group=1
+
+    - name: Prepare artifact
+      run: |
+        ls -la dist
+        cp dist/fireactions-${{ steps.meta.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }} fireactions
+
+    - name: Build image
+      uses: docker/build-push-action@v5
+      id: build
+      with:
+        file: Dockerfile
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: "${{ matrix.os }}/${{ matrix.arch }}"
+        outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+        provenance: false
+        context: .
+
+    - name: Export image digest
+      run: |
+        mkdir -p digests
+        digest="${{ steps.build.outputs.digest }}"
+        touch "digests/${digest#sha256:}"
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: digests
+        path: digests/*
+        if-no-files-found: error
+        retention-days: 1
+
+  merge-docker:
+    runs-on: ubuntu-latest
+    needs: build-docker
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: digests
+        path: digests
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ github.actor }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
+        flavor: |
+          latest=auto
+        tags: |
+          type=match,pattern=fireactions-(.*),group=1
+
+    - name: Create image manifest
+      working-directory: digests
+      run: |
+        docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
