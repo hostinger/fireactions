@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/hostinger/fireactions/compare/v2.2.0...v2.2.1) (2023-12-04)
+
+
+### Bug Fixes
+
+* **agent:** Set correct runner uid/gid ([7e0073c](https://github.com/hostinger/fireactions/commit/7e0073c8845351025a990c4bddaf9a866aad4fa9))
+
 ## [2.2.0](https://github.com/hostinger/fireactions/compare/v2.1.0...v2.2.0) (2023-12-04)
 
 
