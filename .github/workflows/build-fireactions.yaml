@@ -45,6 +45,10 @@ jobs:
         password: ${{ secrets.ORG_GITHUB_TOKEN }}
         username: ${{ github.actor }}
 
+    - name: Parse tag
+      run: |
+        echo "GORELEASER_CURRENT_TAG=$(echo ${GITHUB_REF#refs/*/} | sed 's/fireactions-//')" >> $GITHUB_ENV
+
     - name: Release
       uses: goreleaser/goreleaser-action@v4
       with:
