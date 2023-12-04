@@ -1,11 +1,11 @@
 ---
-name: release
+name: build-fireactions
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-    - main
+    tags:
+    - "fireactions-**"
+    - "!fireactions-agent-**"
 
 permissions:
   pull-requests: write
@@ -13,23 +13,7 @@ permissions:
   packages: write
 
 jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release-please.outputs.release_created }}
-    steps:
-    - name: Run release-please
-      uses: google-github-actions/release-please-action@v3
-      id: release-please
-      with:
-        package-name: fireactions
-        release-type: go
-        pull-request-title-pattern: 'chore${scope}: Release ${component} ${version}'
-        token: ${{ secrets.ORG_GITHUB_TOKEN }}
-
-  release:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout

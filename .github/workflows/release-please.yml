@@ -1,0 +1,24 @@
+---
+name: release-please
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - main
+
+permissions:
+  pull-requests: write
+  contents: write
+  packages: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run release-please
+      uses: google-github-actions/release-please-action@v3
+      with:
+        token: ${{ secrets.ORG_GITHUB_TOKEN }}
+        monorepo-tags: true
+        command: manifest

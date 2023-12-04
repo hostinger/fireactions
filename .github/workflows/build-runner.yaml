@@ -8,7 +8,7 @@ on:
     paths:
     - contrib/**
   workflow_run:
-    workflows: ["build-agent"]
+    workflows: ["build-fireactions-agent"]
     types:
       - completed
 

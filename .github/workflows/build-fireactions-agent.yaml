@@ -1,10 +1,10 @@
 ---
-name: build-agent
+name: build-fireactions-agent
 
 on:
   push:
     tags:
-    - "agent**"
+    - "fireactions-agent-**"
 
 permissions:
   packages: write
@@ -29,8 +29,8 @@ jobs:
 
     - name: Build
       run: |
-        GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o fireactions-agent-amd64 ./cmd/fireactions-agent
-        GO111MODULE=on CGO_ENABLED=0  GOOS=linux GOARCH=arm64 go build -v -o fireactions-agent-arm64 ./cmd/fireactions-agent
+        GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o fireactions-agent-amd64 ./agent/cmd/fireactions-agent
+        GO111MODULE=on CGO_ENABLED=0  GOOS=linux GOARCH=arm64 go build -v -o fireactions-agent-arm64 ./agent/cmd/fireactions-agent
 
     - name: Sign
       run: |
