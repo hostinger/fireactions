@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/hostinger/fireactions/compare/fireactions-v2.3.0...fireactions-v2.3.1) (2023-12-04)
+
+
+### Bug Fixes
+
+* **ci:** Parse monorepo tag in fireactions build ([201e3d2](https://github.com/hostinger/fireactions/commit/201e3d2d5be37ba3fc6e0ee7f545c55df7f90db6))
+
 ## [2.3.0](https://github.com/hostinger/fireactions/compare/fireactions-v2.2.0...fireactions-v2.3.0) (2023-12-04)
 
 
