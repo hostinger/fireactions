@@ -74,6 +74,7 @@ RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 COPY fireactions-agent-* /tmp/
 COPY contrib/overlay/etc /etc
 
-RUN mv /tmp/fireactions-agent-${ARCH} /usr/bin/fireactions-agent
+RUN mv /tmp/fireactions-agent-${ARCH} /usr/bin/fireactions-agent && \
+    chmod +x /usr/bin/fireactions-agent
 
 RUN systemctl enable fireactions-agent.service
