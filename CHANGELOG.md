@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.0](https://github.com/hostinger/fireactions/compare/v2.1.0...v2.2.0) (2023-12-04)
+
+
+### Features
+
+* **cli:** Ability to view aggregated workflow run statistics ([7d2a01b](https://github.com/hostinger/fireactions/commit/7d2a01b4b7bef17b5bdecec7e7c36eaf64be524e))
+* **server:** Implement garbage collector for workflow runs ([7d2a01b](https://github.com/hostinger/fireactions/commit/7d2a01b4b7bef17b5bdecec7e7c36eaf64be524e))
+* **server:** Store workflow runs and jobs for insights and metrics ([651d79e](https://github.com/hostinger/fireactions/commit/651d79e7e7bd10a9ffe9e743340accd7b22a0cf8))
+
+
+### Bug Fixes
+
+* **client:** Handle error on dockerconfigresolver failure ([83ff90f](https://github.com/hostinger/fireactions/commit/83ff90f12fe97dc992d1ae228bf84c48dca06d1c))
+* **server:** Sort labels in fireactions_server_node_info metric ([8c21131](https://github.com/hostinger/fireactions/commit/8c211318aedb253687dbc0254763258c87aab0ab))
+
 ## [2.1.0](https://github.com/hostinger/fireactions/compare/v2.0.3...v2.1.0) (2023-12-01)
 
 
