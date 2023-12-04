@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hostinger/fireactions"
@@ -18,6 +19,7 @@ type Config struct {
 	DataDir   string            `mapstructure:"data_dir"`
 	GitHub    *GitHubConfig     `mapstructure:"github"`
 	Metrics   *MetricsConfig    `mapstructure:"metrics"`
+	History   *HistoryConfig    `mapstructure:"history"`
 	JobLabels []*JobLabelConfig `mapstructure:"job_labels"`
 	LogLevel  string            `mapstructure:"log_level"`
 }
@@ -29,6 +31,7 @@ func NewConfig() *Config {
 		DataDir:   "",
 		GitHub:    &GitHubConfig{WebhookSecret: "", AppID: 0, AppPrivateKey: ""},
 		Metrics:   &MetricsConfig{Enabled: true, Address: ":8081"},
+		History:   &HistoryConfig{MaxWorkflowRunAge: time.Hour * 24 * 7},
 		JobLabels: []*JobLabelConfig{},
 		LogLevel:  "info",
 	}
@@ -267,6 +270,22 @@ func (c *MetricsConfig) Validate() error {
 
 	if c.Address == "" {
 		errs = multierror.Append(errs, fmt.Errorf("address is required"))
+	}
+
+	return errs
+}
+
+// HistoryConfig is the configuration for the garbage collection various history data.
+type HistoryConfig struct {
+	MaxWorkflowRunAge time.Duration `mapstructure:"max_workflow_run_age"`
+}
+
+// Validate validates the configuration.
+func (c *HistoryConfig) Validate() error {
+	var errs error
+
+	if c.MaxWorkflowRunAge == 0 {
+		errs = multierror.Append(errs, fmt.Errorf("max_workflow_run_age is required"))
 	}
 
 	return errs

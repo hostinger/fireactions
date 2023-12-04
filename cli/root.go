@@ -27,6 +27,7 @@ func newRootCommand() *cobra.Command {
 	})
 
 	cmd.AddCommand(newVersionCmd())
+	cmd.AddCommand(newWorkflowRunCommand())
 
 	cmd.AddGroup(&cobra.Group{ID: "runners", Title: "GitHub runner management Commands:"})
 	cmd.AddCommand(newRunnersCmd())

@@ -16,7 +16,7 @@ func (s *Server) createOrUpdateWorkflowRun(deliveryID string, eventName string, 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := s.store.SaveWorkflowRun(ctx, event.GetOrg().GetLogin(), event.GetWorkflowRun())
+	err := s.store.SaveWorkflowRun(ctx, event.GetWorkflowRun())
 	if err != nil {
 		logger.Error().Err(err).Msgf("failed to save workflow run %d", event.GetWorkflowRun().GetID())
 		return err
@@ -32,13 +32,13 @@ func (s *Server) createOrUpdateWorkflowJob(deliveryID string, eventName string, 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := s.store.SaveWorkflowJob(ctx, event.GetOrg().GetLogin(), event.GetWorkflowJob())
+	err := s.store.SaveWorkflowJob(ctx, event.GetWorkflowJob())
 	if err != nil {
 		logger.Error().Err(err).Msgf("failed to save workflow job %d", event.GetWorkflowJob().GetID())
 		return err
 	}
 
-	logger.Debug().Msgf("saved workflow job %d", event.GetWorkflowJob().GetID())
+	logger.Debug().Msgf("saved workflow job %d for workflow run %d", event.GetWorkflowJob().GetID(), event.GetWorkflowJob().GetRunID())
 	return nil
 }
 

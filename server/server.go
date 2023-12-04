@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	"github.com/hostinger/fireactions/server/garbage"
 	"github.com/hostinger/fireactions/server/github"
 	"github.com/hostinger/fireactions/server/metric"
 	"github.com/hostinger/fireactions/server/scheduler"
@@ -19,6 +20,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 )
 
 // Server struct.
@@ -29,6 +31,7 @@ type Server struct {
 	metricsServer *http.Server
 	config        *Config
 	github        *github.Client
+	workflowRunGC garbage.Collector
 	logger        *zerolog.Logger
 }
 
@@ -69,13 +72,17 @@ func New(config *Config) (*Server, error) {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	workflowRunGC := garbage.NewWorkflowRunGC(store, store,
+		garbage.WithWorkflowRunGCInterval(1*time.Minute), garbage.WithMaxWorkflowRunAge(config.History.MaxWorkflowRunAge))
+
 	s := &Server{
-		config:    config,
-		github:    github,
-		scheduler: scheduler,
-		store:     store,
-		server:    server,
-		logger:    &logger,
+		config:        config,
+		github:        github,
+		scheduler:     scheduler,
+		store:         store,
+		server:        server,
+		workflowRunGC: workflowRunGC,
+		logger:        &logger,
 	}
 
 	if config.Metrics.Enabled {
@@ -109,6 +116,7 @@ func New(config *Config) (*Server, error) {
 		v1.GET("/nodes/:id", s.handleGetNode)
 		v1.POST("/runners", s.handleCreateRunner)
 		v1.PATCH("/runners/:id/status", s.handleSetRunnerStatus)
+		v1.GET("/workflow-runs/:organisation/stats", s.handleGetWorkflowRunStats)
 		v1.DELETE("/runners/:id", s.handleDeleteRunner)
 		v1.GET("/nodes/:id/runners", s.handleGetNodeRunners)
 		v1.DELETE("/nodes/:id", s.handleDeregisterNode)
@@ -122,56 +130,42 @@ func New(config *Config) (*Server, error) {
 // Run starts the server. It blocks until the context is cancelled.
 func (s *Server) Run(ctx context.Context) error {
 	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("Starting server on %s", s.config.HTTP.ListenAddress)
+	defer s.store.Close()
 
-	var err error
-	err = s.scheduler.Start()
+	err := s.scheduler.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("scheduler: %w", err)
 	}
-	defer s.scheduler.Shutdown()
+
+	go s.workflowRunGC.Run(ctx)
+
+	errGroup := &errgroup.Group{}
+	errGroup.Go(func() error { return s.server.ListenAndServe() })
+	if s.metricsServer != nil {
+		s.logger.Info().Msgf("Starting metrics server on %s", s.config.Metrics.Address)
+		errGroup.Go(func() error { return s.metricsServer.ListenAndServe() })
+	}
 
 	go func() {
 		<-ctx.Done()
 		fmt.Println()
 
-		s.logger.Info().Msg("Stopping server")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		s.metricsServer.Shutdown(ctx)
 		err := s.server.Shutdown(ctx)
 		if err != nil {
-			s.logger.Error().Err(err).Msg("Failed to shutdown server")
+			s.logger.Error().Err(err).Msg("failed to shutdown server")
 		}
-
-		if s.config.Metrics.Enabled {
-			err := s.metricsServer.Shutdown(ctx)
-			if err != nil {
-				s.logger.Error().Err(err).Msg("Failed to shutdown metrics server")
-			}
-		}
-
-		s.logger.Info().Msg("Server stopped")
 	}()
 
-	if s.config.Metrics.Enabled {
-		go func() {
-			s.logger.Info().Msgf("Starting metrics server on %s", s.config.Metrics.Address)
-
-			err := s.metricsServer.ListenAndServe()
-			if err != nil && err != http.ErrServerClosed {
-				s.logger.Error().Err(err).Msg("Failed to start metrics server")
-			}
-
-			s.logger.Info().Msg("Metrics server stopped")
-		}()
-	}
-
-	err = s.server.ListenAndServe()
+	err = errGroup.Wait()
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
+	s.logger.Info().Msg("Server stopped")
 	return nil
 }
 

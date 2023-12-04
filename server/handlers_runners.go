@@ -143,7 +143,7 @@ func (s *Server) handleDeleteRunner(ctx *gin.Context) {
 	}
 
 	if runner.DeletedAt != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("Runner with ID %s is already deleted", runnerID)})
+		ctx.Status(204)
 		return
 	}
 

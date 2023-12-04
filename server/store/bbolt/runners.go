@@ -13,16 +13,13 @@ import (
 func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterFunc) ([]*fireactions.Runner, error) {
 	runners := make([]*fireactions.Runner, 0)
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
+		b := tx.Bucket([]byte("runners"))
+		if b == nil {
+			return store.ErrNotFound
+		}
 
-		return root.ForEachBucket(func(k []byte) error {
-			b := root.Bucket(k)
-
-			v := b.Get([]byte("runner"))
-			if v == nil {
-				return nil
-			}
-
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
 			runner := &fireactions.Runner{}
 			err := json.Unmarshal(v, runner)
 			if err != nil {
@@ -30,12 +27,13 @@ func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterF
 			}
 
 			if filter != nil && !filter(runner) {
-				return nil
+				continue
 			}
 
 			runners = append(runners, runner)
-			return nil
-		})
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -47,14 +45,12 @@ func (s *Store) GetRunners(ctx context.Context, filter fireactions.RunnerFilterF
 func (s *Store) GetRunner(ctx context.Context, id string) (*fireactions.Runner, error) {
 	runner := &fireactions.Runner{}
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
-
-		b := root.Bucket([]byte(id))
+		b := tx.Bucket([]byte("runners"))
 		if b == nil {
 			return store.ErrNotFound
 		}
 
-		v := b.Get([]byte("runner"))
+		v := b.Get([]byte(id))
 		if v == nil {
 			return store.ErrNotFound
 		}
@@ -70,12 +66,7 @@ func (s *Store) GetRunner(ctx context.Context, id string) (*fireactions.Runner, 
 
 func (s *Store) SaveRunner(ctx context.Context, runner *fireactions.Runner) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
-
-		b, err := root.CreateBucketIfNotExists([]byte(runner.ID))
-		if err != nil {
-			return err
-		}
+		b := tx.Bucket([]byte("runners"))
 
 		runner.CreatedAt = time.Now()
 		runner.UpdatedAt = time.Now()
@@ -84,7 +75,7 @@ func (s *Store) SaveRunner(ctx context.Context, runner *fireactions.Runner) erro
 			return err
 		}
 
-		return b.Put([]byte("runner"), data)
+		return b.Put([]byte(runner.ID), data)
 	})
 	if err != nil {
 		return err
@@ -97,14 +88,12 @@ func (s *Store) UpdateRunnerWithTransaction(ctx context.Context, txn store.Tx, i
 	tx := txn.(*bbolt.Tx)
 
 	runner := &fireactions.Runner{}
-	root := tx.Bucket([]byte("runners"))
-
-	b := root.Bucket([]byte(id))
+	b := tx.Bucket([]byte("runners"))
 	if b == nil {
 		return nil, store.ErrNotFound
 	}
 
-	v := b.Get([]byte("runner"))
+	v := b.Get([]byte(id))
 	if v == nil {
 		return nil, store.ErrNotFound
 	}
@@ -125,7 +114,7 @@ func (s *Store) UpdateRunnerWithTransaction(ctx context.Context, txn store.Tx, i
 		return nil, err
 	}
 
-	err = b.Put([]byte("runner"), data)
+	err = b.Put([]byte(runner.ID), data)
 	if err != nil {
 		return nil, err
 	}
@@ -155,14 +144,12 @@ func (s *Store) UpdateRunner(ctx context.Context, id string, runnerUpdateFn func
 
 func (s *Store) DeleteRunner(ctx context.Context, id string) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("runners"))
-
-		b := root.Bucket([]byte(id))
+		b := tx.Bucket([]byte("runners"))
 		if b == nil {
 			return store.ErrNotFound
 		}
 
-		return b.DeleteBucket([]byte(id))
+		return b.Delete([]byte(id))
 	})
 	if err != nil {
 		return err

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/hostinger/fireactions/version"
@@ -441,4 +442,267 @@ func (c *clientImpl) SetEndpoint(endpoint string) {
 // Fireactions API.
 func (c *clientImpl) SetClient(client *http.Client) {
 	c.client = client
+}
+
+type WorkflowRunStats struct {
+	Stats []*WorkflowRunStat `json:"stats"`
+}
+
+// GetTotal returns the total number of workflow runs.
+func (wrs *WorkflowRunStats) GetTotal() int {
+	var total int
+	for _, stat := range wrs.Stats {
+		total += stat.Total
+	}
+
+	return total
+}
+
+// GetTotalDuration returns the total duration of the workflow runs.
+func (wrs *WorkflowRunStats) GetTotalDuration() time.Duration {
+	var total time.Duration
+	for _, stat := range wrs.Stats {
+		total += stat.TotalDuration
+	}
+
+	return total
+}
+
+// GetSucceeded returns the number of succeeded workflow runs.
+func (wrs *WorkflowRunStats) GetSucceeded() int {
+	var total int
+	for _, stat := range wrs.Stats {
+		total += stat.Succeeded
+	}
+
+	return total
+}
+
+// GetFailed returns the number of failed workflow runs.
+func (wrs *WorkflowRunStats) GetFailed() int {
+	var total int
+	for _, stat := range wrs.Stats {
+		total += stat.Failed
+	}
+
+	return total
+}
+
+// GetCancelled returns the number of cancelled workflow runs.
+func (wrs *WorkflowRunStats) GetCancelled() int {
+	var total int
+	for _, stat := range wrs.Stats {
+		total += stat.Cancelled
+	}
+
+	return total
+}
+
+// GetAverageDuration returns the average duration of the workflow runs.
+func (wrs *WorkflowRunStats) GetAverageDuration() time.Duration {
+	if len(wrs.Stats) == 0 {
+		return 0
+	}
+
+	return time.Duration(int64(wrs.GetTotalDuration()) / int64(wrs.GetTotal()))
+}
+
+// GetSuccessRatio returns the success ratio of the workflow runs.
+func (wrs *WorkflowRunStats) GetSuccessRatio() float64 {
+	if len(wrs.Stats) == 0 {
+		return 0
+	}
+
+	return float64(wrs.GetSucceeded()) / float64(wrs.GetTotal()) * 100
+}
+
+// GetFailureRatio returns the failure ratio of the workflow runs.
+func (wrs *WorkflowRunStats) GetFailureRatio() float64 {
+	if len(wrs.Stats) == 0 {
+		return 0
+	}
+
+	return float64(wrs.GetFailed()) / float64(wrs.GetTotal()) * 100
+}
+
+// Sort sorts the workflow run stats by the given key and order.
+func (wrs *WorkflowRunStats) Sort(key string, order string) error {
+	switch key {
+	case "TOTAL":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].Total < wrs.Stats[j].Total
+			}
+
+			return wrs.Stats[i].Total > wrs.Stats[j].Total
+		})
+	case "TOTAL_DURATION":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].TotalDuration < wrs.Stats[j].TotalDuration
+			}
+
+			return wrs.Stats[i].TotalDuration > wrs.Stats[j].TotalDuration
+		})
+	case "SUCCEEDED":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].Succeeded < wrs.Stats[j].Succeeded
+			}
+
+			return wrs.Stats[i].Succeeded > wrs.Stats[j].Succeeded
+		})
+	case "CANCELLED":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].Cancelled < wrs.Stats[j].Cancelled
+			}
+
+			return wrs.Stats[i].Cancelled > wrs.Stats[j].Cancelled
+		})
+	case "FAILED":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].Failed < wrs.Stats[j].Failed
+			}
+
+			return wrs.Stats[i].Failed > wrs.Stats[j].Failed
+		})
+	case "AVERAGE_DURATION":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].GetAverageDuration() < wrs.Stats[j].GetAverageDuration()
+			}
+
+			return wrs.Stats[i].GetAverageDuration() > wrs.Stats[j].GetAverageDuration()
+		})
+	case "SUCCESS_RATE":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].GetSuccessRatio() < wrs.Stats[j].GetSuccessRatio()
+			}
+
+			return wrs.Stats[i].GetSuccessRatio() > wrs.Stats[j].GetSuccessRatio()
+		})
+	case "FAILURE_RATE":
+		sort.Slice(wrs.Stats, func(i, j int) bool {
+			if order == "asc" {
+				return wrs.Stats[i].GetFailureRatio() < wrs.Stats[j].GetFailureRatio()
+			}
+
+			return wrs.Stats[i].GetFailureRatio() > wrs.Stats[j].GetFailureRatio()
+		})
+	default:
+		return fmt.Errorf("unrecognized sort key: %s, valid keys are: \"TOTAL\", \"TOTAL_DURATION\", \"SUCCEEDED\", \"CANCELLED\", \"FAILED\", \"AVERAGE_DURATION\", \"SUCCESS_RATIO\", \"FAILURE_RATIO\"", key)
+	}
+
+	return nil
+}
+
+// WorkflowRunStat represents statistics for a workflow run across multiple
+// repositories.
+type WorkflowRunStat struct {
+	Repository    string        `json:"repository"`
+	Total         int           `json:"total"`
+	TotalDuration time.Duration `json:"total_duration"`
+	Succeeded     int           `json:"succeeded"`
+	Failed        int           `json:"failed"`
+	Cancelled     int           `json:"cancelled"`
+}
+
+// GetAverageDuration returns the average duration of the workflow runs.
+func (wrs *WorkflowRunStat) GetAverageDuration() time.Duration {
+	if wrs.Total == 0 {
+		return 0
+	}
+
+	return time.Duration(int64(wrs.TotalDuration) / int64(wrs.Total))
+}
+
+// GetSuccessRatio returns the success ratio of the workflow runs.
+func (wrs *WorkflowRunStat) GetSuccessRatio() float64 {
+	if wrs.Total == 0 {
+		return 0
+	}
+
+	return float64(wrs.Succeeded) / float64(wrs.Total) * 100
+}
+
+// GetFailureRatio returns the failure ratio of the workflow runs.
+func (wrs *WorkflowRunStat) GetFailureRatio() float64 {
+	if wrs.Total == 0 {
+		return 0
+	}
+
+	return float64(wrs.Failed) / float64(wrs.Total) * 100
+}
+
+// WorkflowRunStatsQuery represents a query to get workflow run statistics.
+type WorkflowRunStatsQuery struct {
+	Repositories string    `form:"repositories"`
+	Start        time.Time `form:"start"`
+	End          time.Time `form:"end"`
+	SortOrder    string    `form:"sort_order"`
+	Sort         string    `form:"sort"`
+	Limit        int       `form:"limit"`
+}
+
+// Validate validates the query.
+func (q *WorkflowRunStatsQuery) Validate() error {
+	if !q.Start.IsZero() && !q.End.IsZero() && q.Start.After(q.End) {
+		return fmt.Errorf("start date can't be after end date")
+	}
+
+	if !q.End.IsZero() && q.End.After(time.Now()) {
+		return fmt.Errorf("end date can't be after current date")
+	}
+
+	if !q.Start.IsZero() && q.Start.After(time.Now()) {
+		return fmt.Errorf("start date can't be after current date")
+	}
+
+	return nil
+}
+
+// GetWorkflowRunStats returns workflow run statistics.
+func (c *clientImpl) GetWorkflowRunStats(ctx context.Context, organisation string, query *WorkflowRunStatsQuery) (*WorkflowRunStats, *Response, error) {
+	req, err := c.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/api/v1/workflow-runs/%s/stats", organisation), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	q := req.URL.Query()
+	if !query.Start.IsZero() {
+		q.Set("start", query.Start.Format(time.RFC3339))
+	}
+
+	if !query.End.IsZero() {
+		q.Set("end", query.End.Format(time.RFC3339))
+	}
+
+	if query.Repositories != "" {
+		q.Set("repositories", query.Repositories)
+	}
+
+	if query.Sort != "" {
+		q.Set("sort", query.Sort)
+	}
+
+	if query.SortOrder != "" {
+		q.Set("sort_order", query.SortOrder)
+	}
+
+	if query.Limit != 0 {
+		q.Set("limit", fmt.Sprintf("%d", query.Limit))
+	}
+
+	req.URL.RawQuery = q.Encode()
+
+	var workflowRunStats WorkflowRunStats
+	response, err := c.Do(req, &workflowRunStats)
+	if err != nil {
+		return nil, response, err
+	}
+
+	return &workflowRunStats, response, nil
 }

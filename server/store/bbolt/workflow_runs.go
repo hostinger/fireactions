@@ -6,22 +6,23 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/hostinger/fireactions/server/store"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) GetWorkflowRun(ctx context.Context, org string, id int64) (*github.WorkflowRun, error) {
+func (s *Store) GetWorkflowRun(ctx context.Context, id int64) (*github.WorkflowRun, error) {
 	workflowRun := &github.WorkflowRun{}
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
+		b := root.Bucket([]byte(fmt.Sprintf("%d", id)))
+		if b == nil {
+			return store.ErrNotFound
 		}
 
-		data := b.Get([]byte(fmt.Sprintf("%d", id)))
+		data := b.Get([]byte("workflow_run"))
 		if data == nil {
-			return nil
+			return store.ErrNotFound
 		}
 
 		return json.Unmarshal(data, workflowRun)
@@ -33,11 +34,11 @@ func (s *Store) GetWorkflowRun(ctx context.Context, org string, id int64) (*gith
 	return workflowRun, nil
 }
 
-func (s *Store) SaveWorkflowRun(ctx context.Context, org string, workflowRun *github.WorkflowRun) error {
+func (s *Store) SaveWorkflowRun(ctx context.Context, workflowRun *github.WorkflowRun) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
+		b, err := root.CreateBucketIfNotExists([]byte(fmt.Sprintf("%d", workflowRun.GetID())))
 		if err != nil {
 			return err
 		}
@@ -47,7 +48,7 @@ func (s *Store) SaveWorkflowRun(ctx context.Context, org string, workflowRun *gi
 			return err
 		}
 
-		return b.Put([]byte(fmt.Sprintf("%d", workflowRun.GetID())), data)
+		return b.Put([]byte("workflow_run"), data)
 	})
 	if err != nil {
 		return err
@@ -56,25 +57,30 @@ func (s *Store) SaveWorkflowRun(ctx context.Context, org string, workflowRun *gi
 	return nil
 }
 
-func (s *Store) GetWorkflowRuns(ctx context.Context, org string, filter func(*github.WorkflowRun) bool) ([]*github.WorkflowRun, error) {
+func (s *Store) GetWorkflowRuns(ctx context.Context, filter func(*github.WorkflowRun) bool) ([]*github.WorkflowRun, error) {
 	var workflowRuns []*github.WorkflowRun
 	err := s.db.View(func(tx *bbolt.Tx) error {
 		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
-		}
+		c := root.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			b := root.Bucket(k)
+			if b == nil {
+				continue
+			}
 
-		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+			data := b.Get([]byte("workflow_run"))
+			if data == nil {
+				continue
+			}
+
 			workflowRun := &github.WorkflowRun{}
-			err := json.Unmarshal(v, workflowRun)
+			err := json.Unmarshal(data, workflowRun)
 			if err != nil {
 				return err
 			}
 
-			if !filter(workflowRun) {
+			if filter != nil && !filter(workflowRun) {
 				continue
 			}
 
@@ -90,16 +96,16 @@ func (s *Store) GetWorkflowRuns(ctx context.Context, org string, filter func(*gi
 	return workflowRuns, nil
 }
 
-func (s *Store) DeleteWorkflowRun(ctx context.Context, org string, id int64) error {
+func (s *Store) DeleteWorkflowRun(ctx context.Context, id int64) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
 		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
+		b := root.Bucket([]byte(fmt.Sprintf("%d", id)))
+		if b == nil {
+			return store.ErrNotFound
 		}
 
-		return b.Delete([]byte(fmt.Sprintf("%d", id)))
+		return root.DeleteBucket([]byte(fmt.Sprintf("%d", id)))
 	})
 	if err != nil {
 		return err

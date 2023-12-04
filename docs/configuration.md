@@ -63,6 +63,11 @@ metrics:
 # The address to listen on for HTTP requests.
   address: 0.0.0.0:8082
 
+# History (workflow runs and jobs) configuration.
+history:
+# The maximum age of a workflow run. Workflow runs older than this will be deleted.
+  max_workflow_run_age: 24h
+
 # List of job labels.
 job_labels:
 - name: fireactions-2vcpu-2gb

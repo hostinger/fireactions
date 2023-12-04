@@ -25,15 +25,15 @@ type Store interface {
 	UpdateRunner(ctx context.Context, id string, runnerUpdateFn func(*fireactions.Runner) error) (*fireactions.Runner, error)
 	DeleteRunner(ctx context.Context, id string) error
 
-	SaveWorkflowJob(ctx context.Context, org string, workflowJob *github.WorkflowJob) error
-	GetWorkflowJobs(ctx context.Context, org string, filter func(*github.WorkflowJob) bool) ([]*github.WorkflowJob, error)
-	GetWorkflowJob(ctx context.Context, org string, id int64) (*github.WorkflowJob, error)
-	DeleteWorkflowJob(ctx context.Context, org string, id int64) error
+	SaveWorkflowRun(ctx context.Context, workflowRun *github.WorkflowRun) error
+	GetWorkflowRuns(ctx context.Context, filter func(*github.WorkflowRun) bool) ([]*github.WorkflowRun, error)
+	GetWorkflowRun(ctx context.Context, id int64) (*github.WorkflowRun, error)
+	DeleteWorkflowRun(ctx context.Context, id int64) error
 
-	SaveWorkflowRun(ctx context.Context, org string, workflowRun *github.WorkflowRun) error
-	GetWorkflowRuns(ctx context.Context, org string, filter func(*github.WorkflowRun) bool) ([]*github.WorkflowRun, error)
-	GetWorkflowRun(ctx context.Context, org string, id int64) (*github.WorkflowRun, error)
-	DeleteWorkflowRun(ctx context.Context, org string, id int64) error
+	GetWorkflowJob(ctx context.Context, runID int64, id int64) (*github.WorkflowJob, error)
+	SaveWorkflowJob(ctx context.Context, workflowJob *github.WorkflowJob) error
+	GetWorkflowJobs(ctx context.Context, runID int64, filter func(*github.WorkflowJob) bool) ([]*github.WorkflowJob, error)
+	DeleteWorkflowJob(ctx context.Context, runID int64, id int64) error
 
 	BeginTransaction() (Tx, error)
 	Close() error

@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/server/scheduler/cache"
@@ -22,29 +21,23 @@ import (
 
 // Scheduler is responsible for scheduling Runners onto Nodes.
 type Scheduler struct {
-	queue        *schedulingQueue
-	cache        cache.Cache
-	store        store.Store
-	filters      map[string]filter.Filter
-	scorers      map[string]scorer.Scorer
-	shutdownOnce sync.Once
-	shutdownCh   chan struct{}
-	isShutdown   bool
-	logger       *zerolog.Logger
+	queue   *schedulingQueue
+	cache   cache.Cache
+	store   store.Store
+	filters map[string]filter.Filter
+	scorers map[string]scorer.Scorer
+	logger  *zerolog.Logger
 }
 
 // New creates a new Scheduler.
 func New(logger zerolog.Logger, store store.Store) (*Scheduler, error) {
 	s := &Scheduler{
-		queue:        newSchedulingQueue(),
-		filters:      make(map[string]filter.Filter, 0),
-		scorers:      make(map[string]scorer.Scorer, 0),
-		cache:        cache.New(),
-		store:        store,
-		shutdownOnce: sync.Once{},
-		shutdownCh:   make(chan struct{}),
-		isShutdown:   false,
-		logger:       &logger,
+		queue:   newSchedulingQueue(),
+		filters: make(map[string]filter.Filter, 0),
+		scorers: make(map[string]scorer.Scorer, 0),
+		cache:   cache.New(),
+		store:   store,
+		logger:  &logger,
 	}
 
 	filters := []filter.Filter{cpucapacity.New(), ramcapacity.New(), heartbeat.New(), status.New(), affinity.New()}
@@ -61,46 +54,35 @@ func New(logger zerolog.Logger, store store.Store) (*Scheduler, error) {
 }
 
 // Start starts the Scheduler and runs until Shutdown() is called.
-func (s *Scheduler) Start() error {
-	err := s.init()
+func (s *Scheduler) Run(ctx context.Context) error {
+	err := s.init(ctx)
 	if err != nil {
 		return fmt.Errorf("error initializing scheduler: %w", err)
 	}
 
-	go s.runScheduleLoop()
-	return nil
-}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 
-// Shutdown shuts down the Scheduler.
-func (s *Scheduler) Shutdown() {
-	s.shutdownOnce.Do(func() { s.isShutdown = true; close(s.shutdownCh) })
+			s.schedule()
+		}
+	}()
+
+	return nil
 }
 
 // AddToQueue places a Runner into the scheduling queue. If the Runner is already
 // in the queue, an error is returned.
-func (s *Scheduler) AddToQueue(runners ...*fireactions.Runner) {
-	if s.isShutdown {
-		return
-	}
-
-	for _, r := range runners {
-		s.queue.Enqueue(r)
-	}
+func (s *Scheduler) AddToQueue(runner *fireactions.Runner) {
+	s.queue.Enqueue(runner)
 }
 
-// RemoveFromQueue removes a Runner from the scheduling queue. If the Runner is not
-// in the queue, an error is returned.
-func (s *Scheduler) RemoveFromQueue(id string) error {
-	if s.isShutdown {
-		return nil
-	}
-
-	s.queue.Remove(id)
-	return nil
-}
-
-func (s *Scheduler) init() error {
-	nodes, err := s.store.GetNodes(context.Background(), nil)
+func (s *Scheduler) init(ctx context.Context) error {
+	nodes, err := s.store.GetNodes(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -112,7 +94,7 @@ func (s *Scheduler) init() error {
 		}
 	}
 
-	runners, err := s.store.GetRunners(context.Background(), func(m *fireactions.Runner) bool {
+	runners, err := s.store.GetRunners(ctx, func(m *fireactions.Runner) bool {
 		return m.NodeID == nil && m.DeletedAt == nil
 	})
 	if err != nil {
@@ -124,17 +106,6 @@ func (s *Scheduler) init() error {
 	}
 
 	return nil
-}
-
-func (s *Scheduler) runScheduleLoop() {
-	for {
-		select {
-		case <-s.shutdownCh:
-			return
-		default:
-			s.schedule()
-		}
-	}
 }
 
 func (s *Scheduler) schedule() {

@@ -10,16 +10,14 @@ Store is a bbolt implementation of the Store interface using BoltDB.
 
 Current BoltDB schema:
 |-- runners
-|   |-- <ID>
-|	  |   |-- runner -> models.Runner
+|   |-- <ID> -> models.Runner
 |-- nodes
 |   |-- <ID> -> models.Node
-|-- workflow_jobs
-|   |-- <Organisation>
-|   |  |-- <ID> -> github.WorkflowJob
 |-- workflow_runs
-|	  |-- <Organisation>
-|   |  |-- <ID> -> github.WorkflowRun
+|   |-- <ID>
+|	  |   |-- workflow_run -> github.WorkflowRun
+|   |   |-- workflow_jobs
+|   |   |  |-- <ID> -> github.WorkflowJob
 */
 type Store struct {
 	db *bbolt.DB
@@ -37,7 +35,7 @@ func New(path string) (*Store, error) {
 	}
 
 	err = db.Update(func(tx *bbolt.Tx) error {
-		buckets := []string{"nodes", "runners", "workflow_jobs", "workflow_runs"}
+		buckets := []string{"nodes", "runners", "workflow_runs"}
 		for _, bucket := range buckets {
 			_, err := tx.CreateBucketIfNotExists([]byte(bucket))
 			if err != nil {

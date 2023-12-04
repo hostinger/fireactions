@@ -6,22 +6,28 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/hostinger/fireactions/server/store"
 	"go.etcd.io/bbolt"
 )
 
-func (s *Store) GetWorkflowJob(ctx context.Context, org string, id int64) (*github.WorkflowJob, error) {
+func (s *Store) GetWorkflowJob(ctx context.Context, runID int64, id int64) (*github.WorkflowJob, error) {
 	workflowJob := &github.WorkflowJob{}
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("workflow_jobs"))
+		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
+		b := root.Bucket([]byte(fmt.Sprintf("%d", runID)))
+		if b == nil {
+			return store.ErrNotFound
 		}
 
-		data := b.Get([]byte(fmt.Sprintf("%d", id)))
+		j := b.Bucket([]byte("workflow_jobs"))
+		if j == nil {
+			return store.ErrNotFound
+		}
+
+		data := j.Get([]byte(fmt.Sprintf("%d", id)))
 		if data == nil {
-			return nil
+			return store.ErrNotFound
 		}
 
 		return json.Unmarshal(data, workflowJob)
@@ -33,11 +39,16 @@ func (s *Store) GetWorkflowJob(ctx context.Context, org string, id int64) (*gith
 	return workflowJob, nil
 }
 
-func (s *Store) SaveWorkflowJob(ctx context.Context, org string, workflowJob *github.WorkflowJob) error {
+func (s *Store) SaveWorkflowJob(ctx context.Context, workflowJob *github.WorkflowJob) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("workflow_jobs"))
+		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
+		b, err := root.CreateBucketIfNotExists([]byte(fmt.Sprintf("%d", workflowJob.GetRunID())))
+		if err != nil {
+			return err
+		}
+
+		j, err := b.CreateBucketIfNotExists([]byte("workflow_jobs"))
 		if err != nil {
 			return err
 		}
@@ -47,7 +58,7 @@ func (s *Store) SaveWorkflowJob(ctx context.Context, org string, workflowJob *gi
 			return err
 		}
 
-		return b.Put([]byte(fmt.Sprintf("%d", workflowJob.GetID())), data)
+		return j.Put([]byte(fmt.Sprintf("%d", workflowJob.GetID())), data)
 	})
 	if err != nil {
 		return err
@@ -56,17 +67,22 @@ func (s *Store) SaveWorkflowJob(ctx context.Context, org string, workflowJob *gi
 	return nil
 }
 
-func (s *Store) GetWorkflowJobs(ctx context.Context, org string, filter func(*github.WorkflowJob) bool) ([]*github.WorkflowJob, error) {
+func (s *Store) GetWorkflowJobs(ctx context.Context, runID int64, filter func(*github.WorkflowJob) bool) ([]*github.WorkflowJob, error) {
 	var workflowJobs []*github.WorkflowJob
 	err := s.db.View(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("workflow_jobs"))
+		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
+		b := root.Bucket([]byte(fmt.Sprintf("%d", runID)))
+		if b == nil {
+			return store.ErrNotFound
 		}
 
-		c := b.Cursor()
+		j := b.Bucket([]byte("workflow_jobs"))
+		if j == nil {
+			return store.ErrNotFound
+		}
+
+		c := j.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			workflowJob := &github.WorkflowJob{}
 			err := json.Unmarshal(v, workflowJob)
@@ -74,7 +90,7 @@ func (s *Store) GetWorkflowJobs(ctx context.Context, org string, filter func(*gi
 				return err
 			}
 
-			if !filter(workflowJob) {
+			if filter != nil && !filter(workflowJob) {
 				continue
 			}
 
@@ -90,16 +106,21 @@ func (s *Store) GetWorkflowJobs(ctx context.Context, org string, filter func(*gi
 	return workflowJobs, nil
 }
 
-func (s *Store) DeleteWorkflowJob(ctx context.Context, org string, id int64) error {
+func (s *Store) DeleteWorkflowJob(ctx context.Context, runID int64, id int64) error {
 	err := s.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket([]byte("workflow_jobs"))
+		root := tx.Bucket([]byte("workflow_runs"))
 
-		b, err := root.CreateBucketIfNotExists([]byte(org))
-		if err != nil {
-			return err
+		b := root.Bucket([]byte(fmt.Sprintf("%d", runID)))
+		if b == nil {
+			return store.ErrNotFound
 		}
 
-		return b.Delete([]byte(fmt.Sprintf("%d", id)))
+		j := b.Bucket([]byte("workflow_jobs"))
+		if j == nil {
+			return store.ErrNotFound
+		}
+
+		return j.Delete([]byte(fmt.Sprintf("%d", id)))
 	})
 	if err != nil {
 		return err
