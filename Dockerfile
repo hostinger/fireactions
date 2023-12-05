@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && useradd -u 1000 -g fireactions -s /bin/sh -m fireactions
 
 COPY fireactions /usr/bin/fireactions
+RUN chmod +x /usr/bin/fireactions
 
 EXPOSE 8080
 
