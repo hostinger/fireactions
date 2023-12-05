@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 
 ARG ARCH
 ARG RUNNER_VERSION
+ARG AGENT_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y                              \
@@ -71,10 +72,10 @@ RUN echo 'root:root' | chpasswd                                                 
 
 RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 
-COPY fireactions-agent-* /tmp/
+COPY fireactions-agent-${AGENT_VERSION}-linux-${ARCH} /tmp
 COPY contrib/overlay/etc /etc
 
-RUN mv /tmp/fireactions-agent-${ARCH} /usr/bin/fireactions-agent && \
+RUN mv /tmp/fireactions-agent-${AGENT_VERSION}-linux-${ARCH} /usr/bin/fireactions-agent && \
     chmod +x /usr/bin/fireactions-agent
 
 RUN systemctl enable fireactions-agent.service

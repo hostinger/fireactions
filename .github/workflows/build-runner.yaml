@@ -35,23 +35,27 @@ jobs:
       with:
         version: stable
 
-    - name: Get latest agent release
+    - name: Get latest fireactions-agent release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "AGENT_VERSION=$(gh release list | grep 'agent' | awk {'print $1'} | head -1)" >> $GITHUB_ENV
+        echo "AGENT_TAG=$(gh release list | grep fireactions-agent | head -1 | awk {'print $4'})" >> $GITHUB_ENV
+
+    - name: Set latest fireactions-agent version
+      run: |
+        echo "AGENT_VERSION=$(echo ${{ env.AGENT_TAG }} | sed 's/fireactions-agent-//')" >> $GITHUB_ENV
+
+    - name: Set GitHub runner version
+      run: |
+        echo RUNNER_VERSION=$(cat contrib/runner_version) >> $GITHUB_ENV
 
     - name: Download fireactions-agent
       uses: robinraju/release-downloader@v1.8
       with:
-        tag: ${{ env.AGENT_VERSION }}
+        tag: ${{ env.AGENT_TAG }}
         fileName: "fireactions-agent*"
         tarBall: false
         zipBall: false
-
-    - name: Get Github runner version
-      run: |
-        echo RUNNER_VERSION=$(cat contrib/runner_version) >> $GITHUB_ENV
 
     - name: Log in to the Container registry
       uses: docker/login-action@v3
@@ -63,11 +67,9 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Set docker tags
+    - name: Set Docker tags
       run: |
         echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
-        echo "RUNNER_TAG=$(echo runner_v${RUNNER_VERSION})" >> $GITHUB_ENV
-        echo "AGENT_TAG=$(echo ${AGENT_VERSION} | tr "/" _)" >> $GITHUB_ENV
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -79,10 +81,11 @@ jobs:
         build-args: |
           ARCH=${{ matrix.arch }}
           RUNNER_VERSION=${{ env.RUNNER_VERSION }}
+          AGENT_VERSION=${{ env.AGENT_VERSION }}
         tags: |
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }}-${{ env.TIMESTAMP }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }},
           ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}
         platforms: linux/${{ matrix.arch }}
 
@@ -94,9 +97,9 @@ jobs:
         echo '
           {
             "os":"${{ matrix.os }}",
-            "tag": "${{ matrix.os }}-${{ matrix.arch }}-${{ env.AGENT_TAG }}-${{ env.RUNNER_TAG }}-${{ env.TIMESTAMP }}",
-            "runner_version":"${{ env.RUNNER_TAG }}",
-            "agent_version": "${{ env.AGENT_TAG }}"
+            "tag": "${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }}",
+            "runner_version":"${{ env.RUNNER_VERSION }}",
+            "agent_version": "${{ env.AGENT_VERSION }}"
           }
         ' | \
         gh workflow run update.yml --repo hostinger/fireactions-runner-images --json
