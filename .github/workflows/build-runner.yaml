@@ -39,7 +39,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "AGENT_TAG=$(gh release list | grep fireactions-agent | head -1 | awk {'print $4'})" >> $GITHUB_ENV
+        echo "AGENT_TAG=$(gh release list | grep fireactions-agent | head -1 | awk {'print $3'})" >> $GITHUB_ENV
 
     - name: Set latest fireactions-agent version
       run: |
