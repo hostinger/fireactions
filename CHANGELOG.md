@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.1...fireactions-v0.1.2) (2023-12-11)
+
+
+### Bug Fixes
+
+* **images:** Add RUNNER_TOOL_CACHE directory ([e7ec617](https://github.com/hostinger/fireactions/commit/e7ec617575c1cecc53f8eeafee631e810b1eb55b))
+
 ## [0.1.1](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.0...fireactions-v0.1.1) (2023-12-05)
 
 
