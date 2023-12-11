@@ -5,7 +5,7 @@
       "release-type": "go",
       "package-name": "fireactions",
       "exclude-paths": [
-        "agent"
+        "agent", "contrib"
       ]
     },
     "agent": {
