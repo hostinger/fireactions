@@ -70,6 +70,9 @@ RUN echo 'root:root' | chpasswd                                                 
     && sed -i -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i -e 's/^AcceptEnv LANG LC_\*$/#AcceptEnv LANG LC_*/'            /etc/ssh/sshd_config
 
+RUN echo "RUNNER_TOOL_CACHE=/opt/hostedtoolcache" >> /etc/environment && \
+    mkdir -p /opt/hostedtoolcache && chown -R runner:docker /opt/hostedtoolcache && chmod -R 777 /opt/hostedtoolcache
+
 RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 
 COPY fireactions-agent-${AGENT_VERSION}-linux-${ARCH} /tmp
