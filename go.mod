@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/caarlos0/timea.go v1.2.0
-	github.com/cbrgm/githubevents v1.8.0
+	github.com/cbrgm/githubevents v1.9.0
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-gonic/gin v1.9.1
@@ -63,6 +63,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-github/v29 v29.0.2 // indirect
+	github.com/google/go-github/v56 v56.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
