@@ -17,6 +17,10 @@ RUN apt-get update -y                              \
     iputils-ping                                   \
     iptables-persistent                            \
     iptables                                       \
+    cmake                                          \
+    build-essential                                \
+    pkg-config                                     \
+    libssl-dev                                     \
     net-tools                                      \
     openssh-server                                 \
     haveged                                        \
@@ -69,6 +73,8 @@ RUN install -m 0755 -d /etc/apt/keyrings                                        
 RUN echo 'root:root' | chpasswd                                                                   \
     && sed -i -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i -e 's/^AcceptEnv LANG LC_\*$/#AcceptEnv LANG LC_*/'            /etc/ssh/sshd_config
+
+RUN echo "DEBIAN_FRONTEND=noninteractive" >> /etc/environment
 
 RUN echo "RUNNER_TOOL_CACHE=/opt/hostedtoolcache" >> /etc/environment && \
     mkdir -p /opt/hostedtoolcache && chown -R runner:docker /opt/hostedtoolcache && chmod -R 777 /opt/hostedtoolcache
