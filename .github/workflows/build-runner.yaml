@@ -26,7 +26,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-tags: true
+        fetch-depth: 0
 
     - name: Setup GH CLI
       uses: sersoft-gmbh/setup-gh-cli-action@v2
