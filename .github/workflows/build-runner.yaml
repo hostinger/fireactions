@@ -25,6 +25,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-tags: true
 
     - name: Setup GH CLI
       uses: sersoft-gmbh/setup-gh-cli-action@v2
@@ -32,10 +34,8 @@ jobs:
         version: stable
 
     - name: Get latest fireactions-agent release
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "AGENT_TAG=$(gh release list | grep fireactions-agent | head -1 | awk {'print $3'})" >> $GITHUB_ENV
+        echo "AGENT_TAG=$(git describe --tags --match 'fireactions-agent-*' --abbrev=0)" >> $GITHUB_ENV
 
     - name: Set latest fireactions-agent version
       run: |
