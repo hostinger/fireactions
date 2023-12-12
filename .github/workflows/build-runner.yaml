@@ -4,7 +4,7 @@ name: build-runner
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["build-fireactions-agent"]
+    workflows: ["release"]
     types:
       - completed
 
@@ -33,25 +33,13 @@ jobs:
       with:
         version: stable
 
-    - name: Get latest fireactions-agent release
+    - name: Set latest Fireactions version
       run: |
-        echo "AGENT_TAG=$(git describe --tags --match 'fireactions-agent-*' --abbrev=0)" >> $GITHUB_ENV
-
-    - name: Set latest fireactions-agent version
-      run: |
-        echo "AGENT_VERSION=$(echo ${{ env.AGENT_TAG }} | sed 's/fireactions-agent-//')" >> $GITHUB_ENV
+        echo "FIREACTIONS_VERSION=$(git describe --tags --match 'v*' --abbrev=0 | sed 's/v//')" >> $GITHUB_ENV
 
     - name: Set GitHub runner version
       run: |
         echo RUNNER_VERSION=$(cat contrib/runner_version) >> $GITHUB_ENV
-
-    - name: Download fireactions-agent
-      uses: robinraju/release-downloader@v1.8
-      with:
-        tag: ${{ env.AGENT_TAG }}
-        fileName: "fireactions-agent*"
-        tarBall: false
-        zipBall: false
 
     - name: Log in to the Container registry
       uses: docker/login-action@v3
@@ -76,14 +64,14 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         build-args: |
           ARCH=${{ matrix.arch }}
+          FIREACTIONS_VERSION=${{ env.FIREACTIONS_VERSION }}
           RUNNER_VERSION=${{ env.RUNNER_VERSION }}
-          AGENT_VERSION=${{ env.AGENT_VERSION }}
-        tags: |
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }},
-          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}
         platforms: linux/${{ matrix.arch }}
+        tags: |
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-fireactions_${{ env.FIREACTIONS_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-fireactions_${{ env.FIREACTIONS_VERSION }}-runner_${{ env.RUNNER_VERSION }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}-fireactions_${{ env.FIREACTIONS_VERSION }},
+          ghcr.io/${{ github.repository }}/runner:${{ matrix.os }}-${{ matrix.arch }}
 
     - name: Trigger hostinger runner image update workflow
       if: ${{ matrix.arch == 'amd64' }}
@@ -93,9 +81,9 @@ jobs:
         echo '
           {
             "os":"${{ matrix.os }}",
-            "tag": "${{ matrix.os }}-${{ matrix.arch }}-agent_${{ env.AGENT_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }}",
+            "tag": "${{ matrix.os }}-${{ matrix.arch }}-fireactions_${{ env.FIREACTIONS_VERSION }}-runner_${{ env.RUNNER_VERSION }}-${{ env.TIMESTAMP }}",
+            "fireactions_version": "${{ env.FIREACTIONS_VERSION }}"
             "runner_version":"${{ env.RUNNER_VERSION }}",
-            "agent_version": "${{ env.AGENT_VERSION }}"
           }
         ' | \
         gh workflow run update.yml --repo hostinger/fireactions-runner-images --json

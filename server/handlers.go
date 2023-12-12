@@ -1,151 +1,144 @@
 package server
 
 import (
-	"fmt"
+	"context"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/cbrgm/githubevents/githubevents"
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-github/v50/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/hostinger/fireactions"
-	"github.com/hostinger/fireactions/version"
+	"github.com/samber/lo"
 )
 
-func (s *Server) handleGetHealthz(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "OK")
-}
-
-func (s *Server) handleGetVersion(ctx *gin.Context) {
-	ctx.String(http.StatusOK, version.String())
-}
-
-func (s *Server) handleWebhook() gin.HandlerFunc {
-	handler := githubevents.New(s.config.GitHub.WebhookSecret)
-	handler.OnWorkflowRunEventAny(s.createOrUpdateWorkflowRun)
-	handler.OnWorkflowJobEventAny(s.createOrUpdateWorkflowJob)
-	handler.OnWorkflowJobEventInProgress(s.updateRunnerForWorkflowJob)
-	handler.OnWorkflowJobEventQueued(s.createRunnerForWorkflowJob)
-	handler.OnWorkflowJobEventCompleted(s.updateRunnerForWorkflowJob)
-
+func getHealthzHandler() gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		err := handler.HandleEventRequest(ctx.Request)
-		if err != nil {
-			s.logger.Error().Err(err).Msgf("failed to handle GitHub event")
-			ctx.AbortWithStatus(500)
-			return
-		}
-
-		ctx.Status(200)
+		ctx.JSON(http.StatusOK, gin.H{"status": "OK"})
 	}
 
 	return f
 }
 
-func (s *Server) handleGetWorkflowRunStats(ctx *gin.Context) {
-	organisation := ctx.Param("organisation")
-
-	var query fireactions.WorkflowRunStatsQuery
-	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("Bad request: %s", err.Error())})
-		return
+func getVersionHandler() gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"version": fireactions.String()})
 	}
 
-	if query.Start.IsZero() {
-		query.Start = time.Now().Add(-time.Hour * 24 * 7)
-	}
+	return f
+}
 
-	if query.End.IsZero() {
-		query.End = time.Now()
-	}
-
-	if query.Sort == "" {
-		query.Sort = "total"
-	}
-
-	if query.SortOrder == "" {
-		query.SortOrder = "desc"
-	}
-
-	if query.Limit == 0 {
-		query.Limit = 100
-	}
-
-	if err := query.Validate(); err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("Bad request: %s", err.Error())})
-		return
-	}
-
-	workflowRuns, err := s.store.GetWorkflowRuns(ctx, func(wr *github.WorkflowRun) bool {
-		if wr.GetRepository().GetOwner().GetLogin() != organisation {
-			return false
+func listPoolsHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		pools, err := p.ListPools(ctx)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
-		if wr.GetStatus() != "completed" {
-			return false
+		ctx.JSON(http.StatusOK, gin.H{"pools": convertPools(pools)})
+	}
+
+	return f
+}
+
+func getPoolHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		pool, err := p.GetPool(ctx, id)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
 		}
 
-		if query.Repositories != "" {
-			repositories := strings.Split(query.Repositories, ",")
-			found := false
-			for _, repository := range repositories {
-				if repository != wr.GetRepository().GetName() {
-					continue
-				}
+		ctx.JSON(http.StatusOK, gin.H{"pool": convertPool(pool)})
+	}
 
-				found = true
+	return f
+}
+
+func scalePoolHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		if err := p.ScalePool(ctx, id, 1); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pool scaled successfully"})
+	}
+
+	return f
+}
+
+func pausePoolHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		if err := p.PausePool(ctx, id); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pool paused successfully"})
+	}
+
+	return f
+}
+
+func resumePoolHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		if err := p.ResumePool(ctx, id); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pool resumed successfully"})
+	}
+
+	return f
+}
+
+func restartHandler(p PoolManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		if err := p.Restart(ctx); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pools restarted successfully"})
+	}
+
+	return f
+}
+
+func webhookGitHubHandler(p PoolManager, secret string) gin.HandlerFunc {
+	ge := githubevents.New(secret)
+	ge.OnWorkflowJobEventQueued(func(deliveryID, eventName string, event *github.WorkflowJobEvent) error {
+		pools, err := p.ListPools(context.Background())
+		if err != nil {
+			return err
+		}
+
+		for _, pool := range pools {
+			if !lo.Every(pool.config.Runner.Labels, event.WorkflowJob.Labels) {
+				continue
 			}
 
-			if !found {
-				return false
-			}
+			return pool.Scale(context.Background(), 1)
 		}
 
-		return wr.GetRunStartedAt().After(query.Start) && wr.GetRunStartedAt().Before(query.End)
+		return nil
 	})
-	if err != nil {
-		ctx.AbortWithStatusJSON(500, gin.H{"error": fmt.Sprintf("Internal server error: %s", err.Error())})
-		return
-	}
 
-	workflowRunStats := fireactions.WorkflowRunStats{Stats: make([]*fireactions.WorkflowRunStat, 0)}
-
-	statsByRepository := make(map[string]*fireactions.WorkflowRunStat)
-	for _, workflowRun := range workflowRuns {
-		stats := statsByRepository[workflowRun.GetRepository().GetName()]
-		if stats == nil {
-			stats = &fireactions.WorkflowRunStat{Total: 0, TotalDuration: 0, Succeeded: 0, Failed: 0, Cancelled: 0, Repository: workflowRun.GetRepository().GetName()}
-			statsByRepository[workflowRun.GetRepository().GetName()] = stats
+	f := func(ctx *gin.Context) {
+		err := ge.HandleEventRequest(ctx.Request)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
-		switch workflowRun.GetConclusion() {
-		case "cancelled":
-			stats.Cancelled += 1
-		case "success":
-			stats.Succeeded += 1
-		case "failure":
-			stats.Failed += 1
-		default:
-		}
-
-		stats.TotalDuration += workflowRun.GetUpdatedAt().Sub(workflowRun.GetRunStartedAt().Time)
-		stats.Total += 1
+		ctx.Status(http.StatusOK)
 	}
 
-	for _, stat := range statsByRepository {
-		workflowRunStats.Stats = append(workflowRunStats.Stats, stat)
-	}
-
-	err = workflowRunStats.Sort(query.Sort, query.SortOrder)
-	if err != nil {
-		ctx.AbortWithStatusJSON(400, gin.H{"error": fmt.Sprintf("Bad request: %s", err.Error())})
-		return
-	}
-
-	if query.Limit > 0 && len(workflowRunStats.Stats) > query.Limit {
-		workflowRunStats.Stats = workflowRunStats.Stats[:query.Limit]
-	}
-
-	ctx.JSON(200, workflowRunStats)
+	return f
 }

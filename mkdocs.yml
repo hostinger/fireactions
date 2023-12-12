@@ -19,12 +19,29 @@ theme:
 nav:
   - Home:
       - Overview: "index.md"
-      - Architecture: "architecture.md"
   - Deployment:
-      - Installation Guide: "deploy/index.md"
-      - Upgrade: "deploy/upgrade.md"
-  - User guide:
-      - Server:
-          - Introduction: "user-guide/server/index.md"
-          - Usage: "user-guide/server/usage.md"
-      - Runner: "user-guide/runner.md"
+      - Getting started: "deploy/index.md"
+      - Installing with Ansible: "deploy/installing-with-ansible.md"
+      - Installing manually: "deploy/installing-manually.md"
+      - Upgrading: "deploy/upgrading.md"
+  - User Guide:
+      - Configuration: "user-guide/configuration.md"
+      - Monitoring: "user-guide/monitoring.md"
+  - API Guide: "api/index.md"
+  - SDK Guide:
+      - "SDK": "sdk/index.md"
+  - Examples: "examples/index.md"
+  - FAQ: "faq.md"
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tasklist
+  - pymdownx.tilde
+  - pymdownx.emoji
+  - pymdownx.magiclink

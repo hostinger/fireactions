@@ -3,162 +3,173 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
-	"os"
-	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/hostinger/fireactions/server/garbage"
-	"github.com/hostinger/fireactions/server/github"
-	"github.com/hostinger/fireactions/server/metric"
-	"github.com/hostinger/fireactions/server/scheduler"
-	"github.com/hostinger/fireactions/server/store"
-	"github.com/hostinger/fireactions/server/store/bbolt"
-	"github.com/hostinger/fireactions/version"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/hostinger/fireactions"
+	"github.com/hostinger/fireactions/helper/github"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 )
 
-// Server struct.
+// Server represents the Fireactions server.
 type Server struct {
-	store         store.Store
-	scheduler     *scheduler.Scheduler
+	config        *Config
+	pools         map[string]*Pool
 	server        *http.Server
 	metricsServer *http.Server
-	config        *Config
 	github        *github.Client
-	workflowRunGC garbage.Collector
+	l             *sync.Mutex
 	logger        *zerolog.Logger
 }
 
+// Opt is a functional option for Server.
+type Opt func(s *Server)
+
+// WithLogger sets the logger for the Server.
+func WithLogger(logger *zerolog.Logger) Opt {
+	f := func(s *Server) {
+		s.logger = logger
+	}
+
+	return f
+}
+
 // New creates a new Server.
-func New(config *Config) (*Server, error) {
-	logLevel, err := zerolog.ParseLevel(config.LogLevel)
+func New(config *Config, opts ...Opt) (*Server, error) {
+	err := config.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("error parsing log level: %w", err)
-	}
-	logger := zerolog.New(os.Stdout).Level(logLevel).With().Timestamp().CallerWithSkipFrameCount(2).Logger()
-
-	store, err := bbolt.New(filepath.Join(config.DataDir, "fireactions.db"))
-	if err != nil {
-		return nil, fmt.Errorf("error creating store: %w", err)
+		return nil, fmt.Errorf("config: %w", err)
 	}
 
-	scheduler, err := scheduler.New(logger, store)
+	github, err := github.NewClient(config.GitHub.AppID, config.GitHub.AppPrivateKey)
 	if err != nil {
-		return nil, fmt.Errorf("error creating scheduler: %w", err)
+		return nil, fmt.Errorf("creating github client: %w", err)
 	}
 
-	github, err := github.NewClient(&github.ClientConfig{
-		AppID: config.GitHub.AppID, AppPrivateKey: config.GitHub.AppPrivateKey,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("creating GitHub client: %w", err)
-	}
-
-	mux := gin.New()
-	mux.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
-	mux.Use(gin.Recovery())
+	gin.SetMode(gin.ReleaseMode)
+	handler := gin.New()
+	handler.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
+	handler.Use(gin.Recovery())
 
 	server := &http.Server{
-		Addr:         config.HTTP.ListenAddress,
-		Handler:      mux,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		Addr:         config.BindAddress,
+		Handler:      handler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	workflowRunGC := garbage.NewWorkflowRunGC(store, store,
-		garbage.WithWorkflowRunGCInterval(1*time.Minute), garbage.WithMaxWorkflowRunAge(config.History.MaxWorkflowRunAge))
-
+	logger := zerolog.Nop()
 	s := &Server{
-		config:        config,
-		github:        github,
-		scheduler:     scheduler,
-		store:         store,
-		server:        server,
-		workflowRunGC: workflowRunGC,
-		logger:        &logger,
+		config: config,
+		server: server,
+		pools:  make(map[string]*Pool),
+		github: github,
+		l:      &sync.Mutex{},
+		logger: &logger,
+	}
+
+	for _, opt := range opts {
+		opt(s)
 	}
 
 	if config.Metrics.Enabled {
-		registry := prometheus.NewRegistry()
-		registry.MustRegister(metric.NewPrometheusCollector(store, metric.WithLogger(&logger)))
-
 		metricsHandler := http.NewServeMux()
-		metricsHandler.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+		metricsHandler.Handle("/metrics", promhttp.Handler())
 		metricsServer := &http.Server{
 			Addr:         config.Metrics.Address,
 			Handler:      metricsHandler,
-			WriteTimeout: 15 * time.Second,
 			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		}
 
 		s.metricsServer = metricsServer
 	}
 
-	mux.POST("/webhook", s.handleWebhook())
-	mux.GET("/version", s.handleGetVersion)
-	mux.GET("/healthz", s.handleGetHealthz)
+	handler.POST("/webhook/github", webhookGitHubHandler(s, config.GitHub.WebhookSecret))
+	handler.GET("/healthz", getHealthzHandler())
+	handler.GET("/version", getVersionHandler())
 
-	v1 := mux.Group("/api/v1")
+	api := handler.Group("/api")
+	if config.BasicAuthEnabled {
+		api.Use(gin.BasicAuth(gin.Accounts(config.BasicAuthUsers)))
+	}
+
+	v1 := api.Group("/v1")
 	{
-		v1.GET("/healthz", s.handleGetHealthz)
-		v1.GET("/runners", s.handleGetRunners)
-		v1.GET("/runners/:id", s.handleGetRunner)
-		v1.GET("/nodes", s.handleGetNodes)
-		v1.POST("/nodes", s.handleRegisterNode)
-		v1.GET("/nodes/:id", s.handleGetNode)
-		v1.POST("/runners", s.handleCreateRunner)
-		v1.PATCH("/runners/:id/status", s.handleSetRunnerStatus)
-		v1.GET("/workflow-runs/:organisation/stats", s.handleGetWorkflowRunStats)
-		v1.DELETE("/runners/:id", s.handleDeleteRunner)
-		v1.GET("/nodes/:id/runners", s.handleGetNodeRunners)
-		v1.DELETE("/nodes/:id", s.handleDeregisterNode)
-		v1.POST("/nodes/:id/cordon", s.handleCordonNode)
-		v1.POST("/nodes/:id/uncordon", s.handleUncordonNode)
+		v1.GET("/pools", listPoolsHandler(s))
+		v1.POST("/pools/:id/scale", scalePoolHandler(s))
+		v1.GET("/pools/:id", getPoolHandler(s))
+		v1.POST("/pools/:id/resume", resumePoolHandler(s))
+		v1.POST("/pools/:id/pause", pausePoolHandler(s))
+		v1.POST("/restart", restartHandler(s))
 	}
 
 	return s, nil
 }
 
-// Run starts the server. It blocks until the context is cancelled.
+// Run starts the server and blocks until the context is canceled.
 func (s *Server) Run(ctx context.Context) error {
-	s.logger.Info().Str("version", version.Version).Str("date", version.Date).Str("commit", version.Commit).Msgf("Starting server on %s", s.config.HTTP.ListenAddress)
-	defer s.store.Close()
+	s.logger.Info().Str("version", fireactions.Version).Str("date", fireactions.Date).Str("commit", fireactions.Commit).Msgf("Starting server on %s", s.config.BindAddress)
 
-	err := s.scheduler.Run(ctx)
+	listener, err := net.Listen("tcp", s.config.BindAddress)
 	if err != nil {
-		return fmt.Errorf("scheduler: %w", err)
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+	defer listener.Close()
+
+	for _, poolConfig := range s.config.Pools {
+		pool, err := NewPool(s.logger, poolConfig, s.github)
+		if err != nil {
+			return fmt.Errorf("creating pool: %w", err)
+		}
+
+		s.pools[poolConfig.Name] = pool
+		go pool.Start()
+		s.logger.Info().Msgf("Pool %s started", poolConfig.Name)
 	}
 
-	go s.workflowRunGC.Run(ctx)
-
 	errGroup := &errgroup.Group{}
-	errGroup.Go(func() error { return s.server.ListenAndServe() })
+	errGroup.Go(func() error { return s.server.Serve(listener) })
 	if s.metricsServer != nil {
-		s.logger.Info().Msgf("Starting metrics server on %s", s.config.Metrics.Address)
-		errGroup.Go(func() error { return s.metricsServer.ListenAndServe() })
+		metricsListener, err := net.Listen("tcp", s.config.Metrics.Address)
+		if err != nil {
+			return fmt.Errorf("failed to start metrics server: %w", err)
+		}
+
+		errGroup.Go(func() error { return s.metricsServer.Serve(metricsListener) })
 	}
 
 	go func() {
 		<-ctx.Done()
 		fmt.Println()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		s.logger.Info().Msg("Shutting down server")
+
+		for _, pool := range s.pools {
+			pool.Stop()
+		}
+
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
-		s.metricsServer.Shutdown(ctx)
-		err := s.server.Shutdown(ctx)
-		if err != nil {
-			s.logger.Error().Err(err).Msg("failed to shutdown server")
+		if s.config.Metrics.Enabled {
+			_ = s.metricsServer.Shutdown(cancelCtx)
+		}
+
+		if err := s.server.Shutdown(cancelCtx); err != nil {
+			s.logger.Error().Err(err).Msg("Failed to shutdown server")
 		}
 	}()
+
+	metricUp.Set(1)
 
 	err = errGroup.Wait()
 	if err != nil && err != http.ErrServerClosed {
@@ -169,6 +180,102 @@ func (s *Server) Run(ctx context.Context) error {
 	return nil
 }
 
-func init() {
-	gin.SetMode(gin.ReleaseMode)
+// GetPool returns the pool with the given ID.
+func (s *Server) GetPool(ctx context.Context, id string) (*Pool, error) {
+	s.l.Lock()
+	defer s.l.Unlock()
+
+	pool, ok := s.pools[id]
+	if !ok {
+		return nil, fireactions.ErrPoolNotFound
+	}
+
+	return pool, nil
+}
+
+// ListPools returns a list of all pools.
+func (s *Server) ListPools(ctx context.Context) ([]*Pool, error) {
+	s.l.Lock()
+	defer s.l.Unlock()
+
+	pools := make([]*Pool, 0, len(s.pools))
+	for _, pool := range s.pools {
+		pools = append(pools, pool)
+	}
+
+	return pools, nil
+}
+
+// ScalePool scales the pool with the given ID to the desired size.
+func (s *Server) ScalePool(ctx context.Context, id string, replicas int) error {
+	metricPoolScaleRequests.WithLabelValues(id).Inc()
+
+	pool, err := s.GetPool(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = pool.Scale(ctx, replicas)
+	if err != nil {
+		metricPoolScaleFailures.WithLabelValues(id).Inc()
+		return err
+	}
+
+	metricPoolScaleSuccesses.WithLabelValues(id).Inc()
+	return nil
+}
+
+// PausePool pauses the pool with the given ID.
+func (s *Server) PausePool(ctx context.Context, id string) error {
+	pool, err := s.GetPool(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	pool.Pause()
+	metricPoolStatus.WithLabelValues(id).Set(0)
+	return nil
+}
+
+// ResumePool resumes the pool with the given ID.
+func (s *Server) ResumePool(ctx context.Context, id string) error {
+	pool, err := s.GetPool(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	pool.Resume()
+	metricPoolStatus.WithLabelValues(id).Set(1)
+	return nil
+}
+
+func (s *Server) Restart(ctx context.Context) error {
+	s.l.Lock()
+	defer s.l.Unlock()
+
+	s.logger.Info().Msgf("Restarting server configuration")
+	err := s.config.Load()
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+
+	for _, poolConfig := range s.config.Pools {
+		pool, ok := s.pools[poolConfig.Name]
+		if ok {
+			pool.config = poolConfig
+			s.logger.Info().Msgf("Pool %s reloaded", poolConfig.Name)
+			continue
+		}
+
+		pool, err = NewPool(s.logger, poolConfig, s.github)
+		if err != nil {
+			return fmt.Errorf("creating pool: %w", err)
+		}
+
+		s.pools[poolConfig.Name] = pool
+		go pool.Start()
+		s.logger.Info().Msgf("Pool %s started", poolConfig.Name)
+	}
+
+	return nil
 }

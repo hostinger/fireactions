@@ -5,7 +5,7 @@ GIT_TAG    := $(shell git describe --tags --always --match "fireactions-v*" 2> /
 GIT_COMMIT := $(shell git rev-parse HEAD)
 BUILD_DATE := $(shell date '+%FT%T')
 
-LDFLAGS := -ldflags "-s -w -X github.com/hostinger/fireactions/version.Version=$(GIT_TAG) -X github.com/hostinger/fireactions/version.Commit=$(GIT_COMMIT) -X github.com/hostinger/fireactions/version.Date=$(BUILD_DATE)"
+LDFLAGS := -ldflags "-s -w -X github.com/hostinger/fireactions.Version=$(GIT_TAG) -X github.com/hostinger/fireactions.Commit=$(GIT_COMMIT) -X github.com/hostinger/fireactions.Date=$(BUILD_DATE)"
 
 .PHONY: build
 build:

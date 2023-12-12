@@ -1,1 +1,1 @@
-# placeholder
+# Getting started
