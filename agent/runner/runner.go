@@ -102,6 +102,7 @@ func (r *Runner) Start(ctx context.Context) error {
 	runCmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}}
 	runCmd.Env = append(
 		runCmd.Env,
+		"DEBIAN_FRONTEND=noninteractive",
 		fmt.Sprintf("PATH=%s", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"),
 		fmt.Sprintf("LOGNAME=%s", owner.Username),
 		fmt.Sprintf("HOME=%s", owner.HomeDir),

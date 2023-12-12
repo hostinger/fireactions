@@ -49,11 +49,12 @@ RUN adduser --disabled-password --gecos "" --uid 1001 runner  \
     && echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers
 
 RUN case "$ARCH" in amd64|x86_64|i386) export RUNNER_ARCH="x64";; arm64) export RUNNER_ARCH="arm64";; esac                                                         \
-    && mkdir -p /opt/runner && cd /opt/runner                                                                                                                      \
+    && mkdir -p /opt/runner /opt/hostedtoolcache && cd /opt/runner                                                                                                 \
     && curl -fLo runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz \
     && tar xzf ./runner.tar.gz && rm -rf runner.tar.gz                                                                                                             \
     && ./bin/installdependencies.sh                                                                                                                                \
-    && chown -R runner:docker /opt/runner
+    && chown -R runner:docker /opt/runner /opt/hostedtoolcache                                                                                                     \
+    && chmod -R 777 /opt/hostedtoolcache
 
 RUN install -m 0755 -d /etc/apt/keyrings                                                                            \
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg      \
@@ -73,11 +74,6 @@ RUN install -m 0755 -d /etc/apt/keyrings                                        
 RUN echo 'root:root' | chpasswd                                                                   \
     && sed -i -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i -e 's/^AcceptEnv LANG LC_\*$/#AcceptEnv LANG LC_*/'            /etc/ssh/sshd_config
-
-RUN echo "DEBIAN_FRONTEND=noninteractive" >> /etc/environment
-
-RUN echo "RUNNER_TOOL_CACHE=/opt/hostedtoolcache" >> /etc/environment && \
-    mkdir -p /opt/hostedtoolcache && chown -R runner:docker /opt/hostedtoolcache && chmod -R 777 /opt/hostedtoolcache
 
 RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 
