@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	timeago "github.com/caarlos0/timea.go"
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/server/scheduler/filter"
 )
@@ -28,8 +27,8 @@ func (f *Filter) Name() string {
 
 // Filter filters out nodes that didn't reconcile for more than the configured reconcile interval.
 func (f *Filter) Filter(ctx context.Context, runner *fireactions.Runner, node *fireactions.Node) (bool, error) {
-	if time.Since(node.LastReconcileAt) > node.ReconcileInterval {
-		return false, fmt.Errorf("node is not alive: last reconcile was %s", timeago.Of(node.LastReconcileAt))
+	if time.Since(node.LastReconcileAt) > node.ReconcileInterval+time.Minute {
+		return false, fmt.Errorf("node %s is not alive", node.Name)
 	}
 
 	return true, nil
