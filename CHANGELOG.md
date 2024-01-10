@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.1...fireactions-v0.1.2) (2024-01-10)
+
+
+### Bug Fixes
+
+* Consider node unhealthy if not reconciled within 1m + reconcile interval ([01bcbe1](https://github.com/hostinger/fireactions/commit/01bcbe136417f69075d89b449fa506197310d9b1))
+
 ## [0.1.1](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.0...fireactions-v0.1.1) (2023-12-05)
 
 
