@@ -8,7 +8,7 @@ require (
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-gonic/gin v1.9.1
-	github.com/google/go-github/v50 v50.0.0
+	github.com/google/go-github/v50 v50.2.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/rs/zerolog v1.31.0
