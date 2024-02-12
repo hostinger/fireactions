@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/go-github/v50 v50.2.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/opencontainers/image-spec v1.1.0-rc5
+	github.com/opencontainers/image-spec v1.1.0-rc6
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/sirupsen/logrus v1.9.3
