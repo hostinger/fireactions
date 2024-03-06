@@ -107,8 +107,8 @@ github.com/bytedance/sonic v1.9.2 h1:GDaNjuWSGu09guE9Oql0MSTNhNCLlWwO8y/xM5BzcbM
 github.com/bytedance/sonic v1.9.2/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
 github.com/caarlos0/timea.go v1.2.0 h1:JkjyWSUheN4nGO/OmYVGKbEv4ozHP/zuTZWD5Ih3Gog=
 github.com/caarlos0/timea.go v1.2.0/go.mod h1:p4uopjR7K+y0Oxh7j0vLh3vSo58jjzOgXHKcyKwQjuY=
-github.com/cbrgm/githubevents v1.8.0 h1:KpGymzMbgw4irNwis7bniBpU+Ql+G4dccuEAtGhWXJs=
-github.com/cbrgm/githubevents v1.8.0/go.mod h1:08VNEshHTaH7HVALVeVDzO/FGs5BVonMg2dtUZGDAnE=
+github.com/cbrgm/githubevents v1.13.0 h1:JXwViJDxH6loROprMadmqJxdeUYI/9IoD9gP93UGlmA=
+github.com/cbrgm/githubevents v1.13.0/go.mod h1:VD/wrWamjD3k+lqbw5YmJTH5MAS3eNUXOLt/lcM7fE8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
@@ -487,6 +487,8 @@ github.com/google/go-github/v50 v50.2.0 h1:j2FyongEHlO9nxXLc+LP3wuBSVU9mVxfpdYUe
 github.com/google/go-github/v50 v50.2.0/go.mod h1:VBY8FB6yPIjrtKhozXv4FQupxKLS6H4m6xFZlT43q8Q=
 github.com/google/go-github/v53 v53.2.0 h1:wvz3FyF53v4BK+AsnvCmeNhf8AkTaeh2SoYu/XUvTtI=
 github.com/google/go-github/v53 v53.2.0/go.mod h1:XhFRObz+m/l+UCm9b7KSIC3lT3NWSXGt7mOsAWEloao=
+github.com/google/go-github/v60 v60.0.0 h1:oLG98PsLauFvvu4D/YPxq374jhSxFYdzQGNCyONLfn8=
+github.com/google/go-github/v60 v60.0.0/go.mod h1:ByhX2dP9XT9o/ll2yXAu2VD8l5eNVg8hD4Cr0S/LmQk=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
 github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
