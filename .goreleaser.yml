@@ -25,13 +25,36 @@ archives:
   format: tar.gz
 
 dockers:
-- id: fireactions
+- id: fireactions-amd64
   dockerfile: Dockerfile
   image_templates:
-  - ghcr.io/hostinger/fireactions:{{ .Version }}
-  - ghcr.io/hostinger/fireactions:latest
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-amd64
   extra_files:
     - "./"
+  build_flag_templates:
+  - "--pull"
+  - "--platform=linux/amd64"
+  goarch: amd64
+- id: fireactions-arm64
+  dockerfile: Dockerfile
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-arm64
+  extra_files:
+    - "./"
+  build_flag_templates:
+  - "--pull"
+  - "--platform=linux/arm64"
+  goarch: arm64
+
+docker_manifests:
+- name_template: ghcr.io/hostinger/fireactions:{{ .Version }}
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-amd64
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-arm64
+- name_template: ghcr.io/hostinger/fireactions:latest
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-amd64
+  - ghcr.io/hostinger/fireactions:{{ .Version }}-arm64
 
 # Changelog is managed by release-please
 changelog:
