@@ -1,5 +1,5 @@
 {
-  "group-pull-request-title-pattern": "chore: Release ${branch}",
+  "pull-request-title-pattern": "chore: Release ${branch}",
   "packages": {
     ".": {
       "release-type": "go",
