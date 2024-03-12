@@ -4,11 +4,13 @@
 
 Fireactions is an orchestrator for GitHub runners. BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure [Firecracker](https://firecracker-microvm.github.io/) based virtual machines.
 
+![Architecture](docs/architecture.png)
+
 Several key features:
 
 - **Autoscaling**
 
-  Robust autoscaling based on GitHub webhooks for `workflow_job` events, cost-effective with fast GitHub runner startup time of 20s~.
+  Robust pool based scaling, cost-effective with fast GitHub runner startup time of 20s~.
 
 - **Ephemeral**
 
@@ -30,7 +32,7 @@ runs-on:
 - <JOB_LABEL>
 ```
 
-See [Configuration](./docs//configuration.md) for more information on how to configure job labels.
+See [Configuration](./docs/user-guide/configuration.md) for more information on how to configure job labels.
 
 ## Contributing
 

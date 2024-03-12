@@ -5,12 +5,8 @@
       "release-type": "go",
       "package-name": "fireactions",
       "exclude-paths": [
-        "agent", "contrib"
+        "contrib", "docs", "hack"
       ]
-    },
-    "agent": {
-      "release-type": "go",
-      "package-name": "fireactions-agent"
     }
   }
 }

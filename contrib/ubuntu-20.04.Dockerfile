@@ -1,8 +1,10 @@
+ARG FIREACTIONS_VERSION
+FROM ghcr.io/hostinger/fireactions:${FIREACTIONS_VERSION} AS fireactions
+
 FROM ubuntu:20.04
 
 ARG ARCH
 ARG RUNNER_VERSION
-ARG AGENT_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y                              \
@@ -77,10 +79,7 @@ RUN echo 'root:root' | chpasswd                                                 
 
 RUN echo "" > /etc/machine-id && echo "" > /var/lib/dbus/machine-id
 
-COPY fireactions-agent-${AGENT_VERSION}-linux-${ARCH} /tmp
 COPY contrib/overlay/etc /etc
+COPY --from=fireactions /usr/bin/fireactions /usr/bin/fireactions
 
-RUN mv /tmp/fireactions-agent-${AGENT_VERSION}-linux-${ARCH} /usr/bin/fireactions-agent && \
-    chmod +x /usr/bin/fireactions-agent
-
-RUN systemctl enable fireactions-agent.service
+RUN systemctl enable fireactions.service

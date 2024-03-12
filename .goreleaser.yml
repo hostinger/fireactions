@@ -1,0 +1,38 @@
+---
+project_name: fireactions
+
+builds:
+- id: fireactions
+  main: ./cmd/fireactions
+  env:
+  - CGO_ENABLED=0
+  binary: fireactions
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
+  ldflags:
+  - -X github.com/hostinger/fireactions.Version={{ .Version }}
+  - -X github.com/hostinger/fireactions.Commit={{ .ShortCommit }}
+  - -X github.com/hostinger/fireactions.Date={{ .CommitDate }}
+
+archives:
+- id: fireactions
+  builds:
+  - fireactions
+  name_template: fireactions-{{ .Version }}_{{ .Os }}_{{ .Arch }}
+  format: tar.gz
+
+dockers:
+- id: fireactions
+  dockerfile: Dockerfile
+  image_templates:
+  - ghcr.io/hostinger/fireactions:{{ .Version }}
+  - ghcr.io/hostinger/fireactions:latest
+  extra_files:
+    - "./"
+
+# Changelog is managed by release-please
+changelog:
+  disable: true

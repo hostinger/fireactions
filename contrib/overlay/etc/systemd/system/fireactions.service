@@ -1,0 +1,15 @@
+[Unit]
+Description=Fireactions
+Documentation=https://github.com/hostinger/fireactions
+After=network.target
+SuccessAction=reboot
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/fireactions runner --log-level=info
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
