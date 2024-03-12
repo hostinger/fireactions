@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.2...fireactions-v1.0.0) (2024-03-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* Rearchitecture to pool based scaling ([#94](https://github.com/hostinger/fireactions/issues/94))
+
+### Features
+
+* Rearchitecture to pool based scaling ([#94](https://github.com/hostinger/fireactions/issues/94)) ([18d514b](https://github.com/hostinger/fireactions/commit/18d514b5181345e2910cd0c62b506f807fc67600))
+
 ## [0.1.2](https://github.com/hostinger/fireactions/compare/fireactions-v0.1.1...fireactions-v0.1.2) (2024-01-10)
 
 
