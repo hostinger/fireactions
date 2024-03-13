@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/hostinger/fireactions/compare/v0.1.1...v0.1.2) (2024-03-13)
+
+
+### Bug Fixes
+
+* **goreleaser:** Correct checksum name format ([463008e](https://github.com/hostinger/fireactions/commit/463008ef27dd0a1951dfdc6eafa4d772aac20ea5))
+
 ## [0.1.1](https://github.com/hostinger/fireactions/compare/v0.1.0...v0.1.1) (2024-03-13)
 
 
