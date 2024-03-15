@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/hostinger/fireactions/compare/v0.1.3...v0.1.4) (2024-03-15)
+
+
+### Bug Fixes
+
+* Collect current_runners_count metric even if pool is paused ([0c0969c](https://github.com/hostinger/fireactions/commit/0c0969c25a9696bd904c617419ad2cb8aeef1247))
+
 ## [0.1.3](https://github.com/hostinger/fireactions/compare/v0.1.2...v0.1.3) (2024-03-15)
 
 
