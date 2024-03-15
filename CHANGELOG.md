@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/hostinger/fireactions/compare/v0.1.4...v0.1.5) (2024-03-15)
+
+
+### Bug Fixes
+
+* Don't set timeout on Firecracker VM context ([3570347](https://github.com/hostinger/fireactions/commit/3570347149bb99348a345f6e4fb3b55301ef8907))
+
 ## [0.1.4](https://github.com/hostinger/fireactions/compare/v0.1.3...v0.1.4) (2024-03-15)
 
 
