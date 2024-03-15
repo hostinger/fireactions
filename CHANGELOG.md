@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/hostinger/fireactions/compare/v0.1.2...v0.1.3) (2024-03-15)
+
+
+### Bug Fixes
+
+* Correctly set fireactions_pool_scale_ metrics ([9a6988b](https://github.com/hostinger/fireactions/commit/9a6988b9452cd676a3b082e94213d4b0321d9e69))
+
 ## [0.1.2](https://github.com/hostinger/fireactions/compare/v0.1.1...v0.1.2) (2024-03-13)
 
 
