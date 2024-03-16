@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/hostinger/fireactions/compare/v0.1.5...v0.1.6) (2024-03-16)
+
+
+### Bug Fixes
+
+* Deadlock when removing Firecracker VM reference from map ([ee5c00a](https://github.com/hostinger/fireactions/commit/ee5c00ac61df9065709b51e14b0113d3c0925c0f))
+* Gracefully handle SIGTERM ([0302167](https://github.com/hostinger/fireactions/commit/0302167b3c4cd34fe1c9fa1ae8202697d4ef42c4))
+
 ## [0.1.5](https://github.com/hostinger/fireactions/compare/v0.1.4...v0.1.5) (2024-03-15)
 
 
