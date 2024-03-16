@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/hostinger/fireactions/compare/v0.1.6...v0.1.7) (2024-03-16)
+
+
+### Bug Fixes
+
+* Race condition on graceful shutdown ([5ad2390](https://github.com/hostinger/fireactions/commit/5ad23903740cf1b54645cb97bd40f7ab83c74c72))
+
 ## [0.1.6](https://github.com/hostinger/fireactions/compare/v0.1.5...v0.1.6) (2024-03-16)
 
 
