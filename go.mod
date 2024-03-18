@@ -1,9 +1,8 @@
 module github.com/hostinger/fireactions
 
 go 1.22
-
 require (
-	github.com/cbrgm/githubevents v1.13.0
+	github.com/cbrgm/githubevents v1.13.1
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-gonic/gin v1.9.1
