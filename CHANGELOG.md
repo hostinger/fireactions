@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/hostinger/fireactions/compare/v0.1.7...v0.1.8) (2024-03-18)
+
+
+### Bug Fixes
+
+* Don't set expiration time on Containerd lease ([78e76f1](https://github.com/hostinger/fireactions/commit/78e76f18571622e405f93a990526155f099dbf2b))
+
 ## [0.1.7](https://github.com/hostinger/fireactions/compare/v0.1.6...v0.1.7) (2024-03-16)
 
 
