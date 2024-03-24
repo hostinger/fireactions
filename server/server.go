@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions"
@@ -97,6 +98,10 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 	handler.GET("/healthz", getHealthzHandler())
 	handler.GET("/version", getVersionHandler())
 
+	if config.Debug {
+		pprof.Register(handler)
+	}
+
 	api := handler.Group("/api")
 	if config.BasicAuthEnabled {
 		api.Use(gin.BasicAuth(gin.Accounts(config.BasicAuthUsers)))
@@ -118,6 +123,9 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 // Run starts the server and blocks until the context is canceled.
 func (s *Server) Run(ctx context.Context) error {
 	s.logger.Info().Str("version", fireactions.Version).Str("date", fireactions.Date).Str("commit", fireactions.Commit).Msgf("Starting server on %s", s.config.BindAddress)
+	if s.config.Debug {
+		s.logger.Warn().Msg("Debug mode enabled")
+	}
 
 	listener, err := net.Listen("tcp", s.config.BindAddress)
 	if err != nil {

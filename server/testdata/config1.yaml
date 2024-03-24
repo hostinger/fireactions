@@ -6,6 +6,8 @@ basic_auth_users:
   user1: password1
   user2: password2
 
+debug: false
+
 metrics:
   enabled: true
   address: 127.0.0.1:8081
