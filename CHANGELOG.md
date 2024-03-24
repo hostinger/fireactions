@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/hostinger/fireactions/compare/v0.1.8...v0.2.0) (2024-03-24)
+
+
+### Features
+
+* Add debug option for pprof ([#112](https://github.com/hostinger/fireactions/issues/112)) ([7f8311b](https://github.com/hostinger/fireactions/commit/7f8311ba98a144c81376484e67c6abb73245317e))
+
 ## [0.1.8](https://github.com/hostinger/fireactions/compare/v0.1.7...v0.1.8) (2024-03-18)
 
 
