@@ -6,7 +6,7 @@ require (
 	github.com/cbrgm/githubevents v1.13.2
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/pprof v1.4.0
-	github.com/gin-contrib/requestid v0.0.6
+	github.com/gin-contrib/requestid v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/go-github/v60 v60.0.0
 	github.com/opencontainers/image-spec v1.1.0
@@ -105,7 +105,7 @@ require (
 
 require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
-	github.com/bytedance/sonic v1.11.2 // indirect
+	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/containerd/containerd v1.7.15
 	github.com/containerd/nerdctl v1.7.5
@@ -123,7 +123,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spf13/cobra v1.8.0
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
