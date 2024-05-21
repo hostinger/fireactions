@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.1](https://github.com/hostinger/fireactions/compare/v0.2.0...v0.2.1) (2024-05-21)
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.14 to 1.7.15 ([#118](https://github.com/hostinger/fireactions/issues/118)) ([74a6468](https://github.com/hostinger/fireactions/commit/74a646846365873e061c62e95e03c9ef8bb1ab55))
+* Bump github.com/containerd/containerd from 1.7.15 to 1.7.16 ([#121](https://github.com/hostinger/fireactions/issues/121)) ([99f8f4f](https://github.com/hostinger/fireactions/commit/99f8f4f1a1c191d5def4592be03bedcda63e3d81))
+* Bump github.com/containerd/containerd from 1.7.16 to 1.7.17 ([#130](https://github.com/hostinger/fireactions/issues/130)) ([81936d8](https://github.com/hostinger/fireactions/commit/81936d8c172bba450aefad29ee60df64fedd0fe1))
+* Bump github.com/containerd/nerdctl from 1.7.5 to 1.7.6 ([#122](https://github.com/hostinger/fireactions/issues/122)) ([ecedc2a](https://github.com/hostinger/fireactions/commit/ecedc2af9441cf6df3b666d746f9acda3656308e))
+* Bump github.com/gin-contrib/pprof from 1.4.0 to 1.5.0 ([#128](https://github.com/hostinger/fireactions/issues/128)) ([5edd825](https://github.com/hostinger/fireactions/commit/5edd8256f8d2a37f4e8466f875615977cd1a62f7))
+* Bump github.com/gin-contrib/requestid from 0.0.6 to 1.0.0 ([#116](https://github.com/hostinger/fireactions/issues/116)) ([6cf52f1](https://github.com/hostinger/fireactions/commit/6cf52f161b769cd8ef53d1ff77024ebe588204be))
+* Bump github.com/gin-contrib/requestid from 1.0.0 to 1.0.2 ([#123](https://github.com/hostinger/fireactions/issues/123)) ([0b73938](https://github.com/hostinger/fireactions/commit/0b7393819b23620140b770c586e2a828efa49386))
+* Bump github.com/gin-gonic/gin from 1.9.1 to 1.10.0 ([#127](https://github.com/hostinger/fireactions/issues/127)) ([204c2f7](https://github.com/hostinger/fireactions/commit/204c2f74a8385762534d741e182248020ffca943))
+* Bump github.com/prometheus/client_golang from 1.19.0 to 1.19.1 ([#129](https://github.com/hostinger/fireactions/issues/129)) ([d141f71](https://github.com/hostinger/fireactions/commit/d141f71fc01e6c0b18bbd89de42877bfcca7624d))
+* Bump golang.org/x/sync from 0.6.0 to 0.7.0 ([#117](https://github.com/hostinger/fireactions/issues/117)) ([154ed79](https://github.com/hostinger/fireactions/commit/154ed79c75570780c4d36c9291d5e3dd28605a3b))
+
 ## [0.2.0](https://github.com/hostinger/fireactions/compare/v0.1.8...v0.2.0) (2024-03-24)
 
 
