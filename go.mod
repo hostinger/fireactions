@@ -1,9 +1,8 @@
 module github.com/hostinger/fireactions
 
 go 1.22.1
-
 require (
-	github.com/cbrgm/githubevents v1.13.2
+	github.com/cbrgm/githubevents v1.15.0
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/pprof v1.5.0
 	github.com/gin-contrib/requestid v1.0.2
@@ -60,6 +59,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-github/v29 v29.0.3 // indirect
+	github.com/google/go-github/v62 v62.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
