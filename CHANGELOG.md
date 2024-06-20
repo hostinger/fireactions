@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.2](https://github.com/hostinger/fireactions/compare/v0.2.1...v0.2.2) (2024-06-20)
+
+
+### Dependencies
+
+* Bump github.com/cbrgm/githubevents from 1.13.2 to 1.15.1 ([#135](https://github.com/hostinger/fireactions/issues/135)) ([bb998f2](https://github.com/hostinger/fireactions/commit/bb998f25e520ef8920b6241f41f6eedd9b9b3dc7))
+* Bump github.com/containerd/containerd from 1.7.17 to 1.7.18 ([#134](https://github.com/hostinger/fireactions/issues/134)) ([2da4c80](https://github.com/hostinger/fireactions/commit/2da4c8065a509361983ace253642df29fa48fdbf))
+* Bump github.com/go-playground/validator/v10 ([#137](https://github.com/hostinger/fireactions/issues/137)) ([74c749c](https://github.com/hostinger/fireactions/commit/74c749cf227f59bcf374f7e69f96fabcad12ae19))
+* Bump github.com/rs/zerolog from 1.32.0 to 1.33.0 ([#132](https://github.com/hostinger/fireactions/issues/132)) ([2d493bb](https://github.com/hostinger/fireactions/commit/2d493bb9f92c0dcc8a8d844ae884c8b5c192b3ae))
+* Bump github.com/spf13/cobra from 1.8.0 to 1.8.1 ([#136](https://github.com/hostinger/fireactions/issues/136)) ([348b69b](https://github.com/hostinger/fireactions/commit/348b69bbb8915c87d370623dbcf9248690bda93e))
+
 ## [0.2.1](https://github.com/hostinger/fireactions/compare/v0.2.0...v0.2.1) (2024-05-21)
 
 
