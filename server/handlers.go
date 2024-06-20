@@ -6,7 +6,7 @@ import (
 
 	"github.com/cbrgm/githubevents/githubevents"
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v62/github"
 	"github.com/hostinger/fireactions"
 	"github.com/samber/lo"
 )

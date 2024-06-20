@@ -26,7 +26,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/sirupsen/logrus"
 
-	githubv60 "github.com/google/go-github/v60/github"
+	githubv62 "github.com/google/go-github/v62/github"
 )
 
 const (
@@ -301,7 +301,7 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 	}
 
 	client := p.github.Installation(installation.GetID())
-	jitConfig, _, err := client.Actions.GenerateOrgJITConfig(ctx, p.config.Runner.Organization, &githubv60.GenerateJITConfigRequest{
+	jitConfig, _, err := client.Actions.GenerateOrgJITConfig(ctx, p.config.Runner.Organization, &githubv62.GenerateJITConfigRequest{
 		Name:          runnerName,
 		RunnerGroupID: p.config.Runner.GroupID,
 		Labels:        p.config.Runner.Labels,

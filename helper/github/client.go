@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v62/github"
 )
 
 // Client is a wrapper around GitHub client that supports GitHub App authentication for multiple installations.
