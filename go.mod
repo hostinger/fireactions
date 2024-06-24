@@ -5,7 +5,7 @@ go 1.22.2
 toolchain go1.22.4
 
 require (
-	github.com/cbrgm/githubevents v1.15.1
+	github.com/cbrgm/githubevents v1.15.2
 	github.com/containerd/log v0.1.0
 	github.com/gin-contrib/pprof v1.5.0
 	github.com/gin-contrib/requestid v1.0.2
