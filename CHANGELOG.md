@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.3](https://github.com/hostinger/fireactions/compare/v0.2.2...v0.2.3) (2024-08-22)
+
+
+### Dependencies
+
+* Bump github.com/cbrgm/githubevents from 1.15.1 to 1.16.1 ([#146](https://github.com/hostinger/fireactions/issues/146)) ([d148200](https://github.com/hostinger/fireactions/commit/d148200914eebc33b1315c515c91b7e5bab2cf5b))
+* Bump github.com/docker/docker ([#148](https://github.com/hostinger/fireactions/issues/148)) ([4dcd871](https://github.com/hostinger/fireactions/commit/4dcd871ef3c3f6d1c6453b1befef93287fe88c55))
+* Bump github.com/prometheus/client_golang from 1.19.1 to 1.20.1 ([#152](https://github.com/hostinger/fireactions/issues/152)) ([56e0274](https://github.com/hostinger/fireactions/commit/56e027453d064f106bcff9f33b20985e09601359))
+* Bump github.com/samber/lo from 1.46.0 to 1.47.0 ([#151](https://github.com/hostinger/fireactions/issues/151)) ([d25c3f5](https://github.com/hostinger/fireactions/commit/d25c3f5ef37f79399e86cfb020567aaeb1049194))
+* Bump golang.org/x/sync from 0.7.0 to 0.8.0 ([#147](https://github.com/hostinger/fireactions/issues/147)) ([8473920](https://github.com/hostinger/fireactions/commit/8473920c00bb088ea53fd42e99dd6ccdbc17e835))
+
 ## [0.2.2](https://github.com/hostinger/fireactions/compare/v0.2.1...v0.2.2) (2024-06-20)
 
 
