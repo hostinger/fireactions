@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/leases"
 	"github.com/containerd/containerd/mount"
-	"github.com/containerd/containerd/reference/docker"
+	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/containerd/nerdctl/pkg/imgutil/dockerconfigresolver"
+	"github.com/distribution/reference"
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/hostinger/fireactions/helper/deepcopy"
@@ -409,12 +409,12 @@ func (p *Pool) pullImage(ctx context.Context, ref string) (containerd.Image, err
 		return image, nil
 	}
 
-	dockerRef, err := docker.ParseDockerRef(ref)
+	dockerRef, err := reference.ParseDockerRef(ref)
 	if err != nil {
 		return nil, fmt.Errorf("parsing image ref: %w", err)
 	}
 
-	refDomain := docker.Domain(dockerRef)
+	refDomain := reference.Domain(dockerRef)
 	resolver, err := dockerconfigresolver.New(ctx, refDomain)
 	if err != nil {
 		return nil, fmt.Errorf("creating docker config resolver: %w", err)
