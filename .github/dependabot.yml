@@ -2,11 +2,18 @@
 version: 2
 updates:
 - package-ecosystem: "docker"
-  directory: "/"
+  directories:
+    - "*/**"
+  labels:
+    - "dependencies"
+    - "docker"
+  reviewers:
+    - "hostinger/cloudops-team"
   schedule:
-    interval: weekly
+    interval: "daily"
   commit-message:
     prefix: "deps"
+
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
