@@ -5,7 +5,7 @@ go 1.22.2
 toolchain go1.22.4
 
 require (
-	github.com/cbrgm/githubevents v1.16.1
+	github.com/cbrgm/githubevents v1.17.1
 	github.com/containerd/errdefs v0.1.0
 	github.com/containerd/log v0.1.0
 	github.com/distribution/reference v0.6.0
@@ -65,6 +65,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-github/v29 v29.0.3 // indirect
+	github.com/google/go-github/v64 v64.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
