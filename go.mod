@@ -80,7 +80,8 @@ require (
 	github.com/moby/sys/mountinfo v0.7.1 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
-	github.com/moby/sys/user v0.1.0 // indirect
+	github.com/moby/sys/user v0.3.0 // indirect
+	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -112,7 +113,7 @@ require (
 require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/bytedance/sonic v1.11.6 // indirect
-	github.com/containerd/containerd v1.7.20
+	github.com/containerd/containerd v1.7.21
 	github.com/containerd/nerdctl v1.7.6
 	github.com/firecracker-microvm/firecracker-go-sdk v1.0.0
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
