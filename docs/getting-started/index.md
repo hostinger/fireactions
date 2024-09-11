@@ -29,6 +29,4 @@ There are a few requirements to run Fireactions:
 
 ## Quickstart
 
-There are two main ways of installing Fireactions: [manual installation](./manual-installation.md) and [Ansible installation](./ansible-installation.md).
-
-We recommend using the Docker installation method, as it is the easiest and most convenient way to get started.
+To install Fireactions, see the [installation guide](installation.md).
