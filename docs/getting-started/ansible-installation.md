@@ -1,1 +1,0 @@
-# Ansible installation

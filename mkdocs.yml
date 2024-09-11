@@ -21,8 +21,7 @@ nav:
       - Overview: "index.md"
   - Getting Started:
       - Intro: "getting-started/index.md"
-      - Installing with Ansible: "getting-started/ansible-installation.md"
-      - Installing manually: "getting-started/manual-installation.md"
+      - Installation: "getting-started/installation.md"
       - Upgrading: "getting-started/upgrading.md"
   - User Guide:
       - Configuration: "user-guide/configuration.md"
