@@ -6,7 +6,7 @@ toolchain go1.22.4
 
 require (
 	github.com/cbrgm/githubevents v1.16.1
-	github.com/containerd/errdefs v0.1.0
+	github.com/containerd/errdefs v0.2.0
 	github.com/containerd/log v0.1.0
 	github.com/distribution/reference v0.6.0
 	github.com/gin-contrib/pprof v1.5.0
