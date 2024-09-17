@@ -29,7 +29,8 @@ nav:
   - API Guide: "api/index.md"
   - SDK Guide:
       - "SDK": "sdk/index.md"
-  - Examples: "examples/index.md"
+  - Examples:
+      - Creating custom image for Firecracker VMs: "examples/custom-image.md"
   - FAQ: "faq.md"
 
 markdown_extensions:
