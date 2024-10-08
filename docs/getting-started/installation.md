@@ -115,3 +115,5 @@ $ systemctl status fireactions
      Memory: 87.8G
         CPU: 5d 6h 21min 36.143s
 ```
+
+At this point, Fireactions should be up and running. You can now proceed to [running your first build](../getting-started/running-the-first-build.md).
