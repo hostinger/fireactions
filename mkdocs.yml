@@ -22,6 +22,7 @@ nav:
   - Getting Started:
       - Intro: "getting-started/index.md"
       - Installation: "getting-started/installation.md"
+      - Running the first build: "getting-started/running-the-first-build.md"
       - Upgrading: "getting-started/upgrading.md"
   - User Guide:
       - Configuration: "user-guide/configuration.md"
