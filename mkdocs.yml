@@ -32,6 +32,7 @@ nav:
       - "SDK": "sdk/index.md"
   - Examples:
       - Creating custom image for Firecracker VMs: "examples/custom-image.md"
+      - Setting up a Docker registry mirror: "examples/docker-registry-mirror.md"
   - FAQ: "faq.md"
 
 markdown_extensions:
