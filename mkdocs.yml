@@ -21,6 +21,7 @@ nav:
       - Overview: "index.md"
   - Getting Started:
       - Intro: "getting-started/index.md"
+      - Concepts: "getting-started/concepts.md"
       - Installation: "getting-started/installation.md"
       - Running the first build: "getting-started/running-the-first-build.md"
       - Upgrading: "getting-started/upgrading.md"
