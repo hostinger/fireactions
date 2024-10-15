@@ -5,7 +5,7 @@ go 1.22.2
 toolchain go1.22.4
 
 require (
-	github.com/containerd/errdefs v0.1.0
+	github.com/containerd/errdefs v0.3.0
 	github.com/containerd/log v0.1.0
 	github.com/distribution/reference v0.6.0
 	github.com/gin-contrib/pprof v1.5.0
@@ -111,7 +111,7 @@ require (
 require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/bytedance/sonic v1.12.2 // indirect
-	github.com/containerd/containerd v1.7.22
+	github.com/containerd/containerd v1.7.23
 	github.com/containerd/nerdctl v1.7.7
 	github.com/firecracker-microvm/firecracker-go-sdk v1.0.0
 	github.com/gabriel-vasile/mimetype v1.4.5 // indirect
