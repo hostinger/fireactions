@@ -5,7 +5,6 @@ go 1.22.2
 toolchain go1.22.4
 
 require (
-	github.com/cbrgm/githubevents v1.16.1
 	github.com/containerd/errdefs v0.1.0
 	github.com/containerd/log v0.1.0
 	github.com/distribution/reference v0.6.0
@@ -15,7 +14,6 @@ require (
 	github.com/google/go-github/v63 v63.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/rs/zerolog v1.33.0
-	github.com/samber/lo v1.47.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.4.0

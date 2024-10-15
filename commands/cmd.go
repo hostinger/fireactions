@@ -36,7 +36,7 @@ func New() *cobra.Command {
 		return nil
 	})
 
-	cmd.AddCommand(newRestartCmd())
+	cmd.AddCommand(newReloadCmd())
 
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Main application commands:"})
 	cmd.AddCommand(newServerCmd())

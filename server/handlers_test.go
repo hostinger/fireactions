@@ -315,18 +315,18 @@ func TestResumePoolHandler(t *testing.T) {
 	})
 }
 
-func TestRestartHandler(t *testing.T) {
+func TestReloadHandler(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	t.Run("Success", func(t *testing.T) {
 		m := newMockPoolManager(mockCtrl)
-		m.EXPECT().Restart(gomock.Any()).Return(nil)
+		m.EXPECT().Reload(gomock.Any()).Return(nil)
 
 		router := gin.New()
-		router.POST("/api/v1/restart", restartHandler(m))
+		router.POST("/api/v1/reload", reloadHandler(m))
 
-		req, err := http.NewRequest("POST", "/api/v1/restart", nil)
+		req, err := http.NewRequest("POST", "/api/v1/reload", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -339,7 +339,7 @@ func TestRestartHandler(t *testing.T) {
 			t.Errorf("Expected status code %d, but got %d", http.StatusOK, rec.Code)
 		}
 
-		expectedBody := `{"message":"Pools restarted successfully"}`
+		expectedBody := `{"message":"Pools reloaded successfully"}`
 		if rec.Body.String() != expectedBody {
 			t.Errorf("Expected response body %s, but got %s", expectedBody, rec.Body.String())
 		}
@@ -347,12 +347,12 @@ func TestRestartHandler(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		m := newMockPoolManager(mockCtrl)
-		m.EXPECT().Restart(gomock.Any()).Return(errors.New("error"))
+		m.EXPECT().Reload(gomock.Any()).Return(errors.New("error"))
 
 		router := gin.New()
-		router.POST("/api/v1/restart", restartHandler(m))
+		router.POST("/api/v1/reload", reloadHandler(m))
 
-		req, err := http.NewRequest("POST", "/api/v1/restart", nil)
+		req, err := http.NewRequest("POST", "/api/v1/reload", nil)
 		if err != nil {
 			t.Fatal(err)
 		}

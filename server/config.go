@@ -30,7 +30,6 @@ type MetricsConfig struct {
 type GitHubConfig struct {
 	AppPrivateKey string `yaml:"app_private_key" validate:"required"`
 	AppID         int64  `yaml:"app_id" validate:"required"`
-	WebhookSecret string `yaml:"webhook_secret" validate:""`
 }
 
 type RunnerConfig struct {
@@ -62,7 +61,7 @@ func DefaultConfig() *Config {
 		Metrics:          &MetricsConfig{Enabled: true, Address: ":8081"},
 		BasicAuthEnabled: false,
 		BasicAuthUsers:   map[string]string{},
-		GitHub:           &GitHubConfig{AppPrivateKey: "", AppID: 0, WebhookSecret: ""},
+		GitHub:           &GitHubConfig{AppPrivateKey: "", AppID: 0},
 		Pools:            []*PoolConfig{},
 		LogLevel:         "debug",
 		Debug:            false,

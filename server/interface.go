@@ -9,5 +9,5 @@ type PoolManager interface {
 	ScalePool(ctx context.Context, id string, delta int) error
 	PausePool(ctx context.Context, id string) error
 	ResumePool(ctx context.Context, id string) error
-	Restart(ctx context.Context) error
+	Reload(ctx context.Context) error
 }

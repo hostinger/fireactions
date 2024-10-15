@@ -68,13 +68,6 @@ github:
   #
   # Default: 0
   app_id: 12345
-  #
-  # The secret used to sign incoming webhooks. This is used to verify that the webhook is from GitHub.
-  # Not required, but recommended.
-  #
-  # Default: ""
-  #
-  webhook_secret: secret
 
 #
 # Pools configuration.
