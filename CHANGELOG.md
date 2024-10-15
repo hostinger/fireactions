@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.4](https://github.com/hostinger/fireactions/compare/v0.2.3...v0.2.4) (2024-10-15)
+
+
+### Bug Fixes
+
+* Rename restart handler to reload ([#179](https://github.com/hostinger/fireactions/issues/179)) ([b7c2a1a](https://github.com/hostinger/fireactions/commit/b7c2a1a19d51a5292c66005cb5646405d1cdbcfb))
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.20 to 1.7.21 ([#159](https://github.com/hostinger/fireactions/issues/159)) ([1169cf4](https://github.com/hostinger/fireactions/commit/1169cf41ce7b71692fd0da59f522958e912bb699))
+* Bump github.com/containerd/containerd from 1.7.21 to 1.7.22 ([#161](https://github.com/hostinger/fireactions/issues/161)) ([070ef0f](https://github.com/hostinger/fireactions/commit/070ef0f2d591b5264e14015f3568563bdfc8651a))
+* Bump github.com/containerd/containerd from 1.7.22 to 1.7.23 ([#175](https://github.com/hostinger/fireactions/issues/175)) ([4578edf](https://github.com/hostinger/fireactions/commit/4578edff9381e3e54edc256af58b950b752da6c1))
+* Bump github.com/containerd/nerdctl from 1.7.6 to 1.7.7 ([#169](https://github.com/hostinger/fireactions/issues/169)) ([a26c704](https://github.com/hostinger/fireactions/commit/a26c7042f33fd7a9035204f4a5b9a169e1af82a4))
+* Bump github.com/gin-contrib/requestid from 1.0.2 to 1.0.3 ([#158](https://github.com/hostinger/fireactions/issues/158)) ([02bdfeb](https://github.com/hostinger/fireactions/commit/02bdfeb6e5df8eb55a4cd38b20547602a3afc248))
+* Bump github.com/go-playground/validator/v10 ([#162](https://github.com/hostinger/fireactions/issues/162)) ([2b8699d](https://github.com/hostinger/fireactions/commit/2b8699d6af513775c0fa1c35226e8dc57737e860))
+* Bump github.com/prometheus/client_golang from 1.20.1 to 1.20.2 ([#154](https://github.com/hostinger/fireactions/issues/154)) ([d062a6c](https://github.com/hostinger/fireactions/commit/d062a6c2b6938f7244cede9f3bb063abc591ff47))
+* Bump github.com/prometheus/client_golang from 1.20.2 to 1.20.3 ([#160](https://github.com/hostinger/fireactions/issues/160)) ([0c444ab](https://github.com/hostinger/fireactions/commit/0c444abf8a7ff2ec6e20159dec7e1297fc36574d))
+* Bump github.com/prometheus/client_golang from 1.20.3 to 1.20.4 ([#171](https://github.com/hostinger/fireactions/issues/171)) ([57e0d4a](https://github.com/hostinger/fireactions/commit/57e0d4ac7d51ed19e9fcbb7d1d077e59ebd7bcf5))
+
 ## [0.2.3](https://github.com/hostinger/fireactions/compare/v0.2.2...v0.2.3) (2024-08-22)
 
 
