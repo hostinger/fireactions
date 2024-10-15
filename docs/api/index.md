@@ -77,3 +77,17 @@ Curl example:
 ```bash
 curl -X POST -H "X-API-Key: <API_KEY>" http://localhost:8080/api/v1/pools/my-pool/resume
 ```
+
+### Reload the configuration
+
+This endpoint reloads the configuration from disk.
+
+```http
+POST /api/v1/reload
+```
+
+Curl example:
+
+```bash
+curl -X POST -H "X-API-Key: <API_KEY>" http://localhost:8080/api/v1/reload
+```

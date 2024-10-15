@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClient_Restart(t *testing.T) {
+func TestClient_Reload(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" || r.URL.Path != "/api/v1/restart" {
+		if r.Method != "POST" || r.URL.Path != "/api/v1/reload" {
 			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 
@@ -21,7 +21,7 @@ func TestClient_Restart(t *testing.T) {
 
 	client := NewClient(WithEndpoint(server.URL))
 
-	_, err := client.Restart(context.Background())
+	_, err := client.Reload(context.Background())
 
 	assert.NoError(t, err)
 }

@@ -94,7 +94,6 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		s.metricsServer = metricsServer
 	}
 
-	handler.POST("/webhook/github", webhookGitHubHandler(s, config.GitHub.WebhookSecret))
 	handler.GET("/healthz", getHealthzHandler())
 	handler.GET("/version", getVersionHandler())
 
@@ -114,7 +113,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		v1.GET("/pools/:id", getPoolHandler(s))
 		v1.POST("/pools/:id/resume", resumePoolHandler(s))
 		v1.POST("/pools/:id/pause", pausePoolHandler(s))
-		v1.POST("/restart", restartHandler(s))
+		v1.POST("/reload", reloadHandler(s))
 	}
 
 	return s, nil
@@ -257,11 +256,11 @@ func (s *Server) ResumePool(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Server) Restart(ctx context.Context) error {
+func (s *Server) Reload(ctx context.Context) error {
 	s.l.Lock()
 	defer s.l.Unlock()
 
-	s.logger.Info().Msgf("Restarting server configuration")
+	s.logger.Info().Msgf("Reloading server configuration")
 	err := s.config.Load()
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)

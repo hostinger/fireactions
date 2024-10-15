@@ -1,14 +1,10 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
-	"github.com/cbrgm/githubevents/githubevents"
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-github/v63/github"
 	"github.com/hostinger/fireactions"
-	"github.com/samber/lo"
 )
 
 func getHealthzHandler() gin.HandlerFunc {
@@ -98,46 +94,14 @@ func resumePoolHandler(p PoolManager) gin.HandlerFunc {
 	return f
 }
 
-func restartHandler(p PoolManager) gin.HandlerFunc {
+func reloadHandler(p PoolManager) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
-		if err := p.Restart(ctx); err != nil {
+		if err := p.Reload(ctx); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"message": "Pools restarted successfully"})
-	}
-
-	return f
-}
-
-func webhookGitHubHandler(p PoolManager, secret string) gin.HandlerFunc {
-	ge := githubevents.New(secret)
-	ge.OnWorkflowJobEventQueued(func(deliveryID, eventName string, event *github.WorkflowJobEvent) error {
-		pools, err := p.ListPools(context.Background())
-		if err != nil {
-			return err
-		}
-
-		for _, pool := range pools {
-			if !lo.Every(pool.config.Runner.Labels, event.WorkflowJob.Labels) {
-				continue
-			}
-
-			return pool.Scale(context.Background(), 1)
-		}
-
-		return nil
-	})
-
-	f := func(ctx *gin.Context) {
-		err := ge.HandleEventRequest(ctx.Request)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		ctx.Status(http.StatusOK)
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pools reloaded successfully"})
 	}
 
 	return f

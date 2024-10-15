@@ -16,7 +16,6 @@ github:
   app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----
   app_id: 12345
-  webhook_secret: secret
 
 pools:
 - name: fireactions-2vcpu-2gb

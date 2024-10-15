@@ -74,18 +74,18 @@ func (mr *mockPoolManagerMockRecorder) PausePool(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PausePool", reflect.TypeOf((*mockPoolManager)(nil).PausePool), ctx, id)
 }
 
-// Restart mocks base method.
-func (m *mockPoolManager) Restart(ctx context.Context) error {
+// Reload mocks base method.
+func (m *mockPoolManager) Reload(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Restart", ctx)
+	ret := m.ctrl.Call(m, "Reload", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Restart indicates an expected call of Restart.
-func (mr *mockPoolManagerMockRecorder) Restart(ctx any) *gomock.Call {
+// Reload indicates an expected call of Reload.
+func (mr *mockPoolManagerMockRecorder) Reload(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restart", reflect.TypeOf((*mockPoolManager)(nil).Restart), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reload", reflect.TypeOf((*mockPoolManager)(nil).Reload), ctx)
 }
 
 // ResumePool mocks base method.

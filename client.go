@@ -285,9 +285,9 @@ func (c *Client) ScalePool(ctx context.Context, id string) (*Response, error) {
 	return c.do(req, nil)
 }
 
-// Restart restarts the Fireactions server.
-func (c *Client) Restart(ctx context.Context) (*Response, error) {
-	req, err := c.newRequestWithContext(ctx, "POST", "/api/v1/restart", nil)
+// Reload reloads the Fireactions server.
+func (c *Client) Reload(ctx context.Context) (*Response, error) {
+	req, err := c.newRequestWithContext(ctx, "POST", "/api/v1/reload", nil)
 	if err != nil {
 		return nil, err
 	}
