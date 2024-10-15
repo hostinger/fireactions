@@ -19,3 +19,9 @@ The following metrics are available, excluding the default Prometheus metrics:
 | `fireactions_pool_status`                | Status of a pool. 0 is paused, 1 is active    | `pool` (the pool name)   |
 | `fireactions_pool_total`                 | Total number of pools                         | No labels                |
 | `fireactions_server_up`                  | Whether the server is up. 0 is down, 1 is up  | No labels                |
+
+## Grafana Dashboard
+
+Example Grafana dashboard for vizualisation of Fireactions metrics:
+
+![Grafana Dashboard](../images/grafana-dashboard.png)
