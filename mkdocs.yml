@@ -28,8 +28,8 @@ nav:
       - Configuration: "user-guide/configuration.md"
       - Monitoring: "user-guide/monitoring.md"
   - API Guide: "api/index.md"
-  - SDK Guide:
-      - "SDK": "sdk/index.md"
+  - SDK Guide: "sdk/index.md"
+  - CLI Guide: "cli/index.md"
   - Examples:
       - Creating custom image for Firecracker VMs: "examples/custom-image.md"
       - Setting up a Docker registry mirror: "examples/docker-registry-mirror.md"
