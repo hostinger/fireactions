@@ -19,15 +19,16 @@ theme:
 nav:
   - Home:
       - Overview: "index.md"
-  - Getting Started:
-      - Intro: "getting-started/index.md"
-      - Concepts: "getting-started/concepts.md"
-      - Installation: "getting-started/installation.md"
-      - Running the first build: "getting-started/running-the-first-build.md"
-      - Upgrading: "getting-started/upgrading.md"
   - User Guide:
+      - Intro: "user-guide/index.md"
       - Configuration: "user-guide/configuration.md"
+      - Concepts: "user-guide/concepts.md"
+      - Installation: "user-guide/installation.md"
+      - Running the first build: "user-guide/running-the-first-build.md"
+      - Images: "user-guide/images.md"
       - Monitoring: "user-guide/monitoring.md"
+      - Troubleshooting: "user-guide/troubleshooting.md"
+      - Upgrading: "user-guide/upgrading.md"
   - API Guide: "api/index.md"
   - SDK Guide: "sdk/index.md"
   - CLI Guide: "cli/index.md"

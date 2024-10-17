@@ -1,4 +1,4 @@
-# Getting started
+# Intro
 
 Putting it simply, Fireactions is an orchestrator for GitHub runners.
 

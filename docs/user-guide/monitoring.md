@@ -2,7 +2,7 @@
 
 Fireactions provides Prometheus metrics for monitoring.
 
-The metrics can be enabled by setting the `metrics.enabled` configuration option to `true`. The metrics are exposed on the `/metrics` endpoint.
+The metrics can be enabled by setting the `metrics.enabled` configuration option to `true`. The metrics are exposed on the `/metrics` endpoint on the address and port specified in the `metrics.address` and `metrics.port` configuration options.
 
 ## Metrics
 
