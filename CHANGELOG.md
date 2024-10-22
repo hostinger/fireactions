@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5](https://github.com/hostinger/fireactions/compare/v0.2.4...v0.2.5) (2024-10-22)
+
+
+### Dependencies
+
+* Bump github.com/prometheus/client_golang from 1.20.4 to 1.20.5 ([#187](https://github.com/hostinger/fireactions/issues/187)) ([67fc624](https://github.com/hostinger/fireactions/commit/67fc624401f432646428b7378b16034a6d5e5e11))
+* Bump go.uber.org/mock from 0.4.0 to 0.5.0 ([#188](https://github.com/hostinger/fireactions/issues/188)) ([1764e95](https://github.com/hostinger/fireactions/commit/1764e957d92978e748863f17d62ac268d961fb05))
+
 ## [0.2.4](https://github.com/hostinger/fireactions/compare/v0.2.3...v0.2.4) (2024-10-15)
 
 
