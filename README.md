@@ -38,7 +38,7 @@ Several key features:
 
 - **Customizable**
 
-  Define job labels and customize virtual machine resources to fit Your needs. See [Configuration](./docs/configuration.md) for more information.
+  Define job labels and customize virtual machine resources to fit Your needs. See [Configuration](./docs/user-guide/configuration.md) for more information.
 
 ## Quickstart
 
