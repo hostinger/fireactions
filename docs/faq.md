@@ -14,4 +14,4 @@ Fireactions can be run on any regular bare metal server or a VM that supports ne
 
 ## Is there GPU support in Fireactions?
 
-Currently, Fireactions **does not support GPU workloads**. However, we are considering on adding support in the future.
+Currently, Fireactions **does not support GPU workloads**. Fireactions uses [Firecracker](https://firecracker-microvm.github.io/) under the hood and it does not have GPU support, but it is in the [roadmap](https://github.com/firecracker-microvm/firecracker/discussions/4845). We are actively tracking this feature and will add support for GPU workloads as soon as it is available.
