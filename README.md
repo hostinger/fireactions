@@ -42,17 +42,36 @@ Several key features:
 
 ## Quickstart
 
+1. Create and install a GitHub App (see [Creating a GitHub App](https://docs.github.com/en/developers/apps/creating-a-github-app)) with the following permissions:
+
+    - Read access to metadata
+    - Read and write access to actions and organization self hosted runners
+
+2. Note down the GitHub App ID and generate a private key, save it to a file on the host machine, e.g. `/root/private-key.pem`.
+3. Download and run the installation script:
+
+    ```bash
+    curl -sSL https://raw.githubusercontent.com/hostinger/fireactions/main/install.sh -o install.sh
+    chmod +x install.sh
+    ./install.sh \
+      --github-app-id=<GITHUB_APP_ID> \
+      --github-app-key-file="/root/private-key.pem" \
+      --github-organization="<GITHUB_ORGANIZATION>"
+      --containerd-snapshotter-device="<DEVICE>"
+    ```
+
+    Replace `<DEVICE>`, `<GITHUB_APP_ID>`, and `<GITHUB_ORGANIZATION>` with the appropriate values.
+
+This creates a default configuration with a single pool named `default` with a single runner. See [Configuration](./docs/user-guide/configuration.md) for more information on how to customize Fireactions.
+
 To start using self-hosted GitHub runners, add the label to your workflow jobs:
 
 ```yaml
 <...>
 runs-on:
 - self-hosted
-# e.g. fireactions-2vcpu-4gb
-- <JOB_LABEL>
+- fireactions
 ```
-
-See [Configuration](./docs/user-guide/configuration.md) for more information on how to configure job labels.
 
 ## Contributing
 
