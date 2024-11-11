@@ -29,6 +29,7 @@ nav:
       - Monitoring: "user-guide/monitoring.md"
       - Troubleshooting: "user-guide/troubleshooting.md"
       - Upgrading: "user-guide/upgrading.md"
+      - Support Matrix: "user-guide/support-matrix.md"
   - API Guide: "api/index.md"
   - SDK Guide: "sdk/index.md"
   - CLI Guide: "cli/index.md"
