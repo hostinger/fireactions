@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6](https://github.com/hostinger/fireactions/compare/v0.2.5...v0.2.6) (2024-11-13)
+
+
+### Dependencies
+
+* Bump github.com/containerd/errdefs from 0.3.0 to 1.0.0 ([#191](https://github.com/hostinger/fireactions/issues/191)) ([8773609](https://github.com/hostinger/fireactions/commit/8773609b614f4482edd4c835b374492e10216387))
+* Bump golang.org/x/sync from 0.8.0 to 0.9.0 ([#201](https://github.com/hostinger/fireactions/issues/201)) ([72b9ddd](https://github.com/hostinger/fireactions/commit/72b9ddde14e8102cbb48aeff83eb9b429de6bce0))
+
 ## [0.2.5](https://github.com/hostinger/fireactions/compare/v0.2.4...v0.2.5) (2024-10-22)
 
 
