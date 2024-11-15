@@ -37,7 +37,7 @@ nav:
   - Examples:
       - Creating custom image for Firecracker VMs: "examples/custom-image.md"
       - Setting up a Docker registry mirror: "examples/docker-registry-mirror.md"
-      - Debugging workflows: "examples/debugging-workflows"
+      - Debugging workflows: "examples/debugging-workflows.md"
   - FAQ: "faq.md"
 
 markdown_extensions:
@@ -45,6 +45,7 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+  - admonition
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
