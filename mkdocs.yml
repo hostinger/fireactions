@@ -37,6 +37,7 @@ nav:
   - Examples:
       - Creating custom image for Firecracker VMs: "examples/custom-image.md"
       - Setting up a Docker registry mirror: "examples/docker-registry-mirror.md"
+      - Debugging workflows: "examples/debugging-workflows"
   - FAQ: "faq.md"
 
 markdown_extensions:
