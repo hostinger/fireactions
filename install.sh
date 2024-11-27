@@ -339,37 +339,64 @@ main()
         shift
         GITHUB_APP_ID=$1
         ;;
+      --github-app-id=* )
+        GITHUB_APP_ID="${1#*=}"
+        ;;
       --github-app-key-file )
         shift
         GITHUB_APP_PRIVATE_KEY_FILE=$1
+        ;;
+      --github-app-key-file=* )
+        GITHUB_APP_PRIVATE_KEY_FILE="${1#*=}"
         ;;
       --github-organization )
         shift
         GITHUB_ORGANIZATION=$1
         ;;
+      --github-organization=* )
+        GITHUB_ORGANIZATION="${1#*=}"
+        ;;
       --fireactions-version )
         shift
         FIREACTIONS_VERSION=$1
+        ;;
+      --fireactions-version=* )
+        FIREACTIONS_VERSION="${1#*=}"
         ;;
       --firecracker-version )
         shift
         FIRECRACKER_VERSION=$1
         ;;
+      --firecracker-version=* )
+        FIRECRACKER_VERSION="${1#*=}"
+        ;;
       --kernel-version )
         shift
         KERNEL_VERSION=$1
         ;;
+      --kernel-version=* )
+        KERNEL_VERSION="${1#*=}"
+        ;;
       --containerd-snapshotter-device )
         shift
-        export CONTAINERD_SNAPSHOTTER_DEVICE=$1
+        CONTAINERD_SNAPSHOTTER_DEVICE=$1
+        ;;
+      --containerd-snapshotter-device=* )
+        export CONTAINERD_SNAPSHOTTER_DEVICE="${1#*=}"
         ;;
       --containerd-version )
         shift
         CONTAINERD_VERSION=$1
         ;;
+      --containerd-version=* )
+        CONTAINERD_VERSION="${1#*=}"
+        ;;
       --cni-version )
         shift
         CNI_VERSION=$1
+        ;;
+      --cni-version=* )
+        CNI_VERSION="${1#*=}"
         ;;
       -h | --help )
         usage
@@ -393,6 +420,10 @@ main()
     usage
     exit 1
   else
+    if [ ! -f "$GITHUB_APP_PRIVATE_KEY_FILE" ]; then
+      print_error "GitHub App private key file not found: $GITHUB_APP_PRIVATE_KEY_FILE"
+      exit 1
+    fi
     export GITHUB_APP_PRIVATE_KEY=$(cat $GITHUB_APP_PRIVATE_KEY_FILE | sed '1!s/^/    /')
   fi
 
@@ -424,6 +455,11 @@ main()
       print_error "Unsupported architecture: $(uname -m)"
       exit 1
   esac
+
+  if [[ -e /usr/local/bin/fireactions ]]; then
+    echo "Fireactions is already installed. Exiting..."
+    exit 1
+  fi
 
   echo "Installing Fireactions v$FIREACTIONS_VERSION..."
 
