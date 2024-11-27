@@ -71,8 +71,12 @@ func TestPoolsScaleCommand_Success(t *testing.T) {
 	client = mockClient
 
 	cmd := newPoolsScaleCmd()
-	cmd.Flags().Set("replicas", "1")
-	err := newPoolsScaleCmd().RunE(cmd, []string{"pool-name", "1"})
+	err := cmd.Flags().Set("replicas", "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = newPoolsScaleCmd().RunE(cmd, []string{"pool-name", "1"})
 	assert.Nil(t, err)
 }
 
@@ -85,8 +89,12 @@ func TestPoolsScaleCommand_Failure(t *testing.T) {
 	client = mockClient
 
 	cmd := newPoolsScaleCmd()
-	cmd.Flags().Set("replicas", "1")
-	err := cmd.RunE(cmd, []string{"pool-name"})
+	err := cmd.Flags().Set("replicas", "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = cmd.RunE(cmd, []string{"pool-name"})
 	assert.Error(t, err)
 }
 

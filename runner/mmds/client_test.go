@@ -24,11 +24,17 @@ func TestClient_GetMetadata_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPut && r.URL.Path == "/latest/api/token" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("mock-token"))
+			_, err := w.Write([]byte("mock-token"))
+			if err != nil {
+				t.Fatal(err)
+			}
 		} else if r.Method == http.MethodGet && r.URL.Path == "/latest/meta-data/test" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"key": "value"}`))
+			_, err := w.Write([]byte(`{"key": "value"}`))
+			if err != nil {
+				t.Fatal(err)
+			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -51,7 +57,10 @@ func TestClient_GetMetadata_Unauthorized(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPut && r.URL.Path == "/latest/api/token" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("mock-token"))
+			_, err := w.Write([]byte("mock-token"))
+			if err != nil {
+				t.Fatal(err)
+			}
 		} else if r.Method == http.MethodGet && r.URL.Path == "/latest/meta-data/test" {
 			w.WriteHeader(http.StatusUnauthorized)
 		} else {
@@ -70,7 +79,10 @@ func TestClient_GetMetadata_Unknown(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPut && r.URL.Path == "/latest/api/token" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("mock-token"))
+			_, err := w.Write([]byte("mock-token"))
+			if err != nil {
+				t.Fatal(err)
+			}
 		} else if r.Method == http.MethodGet && r.URL.Path == "/latest/meta-data/test" {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {

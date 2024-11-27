@@ -21,10 +21,13 @@ const (
 // Runner represents a virtual machine agent that's responsible for running
 // the actual GitHub runner.
 type Runner struct {
-	config string
-	stdout io.Writer
-	stderr io.Writer
-	logger *zerolog.Logger
+	config    string
+	directory string
+	owner     string
+	group     string
+	stdout    io.Writer
+	stderr    io.Writer
+	logger    *zerolog.Logger
 }
 
 // Opt is a functional option for Runner.
@@ -57,14 +60,44 @@ func WithLogger(logger *zerolog.Logger) Opt {
 	return f
 }
 
+// WithDirectory sets the directory where the GitHub runner is located.
+func WithDirectory(dir string) Opt {
+	f := func(r *Runner) {
+		r.directory = dir
+	}
+
+	return f
+}
+
+// WithOwner sets the owner of the GitHub runner.
+func WithOwner(owner string) Opt {
+	f := func(r *Runner) {
+		r.owner = owner
+	}
+
+	return f
+}
+
+// WithGroup sets the group of the GitHub runner.
+func WithGroup(group string) Opt {
+	f := func(r *Runner) {
+		r.group = group
+	}
+
+	return f
+}
+
 // New creates a new Runner.
 func New(config string, opts ...Opt) *Runner {
 	logger := zerolog.Nop()
 	runner := &Runner{
-		config: config,
-		stdout: os.Stdout,
-		stderr: os.Stderr,
-		logger: &logger,
+		config:    config,
+		directory: defaultDir,
+		owner:     "runner",
+		group:     "docker",
+		stdout:    os.Stdout,
+		stderr:    os.Stderr,
+		logger:    &logger,
 	}
 
 	for _, opt := range opts {
@@ -85,7 +118,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	runCmd.Stderr = r.stderr
 	runCmd.Dir = defaultDir
 
-	owner, err := user.Lookup("runner")
+	owner, err := user.Lookup(r.owner)
 	if err != nil {
 		return fmt.Errorf("lookup: %w", err)
 	}
@@ -95,7 +128,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		return fmt.Errorf("owner: uid: atoi: %w", err)
 	}
 
-	group, err := user.LookupGroup("docker")
+	group, err := user.LookupGroup(r.group)
 	if err != nil {
 		return fmt.Errorf("group: lookup: %w", err)
 	}
