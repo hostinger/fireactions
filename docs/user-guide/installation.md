@@ -28,6 +28,7 @@ fireactions-server-1 ansible_host=<IP_ADDRESS> ansible_user=<SSH_USER>
   hosts:
   - all
   become: yes
+  roles:
   - role: hostinger.fireactions.fireactions
     vars:
       fireactions_version: 0.2.3
@@ -39,24 +40,29 @@ fireactions-server-1 ansible_host=<IP_ADDRESS> ansible_user=<SSH_USER>
         github:
           app_id: <APP_ID>
           app_private_key: |
-            <APP_PRIVATE_KEY>
+            -----BEGIN RSA PRIVATE KEY-----
+            <PRIVATE_KEY_HERE>
+            -----END RSA PRIVATE KEY-----
         debug: true
         pools:
-        - name: example
-          max_runners: 10
-          min_runners: 1
+        - name: myPool
+          max_runners: 100
+          min_runners: 10
           runner:
-            name: example
-            image: <IMAGE>:<IMAGE_TAG>
+            name: myRunnerGroup
+            # ref: https://github.com/hostinger/fireactions-images
+            image: ghcr.io/hostinger/fireactions-images/ubuntu20.04:latest
             image_pull_policy: IfNotPresent
             group_id: 1
-            organization: hostinger
+            organization: myorganization
             labels:
             - self-hosted
             - fireactions
           firecracker:
             binary_path: firecracker
-            kernel_image_path: /usr/local/share/firecracker/vmlinux.bin
+            # obtained from https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/v1.10/x86_64/vmlinux-5.10.223
+            # ref: https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md#getting-a-rootfs-and-guest-kernel-image
+            kernel_image_path: /var/lib/fireactions/vmlinux-5.10.223
             kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
             machine_config:
               mem_size_mib: 1024
