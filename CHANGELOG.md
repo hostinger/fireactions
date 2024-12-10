@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.7](https://github.com/hostinger/fireactions/compare/v0.2.6...v0.2.7) (2024-12-10)
+
+
+### Bug Fixes
+
+* Handle install.sh options with equal sign ([4d2da80](https://github.com/hostinger/fireactions/commit/4d2da8038dfc1851893ee09dd86895a1799fbcb3))
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.23 to 1.7.24 ([#209](https://github.com/hostinger/fireactions/issues/209)) ([108aa2e](https://github.com/hostinger/fireactions/commit/108aa2e9301f210f4390fc51e74217fe41c13c16))
+* Bump github.com/gin-contrib/pprof from 1.5.0 to 1.5.1 ([#206](https://github.com/hostinger/fireactions/issues/206)) ([7aabac4](https://github.com/hostinger/fireactions/commit/7aabac4d5185b5558e08a7e3b36b4f39989a0006))
+* Bump github.com/go-playground/validator/v10 from 10.22.1 to 10.23.0 ([#205](https://github.com/hostinger/fireactions/issues/205)) ([95966a2](https://github.com/hostinger/fireactions/commit/95966a2a3891b1e9b835164bc35fd1e04612ce22))
+* Bump github.com/stretchr/testify from 1.9.0 to 1.10.0 ([#210](https://github.com/hostinger/fireactions/issues/210)) ([ff892b2](https://github.com/hostinger/fireactions/commit/ff892b2aa95814b09b39ef887cd58200b7139ec0))
+* Bump golang.org/x/sync from 0.9.0 to 0.10.0 ([#211](https://github.com/hostinger/fireactions/issues/211)) ([3b7b126](https://github.com/hostinger/fireactions/commit/3b7b126f157aea724bdc1f5bfe41f602d22c33c5))
+
 ## [0.2.6](https://github.com/hostinger/fireactions/compare/v0.2.5...v0.2.6) (2024-11-13)
 
 
