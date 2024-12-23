@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/hostinger/fireactions/compare/v0.2.7...v0.2.8) (2024-12-23)
+
+
+### Dependencies
+
+* Bump golang.org/x/crypto from 0.29.0 to 0.31.0 ([#213](https://github.com/hostinger/fireactions/issues/213)) ([df3b793](https://github.com/hostinger/fireactions/commit/df3b7935670993fb9eccc01ccd213ed76402078a))
+
 ## [0.2.7](https://github.com/hostinger/fireactions/compare/v0.2.6...v0.2.7) (2024-12-10)
 
 
