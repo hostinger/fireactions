@@ -294,3 +294,23 @@ func (c *Client) Reload(ctx context.Context) (*Response, error) {
 
 	return c.do(req, nil)
 }
+
+// ListMicroVMs returns a list of MicroVM(s) inside the specified pool.
+func (c *Client) ListMicroVMs(ctx context.Context, pool string) (*MicroVMs, *Response, error) {
+	req, err := c.newRequestWithContext(ctx, "GET", fmt.Sprintf("/api/v1/pools/%s/microvms", pool), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	type Root struct {
+		MicroVMs MicroVMs `json:"micro_vms"`
+	}
+
+	var root Root
+	rsp, err := c.do(req, &root)
+	if err != nil {
+		return nil, rsp, err
+	}
+
+	return &root.MicroVMs, rsp, nil
+}

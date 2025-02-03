@@ -21,6 +21,9 @@ Pool management commands:
   show        Retrieve a specific pool by name
   list        List all pools
 
+MicroVM management commands:
+  microvm     Manage MicroVMs within a pool
+
 Additional Commands:
   reload      Reload the server with the latest configuration (no downtime)
 
@@ -71,3 +74,9 @@ List all pools.
 ### `reload`
 
 Reload the server with the latest configuration (no downtime).
+
+## `microvm`
+
+### `list --pool <POOL-NAME>`
+
+List all MicroVMs in the specified pool

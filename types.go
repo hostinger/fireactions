@@ -97,3 +97,32 @@ func (p Pools) KV() []map[string]interface{} {
 
 	return kv
 }
+
+// MicroVMs represents a slice of MicroVM
+type MicroVMs []MicroVM
+
+// MicroVM represents a Firecracker based virtual machine
+type MicroVM struct {
+	VMID string `json:"VMID"`
+}
+
+func (m MicroVMs) Cols() []string {
+	return []string{"VMID"}
+}
+
+func (m MicroVMs) ColsMap() map[string]string {
+	return map[string]string{
+		"VMID": "VMID",
+	}
+}
+
+func (m MicroVMs) KV() []map[string]interface{} {
+	kv := make([]map[string]interface{}, 0, len(m))
+	for _, pool := range m {
+		kv = append(kv, map[string]interface{}{
+			"VMID": pool.VMID,
+		})
+	}
+
+	return kv
+}

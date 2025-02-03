@@ -1,6 +1,8 @@
 package server
 
-import "context"
+import (
+	"context"
+)
 
 // PoolManager is an interface for managing pools.
 type PoolManager interface {
@@ -10,4 +12,9 @@ type PoolManager interface {
 	PausePool(ctx context.Context, id string) error
 	ResumePool(ctx context.Context, id string) error
 	Reload(ctx context.Context) error
+}
+
+// MicroVMManager is an interface for managing MicroVMs.
+type MicroVMManager interface {
+	ListMicroVMs(ctx context.Context, pool string) ([]*MicroVM, error)
 }

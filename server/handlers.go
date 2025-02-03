@@ -106,3 +106,22 @@ func reloadHandler(p PoolManager) gin.HandlerFunc {
 
 	return f
 }
+
+func listMicroVMsHandler(m MicroVMManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		poolID := ctx.Param("id")
+
+		microVMs, err := m.ListMicroVMs(ctx, poolID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if microVMs == nil {
+			microVMs = []*MicroVM{}
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"micro_vms": microVMs})
+	}
+
+	return f
+}
