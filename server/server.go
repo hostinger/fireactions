@@ -114,6 +114,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		v1.POST("/pools/:id/resume", resumePoolHandler(s))
 		v1.POST("/pools/:id/pause", pausePoolHandler(s))
 		v1.POST("/reload", reloadHandler(s))
+		v1.GET("/pools/:id/microvms", listMicroVMsHandler(s))
 	}
 
 	return s, nil
@@ -285,4 +286,19 @@ func (s *Server) Reload(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// ListMicroVMs returns a list of MicroVMs for the given poolName.
+func (s *Server) ListMicroVMs(ctx context.Context, poolName string) ([]*MicroVM, error) {
+	pool, err := s.GetPool(ctx, poolName)
+	if err != nil {
+		return nil, err
+	}
+
+	microVMs, err := pool.ListMicroVMs(ctx, poolName)
+	if err != nil {
+		return nil, err
+	}
+
+	return microVMs, nil
 }

@@ -28,5 +28,5 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, cmd.PersistentFlags().Lookup("password"))
 
 	assert.NotNil(t, cmd.Commands())
-	assert.Len(t, cmd.Commands(), 8) // 8 subcommands added
+	assert.Len(t, cmd.Commands(), 9) // 9 subcommands added
 }

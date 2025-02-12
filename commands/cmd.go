@@ -21,6 +21,7 @@ type fireactionsClient interface {
 	ResumePool(ctx context.Context, name string) (*fireactions.Response, error)
 	ScalePool(ctx context.Context, name string) (*fireactions.Response, error)
 	Reload(ctx context.Context) (*fireactions.Response, error)
+	ListMicroVMs(ctx context.Context, pool string) (*fireactions.MicroVMs, *fireactions.Response, error)
 }
 
 // New returns a new root-level command.
@@ -59,6 +60,9 @@ func New() *cobra.Command {
 	cmd.AddCommand(newPoolsResumeCmd())
 	cmd.AddCommand(newPoolsPauseCmd())
 	cmd.AddCommand(newPoolsScaleCmd())
+
+	cmd.AddGroup(&cobra.Group{ID: "microvm", Title: "MicroVM management commands:"})
+	cmd.AddCommand(newMicrovmsCmd())
 
 	cmd.PersistentFlags().SortFlags = false
 	cmd.PersistentFlags().StringVarP(&endpoint, "endpoint", "e", "http://127.0.0.1:8080", "Endpoint to use for communicating with the Fireactions API.")

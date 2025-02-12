@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/hostinger/fireactions"
 	"github.com/hostinger/fireactions/commands/mocks"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestPoolsPauseCommand_Success(t *testing.T) {

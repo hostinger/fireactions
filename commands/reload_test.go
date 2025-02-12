@@ -3,10 +3,10 @@ package commands
 import (
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/hostinger/fireactions/commands/mocks"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestRunReloadCmd_Success(t *testing.T) {
