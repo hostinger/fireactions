@@ -81,11 +81,11 @@ install_firecracker()
   TEMP_DIR=$(mktemp -d)
 
   curl -sL -o "$TEMP_DIR/firecracker-v$FIRECRACKER_VERSION.tgz" \
-    "https://github.com/firecracker-microvm/firecracker/releases/download/v$FIRECRACKER_VERSION/firecracker-v$FIRECRACKER_VERSION-$(uname -p).tgz"
+    "https://github.com/firecracker-microvm/firecracker/releases/download/v$FIRECRACKER_VERSION/firecracker-v$FIRECRACKER_VERSION-$(uname -m).tgz"
 
   tar -xf "$TEMP_DIR/firecracker-v$FIRECRACKER_VERSION.tgz" -C "$TEMP_DIR" --strip-components=1
 
-  mv "$TEMP_DIR/firecracker-v$FIRECRACKER_VERSION-$(uname -p)" /usr/local/bin/firecracker
+  mv "$TEMP_DIR/firecracker-v$FIRECRACKER_VERSION-$(uname -m)" /usr/local/bin/firecracker
   chmod +x /usr/local/bin/firecracker
 
   rm -rf "$TEMP_DIR"
