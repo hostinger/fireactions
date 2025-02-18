@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/hostinger/fireactions/compare/v0.2.8...v0.3.0) (2025-02-18)
+
+
+### Features
+
+* Add command for listing MicroVMs ([#220](https://github.com/hostinger/fireactions/issues/220)) ([48d684b](https://github.com/hostinger/fireactions/commit/48d684b59d109b95e281482dbad555049cd1e2b0))
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.24 to 1.7.25 ([#219](https://github.com/hostinger/fireactions/issues/219)) ([a2174e1](https://github.com/hostinger/fireactions/commit/a2174e1161d6363a83b93d52f94aaf8cdc80f5e7))
+* Bump github.com/gin-contrib/pprof from 1.5.1 to 1.5.2 ([#216](https://github.com/hostinger/fireactions/issues/216)) ([afac1c2](https://github.com/hostinger/fireactions/commit/afac1c2d35a38dcdaca47f4d09742efa8cdcd527))
+* Bump github.com/gin-contrib/requestid from 1.0.3 to 1.0.4 ([#215](https://github.com/hostinger/fireactions/issues/215)) ([a62d4f5](https://github.com/hostinger/fireactions/commit/a62d4f5357687976d8ae59cfdac52beec6772d5e))
+* Bump github.com/go-playground/validator/v10 from 10.23.0 to 10.24.0 ([#218](https://github.com/hostinger/fireactions/issues/218)) ([844fba6](https://github.com/hostinger/fireactions/commit/844fba6646f7807797e6db9a27fc510d9aa7cbd9))
+* Bump github.com/go-playground/validator/v10 from 10.24.0 to 10.25.0 ([#223](https://github.com/hostinger/fireactions/issues/223)) ([f1889e5](https://github.com/hostinger/fireactions/commit/f1889e5d6f317710e198bb8bdb8320aff8485fbb))
+* Bump github.com/spf13/cobra from 1.8.1 to 1.9.1 ([#224](https://github.com/hostinger/fireactions/issues/224)) ([cdcca75](https://github.com/hostinger/fireactions/commit/cdcca7537cbde7ca8cd751f20298eb17965ae413))
+* Bump golang.org/x/sync from 0.10.0 to 0.11.0 ([#221](https://github.com/hostinger/fireactions/issues/221)) ([e16306c](https://github.com/hostinger/fireactions/commit/e16306ccf4b58f3826bad6984d74497435b4a72d))
+
 ## [0.2.8](https://github.com/hostinger/fireactions/compare/v0.2.7...v0.2.8) (2024-12-23)
 
 
