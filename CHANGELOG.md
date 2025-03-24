@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1](https://github.com/hostinger/fireactions/compare/v0.3.0...v0.3.1) (2025-03-24)
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.25 to 1.7.27 ([#231](https://github.com/hostinger/fireactions/issues/231)) ([16c4478](https://github.com/hostinger/fireactions/commit/16c4478b6f2af752e7f141c54a4b53fc5437fba4))
+* Bump github.com/opencontainers/image-spec from 1.1.0 to 1.1.1 ([#227](https://github.com/hostinger/fireactions/issues/227)) ([d1b6de5](https://github.com/hostinger/fireactions/commit/d1b6de598f6ea302c3233e18eb577b3b16b92d7a))
+* Bump github.com/prometheus/client_golang from 1.20.5 to 1.21.1 ([#228](https://github.com/hostinger/fireactions/issues/228)) ([e24b72b](https://github.com/hostinger/fireactions/commit/e24b72bafbc6f2eef6dac0ac03204c9928144fbe))
+
 ## [0.3.0](https://github.com/hostinger/fireactions/compare/v0.2.8...v0.3.0) (2025-02-18)
 
 
