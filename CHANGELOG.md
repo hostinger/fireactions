@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/hostinger/fireactions/compare/v0.3.0...v0.3.1) (2025-05-07)
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.25 to 1.7.27 ([#231](https://github.com/hostinger/fireactions/issues/231)) ([16c4478](https://github.com/hostinger/fireactions/commit/16c4478b6f2af752e7f141c54a4b53fc5437fba4))
+* Bump github.com/gin-contrib/requestid from 1.0.4 to 1.0.5 ([#235](https://github.com/hostinger/fireactions/issues/235)) ([13083ee](https://github.com/hostinger/fireactions/commit/13083ee49b8825ff8815522a4f21d0a38a45ad06))
+* Bump github.com/go-playground/validator/v10 from 10.25.0 to 10.26.0 ([#234](https://github.com/hostinger/fireactions/issues/234)) ([f606e05](https://github.com/hostinger/fireactions/commit/f606e059e3e5470bfaf338f2dda89869d0d32a10))
+* Bump github.com/opencontainers/image-spec from 1.1.0 to 1.1.1 ([#227](https://github.com/hostinger/fireactions/issues/227)) ([d1b6de5](https://github.com/hostinger/fireactions/commit/d1b6de598f6ea302c3233e18eb577b3b16b92d7a))
+* Bump github.com/prometheus/client_golang from 1.20.5 to 1.21.1 ([#228](https://github.com/hostinger/fireactions/issues/228)) ([e24b72b](https://github.com/hostinger/fireactions/commit/e24b72bafbc6f2eef6dac0ac03204c9928144fbe))
+* Bump github.com/prometheus/client_golang from 1.21.1 to 1.22.0 ([#239](https://github.com/hostinger/fireactions/issues/239)) ([f3600fb](https://github.com/hostinger/fireactions/commit/f3600fb2d27be021908b49589fbe3217b044162d))
+* Bump github.com/rs/zerolog from 1.33.0 to 1.34.0 ([#233](https://github.com/hostinger/fireactions/issues/233)) ([bd8deaf](https://github.com/hostinger/fireactions/commit/bd8deafd563f5fa798abb4ccaa5df2ce42f6816d))
+* Bump golang.org/x/sync from 0.11.0 to 0.14.0 ([#245](https://github.com/hostinger/fireactions/issues/245)) ([b8334e8](https://github.com/hostinger/fireactions/commit/b8334e844b35568e4ef121452936357b193a8616))
+
 ## [0.3.0](https://github.com/hostinger/fireactions/compare/v0.2.8...v0.3.0) (2025-02-18)
 
 
