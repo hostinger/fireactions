@@ -91,3 +91,31 @@ Curl example:
 ```bash
 curl -X POST -H "X-API-Key: <API_KEY>" http://localhost:8080/api/v1/reload
 ```
+
+### Get a list of all MicroVMs in a pool
+
+This endpoint lists all MicroVMs that are running in a pool.
+
+```http
+GET /api/v1/pools/:pool/microvms
+```
+
+Curl example:
+
+```bash
+curl -X GET -H "X-API-Key: <API_KEY>" http://localhost:8080/api/v1/pools/my-pool-1/microvms
+```
+
+### Get the details of a MicroVM by given VM ID.
+
+This endpoint returns details of a MicroVM such as ID and IP Address.
+
+```http
+GET /api/v1/microvms/:id
+```
+
+Curl example:
+
+```bash
+curl -X GET -H "X-API-Key: <API_KEY>" http://localhost:8080/api/v1/microvms/microvm-abc123
+```

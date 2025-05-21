@@ -77,6 +77,10 @@ Reload the server with the latest configuration (no downtime).
 
 ## `microvm`
 
-### `list --pool <POOL-NAME>`
+### `list <POOL-NAME>`
 
-List all MicroVMs in the specified pool
+List all MicroVMs in the specified pool.
+
+### `login <VM-ID>`
+
+Display a command to SSH into a MicroVM (along with its details) by specified VM ID.

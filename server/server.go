@@ -115,6 +115,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		v1.POST("/pools/:id/pause", pausePoolHandler(s))
 		v1.POST("/reload", reloadHandler(s))
 		v1.GET("/pools/:id/microvms", listMicroVMsHandler(s))
+		v1.GET("/microvms/:id", getMicroVMHandler(s))
 	}
 
 	return s, nil
@@ -301,4 +302,32 @@ func (s *Server) ListMicroVMs(ctx context.Context, poolName string) ([]*MicroVM,
 	}
 
 	return microVMs, nil
+}
+
+// GetMicroVM returns a MicroVM object by the given VM ID.
+func (s *Server) GetMicroVM(ctx context.Context, vmid string) (*MicroVM, error) {
+	poolName, err := ExtractPoolNameFromVMID(vmid)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, ok := s.pools[poolName]
+	if !ok {
+		return nil, fmt.Errorf("pool %q not found", poolName)
+	}
+
+	pool.machinesMu.Lock()
+	defer pool.machinesMu.Unlock()
+
+	for _, machine := range pool.machines {
+		if machine.Cfg.VMID == vmid {
+			ip := machine.Cfg.NetworkInterfaces[0].StaticConfiguration.IPConfiguration.IPAddr.IP.String()
+			return &MicroVM{
+				VMID:   vmid,
+				IPAddr: ip,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("machine with VMID %q not found in pool %q", vmid, poolName)
 }

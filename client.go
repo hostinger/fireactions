@@ -314,3 +314,23 @@ func (c *Client) ListMicroVMs(ctx context.Context, pool string) (*MicroVMs, *Res
 
 	return &root.MicroVMs, rsp, nil
 }
+
+// GetMicroVM returns a MicroVM by VMID.
+func (c *Client) GetMicroVM(ctx context.Context, vmid string) (*MicroVM, *Response, error) {
+	req, err := c.newRequestWithContext(ctx, "GET", fmt.Sprintf("/api/v1/microvms/%s", vmid), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	type Root struct {
+		MicroVM *MicroVM `json:"micro_vm"`
+	}
+
+	var root Root
+	rsp, err := c.do(req, &root)
+	if err != nil {
+		return nil, rsp, err
+	}
+
+	return root.MicroVM, rsp, nil
+}

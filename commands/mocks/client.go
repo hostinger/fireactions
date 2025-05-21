@@ -12,31 +12,47 @@ import (
 	fireactions "github.com/hostinger/fireactions"
 )
 
-// Client is a mock of fireactionsClient interface.
-type Client struct {
+// MockfireactionsClient is a mock of fireactionsClient interface.
+type MockfireactionsClient struct {
 	ctrl     *gomock.Controller
-	recorder *ClientMockRecorder
+	recorder *MockfireactionsClientMockRecorder
 }
 
-// ClientMockRecorder is the mock recorder for Client.
-type ClientMockRecorder struct {
-	mock *Client
+// MockfireactionsClientMockRecorder is the mock recorder for MockfireactionsClient.
+type MockfireactionsClientMockRecorder struct {
+	mock *MockfireactionsClient
 }
 
-// NewClient creates a new mock instance.
-func NewClient(ctrl *gomock.Controller) *Client {
-	mock := &Client{ctrl: ctrl}
-	mock.recorder = &ClientMockRecorder{mock}
+// NewMockfireactionsClient creates a new mock instance.
+func NewMockfireactionsClient(ctrl *gomock.Controller) *MockfireactionsClient {
+	mock := &MockfireactionsClient{ctrl: ctrl}
+	mock.recorder = &MockfireactionsClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *Client) EXPECT() *ClientMockRecorder {
+func (m *MockfireactionsClient) EXPECT() *MockfireactionsClientMockRecorder {
 	return m.recorder
 }
 
+// GetMicroVM mocks base method.
+func (m *MockfireactionsClient) GetMicroVM(ctx context.Context, vmid string) (*fireactions.MicroVM, *fireactions.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMicroVM", ctx, vmid)
+	ret0, _ := ret[0].(*fireactions.MicroVM)
+	ret1, _ := ret[1].(*fireactions.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetMicroVM indicates an expected call of GetMicroVM.
+func (mr *MockfireactionsClientMockRecorder) GetMicroVM(ctx, vmid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMicroVM", reflect.TypeOf((*MockfireactionsClient)(nil).GetMicroVM), ctx, vmid)
+}
+
 // GetPool mocks base method.
-func (m *Client) GetPool(ctx context.Context, name string) (*fireactions.Pool, *fireactions.Response, error) {
+func (m *MockfireactionsClient) GetPool(ctx context.Context, name string) (*fireactions.Pool, *fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPool", ctx, name)
 	ret0, _ := ret[0].(*fireactions.Pool)
@@ -46,13 +62,13 @@ func (m *Client) GetPool(ctx context.Context, name string) (*fireactions.Pool, *
 }
 
 // GetPool indicates an expected call of GetPool.
-func (mr *ClientMockRecorder) GetPool(ctx, name interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) GetPool(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPool", reflect.TypeOf((*Client)(nil).GetPool), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPool", reflect.TypeOf((*MockfireactionsClient)(nil).GetPool), ctx, name)
 }
 
 // ListMicroVMs mocks base method.
-func (m *Client) ListMicroVMs(ctx context.Context, pool string) (*fireactions.MicroVMs, *fireactions.Response, error) {
+func (m *MockfireactionsClient) ListMicroVMs(ctx context.Context, pool string) (*fireactions.MicroVMs, *fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListMicroVMs", ctx, pool)
 	ret0, _ := ret[0].(*fireactions.MicroVMs)
@@ -62,13 +78,13 @@ func (m *Client) ListMicroVMs(ctx context.Context, pool string) (*fireactions.Mi
 }
 
 // ListMicroVMs indicates an expected call of ListMicroVMs.
-func (mr *ClientMockRecorder) ListMicroVMs(ctx, pool interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) ListMicroVMs(ctx, pool interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMicroVMs", reflect.TypeOf((*Client)(nil).ListMicroVMs), ctx, pool)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMicroVMs", reflect.TypeOf((*MockfireactionsClient)(nil).ListMicroVMs), ctx, pool)
 }
 
 // ListPools mocks base method.
-func (m *Client) ListPools(ctx context.Context, opts *fireactions.ListOptions) (fireactions.Pools, *fireactions.Response, error) {
+func (m *MockfireactionsClient) ListPools(ctx context.Context, opts *fireactions.ListOptions) (fireactions.Pools, *fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPools", ctx, opts)
 	ret0, _ := ret[0].(fireactions.Pools)
@@ -78,13 +94,13 @@ func (m *Client) ListPools(ctx context.Context, opts *fireactions.ListOptions) (
 }
 
 // ListPools indicates an expected call of ListPools.
-func (mr *ClientMockRecorder) ListPools(ctx, opts interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) ListPools(ctx, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPools", reflect.TypeOf((*Client)(nil).ListPools), ctx, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPools", reflect.TypeOf((*MockfireactionsClient)(nil).ListPools), ctx, opts)
 }
 
 // PausePool mocks base method.
-func (m *Client) PausePool(ctx context.Context, name string) (*fireactions.Response, error) {
+func (m *MockfireactionsClient) PausePool(ctx context.Context, name string) (*fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PausePool", ctx, name)
 	ret0, _ := ret[0].(*fireactions.Response)
@@ -93,13 +109,13 @@ func (m *Client) PausePool(ctx context.Context, name string) (*fireactions.Respo
 }
 
 // PausePool indicates an expected call of PausePool.
-func (mr *ClientMockRecorder) PausePool(ctx, name interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) PausePool(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PausePool", reflect.TypeOf((*Client)(nil).PausePool), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PausePool", reflect.TypeOf((*MockfireactionsClient)(nil).PausePool), ctx, name)
 }
 
 // Reload mocks base method.
-func (m *Client) Reload(ctx context.Context) (*fireactions.Response, error) {
+func (m *MockfireactionsClient) Reload(ctx context.Context) (*fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Reload", ctx)
 	ret0, _ := ret[0].(*fireactions.Response)
@@ -108,13 +124,13 @@ func (m *Client) Reload(ctx context.Context) (*fireactions.Response, error) {
 }
 
 // Reload indicates an expected call of Reload.
-func (mr *ClientMockRecorder) Reload(ctx interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) Reload(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reload", reflect.TypeOf((*Client)(nil).Reload), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reload", reflect.TypeOf((*MockfireactionsClient)(nil).Reload), ctx)
 }
 
 // ResumePool mocks base method.
-func (m *Client) ResumePool(ctx context.Context, name string) (*fireactions.Response, error) {
+func (m *MockfireactionsClient) ResumePool(ctx context.Context, name string) (*fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResumePool", ctx, name)
 	ret0, _ := ret[0].(*fireactions.Response)
@@ -123,13 +139,13 @@ func (m *Client) ResumePool(ctx context.Context, name string) (*fireactions.Resp
 }
 
 // ResumePool indicates an expected call of ResumePool.
-func (mr *ClientMockRecorder) ResumePool(ctx, name interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) ResumePool(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumePool", reflect.TypeOf((*Client)(nil).ResumePool), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumePool", reflect.TypeOf((*MockfireactionsClient)(nil).ResumePool), ctx, name)
 }
 
 // ScalePool mocks base method.
-func (m *Client) ScalePool(ctx context.Context, name string) (*fireactions.Response, error) {
+func (m *MockfireactionsClient) ScalePool(ctx context.Context, name string) (*fireactions.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ScalePool", ctx, name)
 	ret0, _ := ret[0].(*fireactions.Response)
@@ -138,7 +154,7 @@ func (m *Client) ScalePool(ctx context.Context, name string) (*fireactions.Respo
 }
 
 // ScalePool indicates an expected call of ScalePool.
-func (mr *ClientMockRecorder) ScalePool(ctx, name interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) ScalePool(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScalePool", reflect.TypeOf((*Client)(nil).ScalePool), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScalePool", reflect.TypeOf((*MockfireactionsClient)(nil).ScalePool), ctx, name)
 }

@@ -17,4 +17,5 @@ type PoolManager interface {
 // MicroVMManager is an interface for managing MicroVMs.
 type MicroVMManager interface {
 	ListMicroVMs(ctx context.Context, pool string) ([]*MicroVM, error)
+	GetMicroVM(ctx context.Context, vmid string) (*MicroVM, error)
 }
