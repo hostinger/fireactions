@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/hostinger/fireactions/compare/v0.3.1...v0.4.0) (2025-05-22)
+
+
+### Features
+
+* Add MicroVM login command ([#251](https://github.com/hostinger/fireactions/issues/251)) ([b997f86](https://github.com/hostinger/fireactions/commit/b997f86c11ed81862646702a3028e4c94c1b8536))
+
 ## [0.3.1](https://github.com/hostinger/fireactions/compare/v0.3.0...v0.3.1) (2025-05-07)
 
 
