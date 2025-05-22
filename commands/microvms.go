@@ -17,28 +17,21 @@ func newMicrovmsCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(newMicrovmsListCmd())
+	cmd.AddCommand(newMicrovmLoginCmd())
 
 	return cmd
 }
 
 func newMicrovmsListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list --pool <pool-name>",
+		Use:     "list <pool-name>",
 		Short:   "List all MicroVMs in the specified pool",
-		Args:    cobra.NoArgs,
+		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			poolName, err := cmd.Flags().GetString("pool")
-			if err != nil {
-				return fmt.Errorf("error retrieving pool flag: %w", err)
-			}
+			poolName := args[0]
 			return runMicrovmsListCmd(cmd, poolName)
 		},
-	}
-
-	cmd.Flags().String("pool", "", "Pool name (required)")
-	if err := cmd.MarkFlagRequired("pool"); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "failed to mark 'pool' flag as required: %v\n", err)
 	}
 
 	return cmd
@@ -52,5 +45,43 @@ func runMicrovmsListCmd(cmd *cobra.Command, poolName string) error {
 
 	printer.PrintText(microvms, cmd.OutOrStdout(), nil)
 	return nil
+}
 
+func newMicrovmLoginCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "login <vmid>",
+		Short:   "Display a command to SSH into a MicroVM",
+		Args:    cobra.ExactArgs(1),
+		Example: "fireactions microvm login default-abc123",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vmid := args[0]
+			return runMicrovmLoginCmd(cmd, vmid)
+		},
+	}
+
+	return cmd
+}
+
+func runMicrovmLoginCmd(cmd *cobra.Command, vmid string) error {
+	vm, _, err := client.GetMicroVM(context.Background(), vmid)
+	if err != nil {
+		return fmt.Errorf("failed to get MicroVM %q: %w", vmid, err)
+	}
+
+	if vm.IPAddr == "" {
+		return fmt.Errorf("MicroVM %q does not have an IP address assigned", vmid)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -l root %s", vm.IPAddr)
+
+	output := fmt.Sprintf(`
+VM ID: %s
+IP Address: %s
+Copy/paste to connect:
+
+%s
+`, vmid, vm.IPAddr, sshCmd)
+
+	fmt.Fprint(cmd.OutOrStdout(), output)
+	return nil
 }

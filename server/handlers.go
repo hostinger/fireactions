@@ -125,3 +125,18 @@ func listMicroVMsHandler(m MicroVMManager) gin.HandlerFunc {
 
 	return f
 }
+
+func getMicroVMHandler(m MicroVMManager) gin.HandlerFunc {
+	f := func(ctx *gin.Context) {
+		vmID := ctx.Param("id")
+		vm, err := m.GetMicroVM(ctx, vmID)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"micro_vm": convertMicroVM(vm)})
+	}
+
+	return f
+}

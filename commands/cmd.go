@@ -22,6 +22,7 @@ type fireactionsClient interface {
 	ScalePool(ctx context.Context, name string) (*fireactions.Response, error)
 	Reload(ctx context.Context) (*fireactions.Response, error)
 	ListMicroVMs(ctx context.Context, pool string) (*fireactions.MicroVMs, *fireactions.Response, error)
+	GetMicroVM(ctx context.Context, vmid string) (*fireactions.MicroVM, *fireactions.Response, error)
 }
 
 // New returns a new root-level command.

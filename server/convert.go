@@ -35,3 +35,12 @@ func convertPools(pools []*Pool) fireactions.Pools {
 
 	return convertedPools
 }
+
+func convertMicroVM(m *MicroVM) *fireactions.MicroVM {
+	microVM := &fireactions.MicroVM{
+		VMID:   m.VMID,
+		IPAddr: m.IPAddr,
+	}
+
+	return microVM
+}

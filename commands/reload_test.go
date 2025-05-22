@@ -13,7 +13,7 @@ func TestRunReloadCmd_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().Reload(gomock.Any()).Return(nil, nil)
 	client = mockClient
 
@@ -25,7 +25,7 @@ func TestRunReloadCmd_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().Reload(gomock.Any()).Return(nil, assert.AnError)
 	client = mockClient
 

@@ -14,7 +14,7 @@ func TestPoolsPauseCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().PausePool(gomock.Any(), "pool-name").Return(nil, nil)
 	client = mockClient
 
@@ -27,7 +27,7 @@ func TestPoolsPauseCommand_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().PausePool(gomock.Any(), "pool-name").Return(nil, errors.New("error"))
 	client = mockClient
 
@@ -40,7 +40,7 @@ func TestPoolsResumeCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ResumePool(gomock.Any(), "pool-name").Return(nil, nil)
 	client = mockClient
 
@@ -53,7 +53,7 @@ func TestPoolsResumeCommand_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ResumePool(gomock.Any(), "pool-name").Return(nil, errors.New("error"))
 	client = mockClient
 
@@ -66,7 +66,7 @@ func TestPoolsScaleCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name").Return(nil, nil)
 	client = mockClient
 
@@ -84,7 +84,7 @@ func TestPoolsScaleCommand_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name").Return(nil, errors.New("error"))
 	client = mockClient
 
@@ -102,7 +102,7 @@ func TestPoolsShowCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().GetPool(gomock.Any(), "pool-name").Return(&fireactions.Pool{}, nil, nil)
 	client = mockClient
 
@@ -115,7 +115,7 @@ func TestPoolsShowCommand_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().GetPool(gomock.Any(), "pool-name").Return(nil, nil, errors.New("error"))
 	client = mockClient
 
@@ -128,7 +128,7 @@ func TestPoolsListCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ListPools(gomock.Any(), nil).Return([]*fireactions.Pool{}, nil, nil)
 	client = mockClient
 
@@ -141,7 +141,7 @@ func TestPoolsListCommand_Failure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mocks.NewClient(ctrl)
+	mockClient := mocks.NewMockfireactionsClient(ctrl)
 	mockClient.EXPECT().ListPools(gomock.Any(), nil).Return(nil, nil, errors.New("error"))
 	client = mockClient
 

@@ -103,26 +103,28 @@ type MicroVMs []MicroVM
 
 // MicroVM represents a Firecracker based virtual machine
 type MicroVM struct {
-	VMID string `json:"VMID"`
+	VMID   string `json:"VMID"`
+	IPAddr string `json:"IPAddr"`
 }
 
 func (m MicroVMs) Cols() []string {
-	return []string{"VMID"}
+	return []string{"VMID", "IP Address"}
 }
 
 func (m MicroVMs) ColsMap() map[string]string {
 	return map[string]string{
-		"VMID": "VMID",
+		"VMID":   "VMID",
+		"IPAddr": "IP Address",
 	}
 }
 
 func (m MicroVMs) KV() []map[string]interface{} {
 	kv := make([]map[string]interface{}, 0, len(m))
-	for _, pool := range m {
+	for _, vm := range m {
 		kv = append(kv, map[string]interface{}{
-			"VMID": pool.VMID,
+			"VMID":       vm.VMID,
+			"IP Address": vm.IPAddr,
 		})
 	}
-
 	return kv
 }
