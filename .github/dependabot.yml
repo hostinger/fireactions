@@ -12,11 +12,11 @@ updates:
   schedule:
     interval: "daily"
   commit-message:
-    prefix: "deps"
+    prefix: "chore(deps)"
 
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
     interval: weekly
   commit-message:
-    prefix: "deps"
+    prefix: "chore(deps)"
