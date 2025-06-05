@@ -10,7 +10,7 @@ require (
 	github.com/distribution/reference v0.6.0
 	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-contrib/requestid v1.0.5
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.1
 	github.com/google/go-github/v63 v63.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/rs/zerolog v1.34.0
