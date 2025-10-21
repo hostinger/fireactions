@@ -16,51 +16,53 @@ github:
   app_private_key: |
     -----BEGIN RSA PRIVATE KEY-----
   app_id: 12345
+  enterprise_api_url: "https://api.githubenterprise.example.com/api/v3" # optional, empty = github.com, otherwise i.e. https://example.com/api/v3, or https://api.example.com
+  skip_tls_verify: true
 
 pools:
-- name: fireactions-2vcpu-2gb
-  max_runners: 20
-  min_runners: 10
-  runner:
-    name: fireactions-2vcpu-2gb
-    image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
-    image_pull_policy: IfNotPresent
-    group_id: 1
-    organization: hostinger
-    labels:
-    - self-hosted
-    - fireactions-2vcpu-2gb
-    - fireactions
-  firecracker:
-    binary_path: firecracker
-    kernel_image_path: /var/lib/fireactions/vmlinux
-    kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
-    machine_config:
-      mem_size_mib: 2048
-      vcpu_count: 2
-    metadata:
-      example1: value1
-- name: fireactions-2vcpu-4gb
-  max_runners: 20
-  min_runners: 10
-  runner:
-    name: fireactions-2vcpu-4gb
-    image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
-    image_pull_policy: IfNotPresent
-    group_id: 1
-    organization: hostinger
-    labels:
-    - self-hosted
-    - fireactions-2vcpu-2gb
-    - fireactions
-  firecracker:
-    binary_path: firecracker
-    kernel_image_path: /var/lib/fireactions/vmlinux
-    kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
-    machine_config:
-      mem_size_mib: 4096
-      vcpu_count: 2
-    metadata:
-      example1: value1
+  - name: fireactions-2vcpu-2gb
+    max_runners: 20
+    min_runners: 10
+    runner:
+      name: fireactions-2vcpu-2gb
+      image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
+      image_pull_policy: IfNotPresent
+      group_id: 1
+      organization: hostinger
+      labels:
+        - self-hosted
+        - fireactions-2vcpu-2gb
+        - fireactions
+    firecracker:
+      binary_path: firecracker
+      kernel_image_path: /var/lib/fireactions/vmlinux
+      kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
+      machine_config:
+        mem_size_mib: 2048
+        vcpu_count: 2
+      metadata:
+        example1: value1
+  - name: fireactions-2vcpu-4gb
+    max_runners: 20
+    min_runners: 10
+    runner:
+      name: fireactions-2vcpu-4gb
+      image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
+      image_pull_policy: IfNotPresent
+      group_id: 1
+      organization: hostinger
+      labels:
+        - self-hosted
+        - fireactions-2vcpu-2gb
+        - fireactions
+    firecracker:
+      binary_path: firecracker
+      kernel_image_path: /var/lib/fireactions/vmlinux
+      kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
+      machine_config:
+        mem_size_mib: 4096
+        vcpu_count: 2
+      metadata:
+        example1: value1
 
 log_level: debug
