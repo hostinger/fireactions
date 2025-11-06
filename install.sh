@@ -8,9 +8,9 @@ export DEBIAN_FRONTEND=noninteractive
 export FIREACTIONS_VERSION=0.2.5
 export FIRECRACKER_VERSION=1.4.1
 export KERNEL_VERSION=5.10
+export GITHUB_SKIP_TLS_VERIFY=false
 
-usage()
-{
+usage() {
   echo "This script installs Fireactions on a Linux machine."
   echo
   echo "Usage: $0 [options]"
@@ -18,6 +18,8 @@ usage()
   echo "Options:"
   echo "  --github-app-id                     Sepcify the ID of the GitHub App                          (required)"
   echo "  --github-app-key-file               Specify the path to the GitHub App private key file       (required)"
+  echo "  --github-enterprise-api-url         Specify the enterprise GitHub api url                     (optional default: https://api.github.com)"
+  echo "  --github-skip-tls-verify            Specify whether or not to verify GitHub certificate       (optional default: false)"
   echo "  --github-organization               Specify the name of the GitHub organization               (required)"
   echo "  --fireactions-version               Specify the Fireactions version to install                (default: $FIREACTIONS_VERSION)"
   echo "  --firecracker-version               Specify the Firecracker version to install                (default: $FIRECRACKER_VERSION)"
@@ -29,37 +31,32 @@ usage()
   echo
 }
 
-has_yum()
-{
+has_yum() {
   [ -n "$(command -v yum)" ]
 }
 
-has_apt()
-{
+has_apt() {
   [ -n "$(command -v apt-get)" ]
 }
 
-print_error()
-{
+print_error() {
   echo -e "\033[31mERROR:\033[0m $1"
 }
 
-check_kvm()
-{
+check_kvm() {
   if [[ ! -e /dev/kvm ]]; then
     print_error "Virtualization is not available on this machine, /dev/kvm is missing. Enable virtualization and try again."
     exit 1
   fi
 }
 
-install_dependencies()
-{
+install_dependencies() {
   if has_apt; then
     apt-get update -qq -y
     apt-get install -qq -y \
-      curl  \
+      curl \
       gnupg \
-      lvm2  \
+      lvm2 \
       tar
   elif has_yum; then
     yum install -q -y \
@@ -72,8 +69,7 @@ install_dependencies()
   fi
 }
 
-install_firecracker()
-{
+install_firecracker() {
   if [[ -e /usr/local/bin/firecracker ]]; then
     return
   fi
@@ -91,8 +87,7 @@ install_firecracker()
   rm -rf "$TEMP_DIR"
 }
 
-install_containerd()
-{
+install_containerd() {
   if [[ -e /usr/local/bin/containerd ]]; then
     return
   fi
@@ -101,13 +96,13 @@ install_containerd()
 
   curl -sL -o "$TEMP_DIR/containerd-$CONTAINERD_VERSION-linux-$ARCH.tar.gz" \
     "https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERSION/containerd-$CONTAINERD_VERSION-linux-$ARCH.tar.gz"
-  
+
   tar -zxf "$TEMP_DIR/containerd-$CONTAINERD_VERSION-linux-$ARCH.tar.gz" -C "$TEMP_DIR"
 
   mv "$TEMP_DIR/bin/containerd" /usr/local/bin/containerd
   mv "$TEMP_DIR/bin/ctr" /usr/local/bin/ctr
 
-  cat <<EOF > /etc/systemd/system/containerd.service
+  cat <<EOF >/etc/systemd/system/containerd.service
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
@@ -136,7 +131,7 @@ WantedBy=multi-user.target
 EOF
 
   mkdir -p /etc/containerd
-  cat <<EOF > /etc/containerd/config.toml
+  cat <<EOF >/etc/containerd/config.toml
 version = 2
 
 root      = "/var/lib/containerd"
@@ -174,8 +169,7 @@ EOF
   rm -rf "$TEMP_DIR"
 }
 
-install_cni()
-{
+install_cni() {
   if [[ -e /opt/cni/bin/bridge ]]; then
     return
   fi
@@ -184,7 +178,7 @@ install_cni()
 
   curl -sL -o "$TEMP_DIR/cni-plugins-linux-$ARCH-v$CNI_VERSION.tgz" \
     "https://github.com/containernetworking/plugins/releases/download/v$CNI_VERSION/cni-plugins-linux-$ARCH-v$CNI_VERSION.tgz"
-  
+
   mkdir -p /opt/cni/bin
   tar -zxf "$TEMP_DIR/cni-plugins-linux-$ARCH-v$CNI_VERSION.tgz" -C /opt/cni/bin
 
@@ -193,7 +187,7 @@ install_cni()
   chmod +x /opt/cni/bin/tc-redirect-tap
 
   mkdir -p /etc/cni/net.d
-  cat <<EOF > /etc/cni/net.d/10-fireactions.conflist
+  cat <<EOF >/etc/cni/net.d/10-fireactions.conflist
 {
   "cniVersion": "0.4.0",
   "name": "fireactions",
@@ -226,8 +220,7 @@ EOF
   rm -rf "$TEMP_DIR"
 }
 
-install_fireactions()
-{
+install_fireactions() {
   if [[ -e /usr/local/bin/fireactions ]]; then
     return
   fi
@@ -236,20 +229,20 @@ install_fireactions()
 
   curl -sL -o "$TEMP_DIR/fireactions-v$FIREACTIONS_VERSION.tar.gz" \
     "https://github.com/hostinger/fireactions/releases/download/v$FIREACTIONS_VERSION/fireactions-v$FIREACTIONS_VERSION-linux-$ARCH.tar.gz"
-  
+
   tar -zxf "$TEMP_DIR/fireactions-v$FIREACTIONS_VERSION.tar.gz" -C "$TEMP_DIR"
 
   mv "$TEMP_DIR/fireactions" /usr/local/bin/fireactions
   chmod +x /usr/local/bin/fireactions
 
-  cat <<EOF > /etc/sysctl.d/99-fireactions.conf
+  cat <<EOF >/etc/sysctl.d/99-fireactions.conf
 net.ipv4.conf.all.forwarding=1
 net.ipv4.ip_forward=1
 EOF
-  sysctl -p /etc/sysctl.d/99-fireactions.conf > /dev/null
+  sysctl -p /etc/sysctl.d/99-fireactions.conf >/dev/null
 
   mkdir -p /etc/fireactions
-  cat <<EOF > /etc/fireactions/config.yaml
+  cat <<EOF >/etc/fireactions/config.yaml
 bind_address: 127.0.0.1:8080
 
 metrics:
@@ -258,6 +251,8 @@ metrics:
 
 github:
   app_id: $GITHUB_APP_ID
+  enterprise_api_url: $GITHUB_ENTERPRISE_API_URL
+  skip_tls_verify: $GITHUB_SKIP_TLS_VERIFY
   app_private_key: |
     $GITHUB_APP_PRIVATE_KEY
 
@@ -288,7 +283,7 @@ pools:
 log_level: debug
 EOF
 
-  cat <<EOF > /etc/systemd/system/fireactions.service
+  cat <<EOF >/etc/systemd/system/fireactions.service
 [Unit]
 Description=Fireactions
 Documentation=https://github.com/hostinger/fireactions
@@ -314,8 +309,7 @@ EOF
   rm -rf "$TEMP_DIR"
 }
 
-install_kernel()
-{
+install_kernel() {
   if [[ -e /var/lib/fireactions/kernels/$KERNEL_VERSION/vmlinux ]]; then
     return
   fi
@@ -326,8 +320,7 @@ install_kernel()
     "https://storage.googleapis.com/fireactions/kernels/$ARCH/$KERNEL_VERSION/vmlinux"
 }
 
-main()
-{
+main() {
   if [ "$#" -eq 0 ]; then
     usage
     exit 1
@@ -335,76 +328,91 @@ main()
 
   while [ "$1" != "" ]; do
     case $1 in
-      --github-app-id )
-        shift
-        GITHUB_APP_ID=$1
-        ;;
-      --github-app-id=* )
-        GITHUB_APP_ID="${1#*=}"
-        ;;
-      --github-app-key-file )
-        shift
-        GITHUB_APP_PRIVATE_KEY_FILE=$1
-        ;;
-      --github-app-key-file=* )
-        GITHUB_APP_PRIVATE_KEY_FILE="${1#*=}"
-        ;;
-      --github-organization )
-        shift
-        GITHUB_ORGANIZATION=$1
-        ;;
-      --github-organization=* )
-        GITHUB_ORGANIZATION="${1#*=}"
-        ;;
-      --fireactions-version )
-        shift
-        FIREACTIONS_VERSION=$1
-        ;;
-      --fireactions-version=* )
-        FIREACTIONS_VERSION="${1#*=}"
-        ;;
-      --firecracker-version )
-        shift
-        FIRECRACKER_VERSION=$1
-        ;;
-      --firecracker-version=* )
-        FIRECRACKER_VERSION="${1#*=}"
-        ;;
-      --kernel-version )
-        shift
-        KERNEL_VERSION=$1
-        ;;
-      --kernel-version=* )
-        KERNEL_VERSION="${1#*=}"
-        ;;
-      --containerd-snapshotter-device )
-        shift
-        CONTAINERD_SNAPSHOTTER_DEVICE=$1
-        ;;
-      --containerd-snapshotter-device=* )
-        export CONTAINERD_SNAPSHOTTER_DEVICE="${1#*=}"
-        ;;
-      --containerd-version )
-        shift
-        CONTAINERD_VERSION=$1
-        ;;
-      --containerd-version=* )
-        CONTAINERD_VERSION="${1#*=}"
-        ;;
-      --cni-version )
-        shift
-        CNI_VERSION=$1
-        ;;
-      --cni-version=* )
-        CNI_VERSION="${1#*=}"
-        ;;
-      -h | --help )
-        usage
-        exit 0
-        ;;
-      * )
-        usage
-        exit 1
+    --github-app-id)
+      shift
+      GITHUB_APP_ID=$1
+      ;;
+    --github-app-id=*)
+      GITHUB_APP_ID="${1#*=}"
+      ;;
+    --github-app-key-file)
+      shift
+      GITHUB_APP_PRIVATE_KEY_FILE=$1
+      ;;
+    --github-app-key-file=*)
+      GITHUB_APP_PRIVATE_KEY_FILE="${1#*=}"
+      ;;
+    --github-enterprise-api-url)
+      shift
+      GITHUB_ENTERPRISE_API_URL=$1
+      ;;
+    --github-enterprise-api-url=*)
+      GITHUB_ENTERPRISE_API_URL="${1#*=}"
+      ;;
+    --github-skip-tls-verify)
+      shift
+      GITHUB_SKIP_TLS_VERIFY=$1
+      ;;
+    --github-skip-tls-verify=*)
+      GITHUB_SKIP_TLS_VERIFY="${1#*=}"
+      ;;
+    --github-organization)
+      shift
+      GITHUB_ORGANIZATION=$1
+      ;;
+    --github-organization=*)
+      GITHUB_ORGANIZATION="${1#*=}"
+      ;;
+    --fireactions-version)
+      shift
+      FIREACTIONS_VERSION=$1
+      ;;
+    --fireactions-version=*)
+      FIREACTIONS_VERSION="${1#*=}"
+      ;;
+    --firecracker-version)
+      shift
+      FIRECRACKER_VERSION=$1
+      ;;
+    --firecracker-version=*)
+      FIRECRACKER_VERSION="${1#*=}"
+      ;;
+    --kernel-version)
+      shift
+      KERNEL_VERSION=$1
+      ;;
+    --kernel-version=*)
+      KERNEL_VERSION="${1#*=}"
+      ;;
+    --containerd-snapshotter-device)
+      shift
+      CONTAINERD_SNAPSHOTTER_DEVICE=$1
+      ;;
+    --containerd-snapshotter-device=*)
+      export CONTAINERD_SNAPSHOTTER_DEVICE="${1#*=}"
+      ;;
+    --containerd-version)
+      shift
+      CONTAINERD_VERSION=$1
+      ;;
+    --containerd-version=*)
+      CONTAINERD_VERSION="${1#*=}"
+      ;;
+    --cni-version)
+      shift
+      CNI_VERSION=$1
+      ;;
+    --cni-version=*)
+      CNI_VERSION="${1#*=}"
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
     esac
     shift
   done
@@ -445,15 +453,16 @@ main()
   fi
 
   case $(uname -m) in
-    x86_64)
-      export ARCH=amd64
-      ;;
-    aarch64)
-      export ARCH=arm64
-      ;;
-    *)
-      print_error "Unsupported architecture: $(uname -m)"
-      exit 1
+  x86_64)
+    export ARCH=amd64
+    ;;
+  aarch64)
+    export ARCH=arm64
+    ;;
+  *)
+    print_error "Unsupported architecture: $(uname -m)"
+    exit 1
+    ;;
   esac
 
   if [[ -e /usr/local/bin/fireactions ]]; then
