@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.0](https://github.com/hostinger/fireactions/compare/v0.3.1...v0.4.0) (2025-11-07)
+
+
+### Features
+
+* Add MicroVM login command ([#251](https://github.com/hostinger/fireactions/issues/251)) ([b997f86](https://github.com/hostinger/fireactions/commit/b997f86c11ed81862646702a3028e4c94c1b8536))
+
+
+### Bug Fixes
+
+* Sanitize --jitconfig value before using it ([#276](https://github.com/hostinger/fireactions/issues/276)) ([2392a51](https://github.com/hostinger/fireactions/commit/2392a51434439ba3117513baf0900b545895f70f))
+
+
+### Dependencies
+
+* Bump github.com/gin-contrib/pprof from 1.5.2 to 1.5.3 ([#247](https://github.com/hostinger/fireactions/issues/247)) ([bec3dc2](https://github.com/hostinger/fireactions/commit/bec3dc229bcdc2bdca4c71cbb2352d09ad80e4b4))
+* Bump github.com/gin-gonic/gin from 1.10.0 to 1.10.1 ([#254](https://github.com/hostinger/fireactions/issues/254)) ([330b0df](https://github.com/hostinger/fireactions/commit/330b0dfba1cd9e82267fb22d9c926445e445d804))
+* Bump go.uber.org/mock from 0.5.0 to 0.5.2 ([#246](https://github.com/hostinger/fireactions/issues/246)) ([fbab855](https://github.com/hostinger/fireactions/commit/fbab855f9d59097108a8c1be9cf5a89b48ca7117))
+
 ## [0.3.1](https://github.com/hostinger/fireactions/compare/v0.3.0...v0.3.1) (2025-05-07)
 
 
