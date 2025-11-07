@@ -82,3 +82,35 @@ ctr namespaces rm fireactions-2vcpu-4gb
 
 systemctl start containerd
 ```
+
+## How to clean up orphaned GH Runners?
+
+If there is a need to clean up GH Runners that have errored and didn't remove themselves, there is a one-line shell
+command that can remove all runners that are currently offline.
+
+Requirements:
+
+- The tools `jq`, `xargs` and the GitHub CLI
+- The GitHub CLI is authenticated as Organization Administrator for the affected Fireactions Pool.
+
+⚠️ **Warning**: This command will permanently delete runners. Ensure your organization depends on fireactions and that
+you have tested this in a non-production environment first. To preview which runners will be deleted without actually
+deleting them please omit the `xargs` step in the shell commands.
+
+To execute this command with bash, execute the following:
+
+```bash
+export GH_PAGER=
+export ORG="<ORG>"
+gh api --paginate /orgs/$ORG/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /orgs/$ORG/actions/runners/{}
+```
+
+To do the same with fish shell, execute the following:
+
+```fish
+set -x GH_PAGER
+set -x ORG <ORG>
+gh api --paginate /orgs/$ORG/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /orgs/$ORG/actions/runners/{}
+```
+
+Please replace `<ORG>` with the name of your GitHub Account or Organization.
