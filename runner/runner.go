@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/rs/zerolog"
@@ -113,7 +114,12 @@ func (r *Runner) Run(ctx context.Context) error {
 	r.logger.Info().Msgf("Starting GitHub runner")
 	r.logger.Info().Msgf("Running command: %s", filepath.Join(defaultDir, "run.sh"))
 
-	runCmd := exec.CommandContext(ctx, filepath.Join(defaultDir, "run.sh"), "--jitconfig", r.config)
+	sanitizedConfig := strings.TrimSpace(r.config)
+	if strings.ContainsAny(sanitizedConfig, ";|&$`(){}[]*?~<>^!\n\r") {
+		return fmt.Errorf("invalid characters in config: %q", sanitizedConfig)
+	}
+
+	runCmd := exec.CommandContext(ctx, filepath.Join(defaultDir, "run.sh"), "--jitconfig", sanitizedConfig)
 	runCmd.Stdout = r.stdout
 	runCmd.Stderr = r.stderr
 	runCmd.Dir = defaultDir
