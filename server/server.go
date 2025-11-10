@@ -34,21 +34,25 @@ type Opt func(s *Server)
 
 // WithLogger sets the logger for the Server.
 func WithLogger(logger *zerolog.Logger) Opt {
-	f := func(s *Server) {
+	return func(s *Server) {
 		s.logger = logger
 	}
-
-	return f
 }
 
 // New creates a new Server.
 func New(config *Config, opts ...Opt) (*Server, error) {
-	err := config.Validate()
-	if err != nil {
+	// Validate config
+	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
 
-	github, err := github.NewClient(config.GitHub.AppID, config.GitHub.AppPrivateKey)
+	// Create GitHub client (supports GitHub.com and Enterprise)
+	gclient, err := github.NewClient(
+		config.GitHub.AppID,
+		config.GitHub.AppPrivateKey,
+		config.GitHub.EnterpriseApiUrl,
+		config.GitHub.SkipTLSVerify,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("creating github client: %w", err)
 	}
@@ -58,6 +62,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 	handler.Use(requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")))
 	handler.Use(gin.Recovery())
 
+	// HTTP server
 	server := &http.Server{
 		Addr:         config.BindAddress,
 		Handler:      handler,
@@ -71,7 +76,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		config: config,
 		server: server,
 		pools:  make(map[string]*Pool),
-		github: github,
+		github: gclient,
 		l:      &sync.Mutex{},
 		logger: &logger,
 	}
@@ -90,7 +95,6 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		}
-
 		s.metricsServer = metricsServer
 	}
 
@@ -123,7 +127,12 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 
 // Run starts the server and blocks until the context is canceled.
 func (s *Server) Run(ctx context.Context) error {
-	s.logger.Info().Str("version", fireactions.Version).Str("date", fireactions.Date).Str("commit", fireactions.Commit).Msgf("Starting server on %s", s.config.BindAddress)
+	s.logger.Info().
+		Str("version", fireactions.Version).
+		Str("date", fireactions.Date).
+		Str("commit", fireactions.Commit).
+		Msgf("Starting server on %s", s.config.BindAddress)
+
 	if s.config.Debug {
 		s.logger.Warn().Msg("Debug mode enabled")
 	}
@@ -139,7 +148,6 @@ func (s *Server) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("creating pool: %w", err)
 		}
-
 		s.pools[poolConfig.Name] = pool
 		go pool.Start()
 		s.logger.Info().Msgf("Pool %s started", poolConfig.Name)
@@ -147,19 +155,18 @@ func (s *Server) Run(ctx context.Context) error {
 
 	errGroup := &errgroup.Group{}
 	errGroup.Go(func() error { return s.server.Serve(listener) })
+
 	if s.metricsServer != nil {
 		metricsListener, err := net.Listen("tcp", s.config.Metrics.Address)
 		if err != nil {
 			return fmt.Errorf("failed to start metrics server: %w", err)
 		}
-
 		errGroup.Go(func() error { return s.metricsServer.Serve(metricsListener) })
 	}
 
 	go func() {
 		<-ctx.Done()
 		fmt.Println()
-
 		s.logger.Info().Msg("Shutting down server")
 
 		wg := sync.WaitGroup{}
@@ -170,7 +177,6 @@ func (s *Server) Run(ctx context.Context) error {
 				wg.Done()
 			}(pool)
 		}
-
 		wg.Wait()
 
 		cancelCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -205,7 +211,6 @@ func (s *Server) GetPool(ctx context.Context, id string) (*Pool, error) {
 	if !ok {
 		return nil, fireactions.ErrPoolNotFound
 	}
-
 	return pool, nil
 }
 
@@ -218,7 +223,6 @@ func (s *Server) ListPools(ctx context.Context) ([]*Pool, error) {
 	for _, pool := range s.pools {
 		pools = append(pools, pool)
 	}
-
 	return pools, nil
 }
 
@@ -258,13 +262,13 @@ func (s *Server) ResumePool(ctx context.Context, id string) error {
 	return nil
 }
 
+// Reload reloads server configuration and restarts pools as needed.
 func (s *Server) Reload(ctx context.Context) error {
 	s.l.Lock()
 	defer s.l.Unlock()
 
 	s.logger.Info().Msgf("Reloading server configuration")
-	err := s.config.Load()
-	if err != nil {
+	if err := s.config.Load(); err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
@@ -276,7 +280,7 @@ func (s *Server) Reload(ctx context.Context) error {
 			continue
 		}
 
-		pool, err = NewPool(s.logger, poolConfig, s.github)
+		pool, err := NewPool(s.logger, poolConfig, s.github)
 		if err != nil {
 			return fmt.Errorf("creating pool: %w", err)
 		}

@@ -28,13 +28,15 @@ type MetricsConfig struct {
 }
 
 type GitHubConfig struct {
-	AppPrivateKey string `yaml:"app_private_key" validate:"required"`
-	AppID         int64  `yaml:"app_id" validate:"required"`
+	AppPrivateKey    string `yaml:"app_private_key" validate:"required"`
+	AppID            int64  `yaml:"app_id" validate:"required"`
+	EnterpriseApiUrl string `yaml:"enterprise_api_url" validate:"omitempty,url"`
+	SkipTLSVerify    bool   `yaml:"skip_tls_verify" validate:"skiptls_if_enterprise"`
 }
 
 type RunnerConfig struct {
 	Name            string   `yaml:"name" validate:"required"`
-	ImagePullPolicy string   `yaml:"image_pull_policy" validate:"required,oneof=always never ifnotpresent"`
+	ImagePullPolicy string   `yaml:"image_pull_policy" validate:"required,oneof=Always Never IfNotPresent"`
 	Image           string   `yaml:"image" validate:"required"`
 	Organization    string   `yaml:"organization" validate:"required"`
 	GroupID         int64    `yaml:"group_id" validate:"required"`
@@ -42,7 +44,7 @@ type RunnerConfig struct {
 }
 
 type FirecrackerConfig struct {
-	BinaryPath      string                   `yaml:"binary_path" `
+	BinaryPath      string                   `yaml:"binary_path"`
 	KernelImagePath string                   `yaml:"kernel_image_path"`
 	KernelArgs      string                   `yaml:"kernel_args"`
 	MachineConfig   FirecrackerMachineConfig `yaml:"machine_config"`
@@ -56,18 +58,21 @@ type FirecrackerMachineConfig struct {
 
 // DefaultConfig creates a new Config with default values.
 func DefaultConfig() *Config {
-	c := &Config{
+	return &Config{
 		BindAddress:      ":8080",
 		Metrics:          &MetricsConfig{Enabled: true, Address: ":8081"},
 		BasicAuthEnabled: false,
 		BasicAuthUsers:   map[string]string{},
-		GitHub:           &GitHubConfig{AppPrivateKey: "", AppID: 0},
-		Pools:            []*PoolConfig{},
-		LogLevel:         "debug",
-		Debug:            false,
+		GitHub: &GitHubConfig{
+			AppPrivateKey:    "",
+			AppID:            0,
+			EnterpriseApiUrl: "",    // empty = GitHub.com
+			SkipTLSVerify:    false, // default: do not skip TLS
+		},
+		Pools:    []*PoolConfig{},
+		LogLevel: "debug",
+		Debug:    false,
 	}
-
-	return c
 }
 
 // NewConfigFromFile creates a new Config from a file.
@@ -75,13 +80,11 @@ func NewConfig(path string) (*Config, error) {
 	c := DefaultConfig()
 	c.path = path
 
-	err := c.Load()
-	if err != nil {
+	if err := c.Load(); err != nil {
 		return nil, err
 	}
 
-	err = c.Validate()
-	if err != nil {
+	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("validate: %w", err)
 	}
 
@@ -94,7 +97,6 @@ func (c *Config) Load() error {
 	if err != nil {
 		return fmt.Errorf("open file: %w", err)
 	}
-
 	defer file.Close()
 
 	return yaml.NewDecoder(file).Decode(c)
@@ -102,5 +104,17 @@ func (c *Config) Load() error {
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
-	return validator.New().Struct(c)
+	v := validator.New()
+
+	// Custom validation: SkipTLSVerify can only be true if EnterpriseApiUrl is set
+	_ = v.RegisterValidation("skiptls_if_enterprise", func(fl validator.FieldLevel) bool {
+		cfg := fl.Parent().Interface().(GitHubConfig)
+		if cfg.SkipTLSVerify && cfg.EnterpriseApiUrl == "" {
+			return false
+		}
+		return true
+	})
+
+	// Apply struct validation
+	return v.Struct(c)
 }
