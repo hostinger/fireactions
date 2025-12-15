@@ -116,11 +116,11 @@ require (
 	github.com/containerd/containerd v1.7.29
 	github.com/containerd/nerdctl v1.7.7
 	github.com/firecracker-microvm/firecracker-go-sdk v1.0.0
-	github.com/gabriel-vasile/mimetype v1.4.10 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.28.0
+	github.com/go-playground/validator/v10 v10.29.0
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0 // indirect
