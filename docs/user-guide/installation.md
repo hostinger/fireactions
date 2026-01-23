@@ -43,8 +43,7 @@ fireactions-server-1 ansible_host=<IP_ADDRESS> ansible_user=<SSH_USER>
         debug: true
         pools:
         - name: example
-          max_runners: 10
-          min_runners: 1
+          replicas: 5
           runner:
             name: example
             image: <IMAGE>:<IMAGE_TAG>

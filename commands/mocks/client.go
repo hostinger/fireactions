@@ -145,16 +145,16 @@ func (mr *MockfireactionsClientMockRecorder) ResumePool(ctx, name interface{}) *
 }
 
 // ScalePool mocks base method.
-func (m *MockfireactionsClient) ScalePool(ctx context.Context, name string) (*fireactions.Response, error) {
+func (m *MockfireactionsClient) ScalePool(ctx context.Context, name string, replicas int) (*fireactions.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ScalePool", ctx, name)
+	ret := m.ctrl.Call(m, "ScalePool", ctx, name, replicas)
 	ret0, _ := ret[0].(*fireactions.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ScalePool indicates an expected call of ScalePool.
-func (mr *MockfireactionsClientMockRecorder) ScalePool(ctx, name interface{}) *gomock.Call {
+func (mr *MockfireactionsClientMockRecorder) ScalePool(ctx, name, replicas interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScalePool", reflect.TypeOf((*MockfireactionsClient)(nil).ScalePool), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScalePool", reflect.TypeOf((*MockfireactionsClient)(nil).ScalePool), ctx, name, replicas)
 }

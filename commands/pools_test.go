@@ -10,6 +10,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPoolsCommand(t *testing.T) {
+	cmd := newPoolsCmd()
+	assert.NotNil(t, cmd)
+	assert.Equal(t, "pools", cmd.Use)
+	assert.Equal(t, "Manage pools", cmd.Short)
+
+	// Verify subcommands are registered
+	subcommands := cmd.Commands()
+	assert.NotEmpty(t, subcommands)
+
+	subcommandNames := make([]string, 0)
+	for _, subcmd := range subcommands {
+		subcommandNames = append(subcommandNames, subcmd.Name())
+	}
+
+	assert.Contains(t, subcommandNames, "list")
+	assert.Contains(t, subcommandNames, "show")
+	assert.Contains(t, subcommandNames, "pause")
+	assert.Contains(t, subcommandNames, "resume")
+	assert.Contains(t, subcommandNames, "scale")
+}
+
 func TestPoolsPauseCommand_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -67,16 +89,16 @@ func TestPoolsScaleCommand_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mocks.NewMockfireactionsClient(ctrl)
-	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name").Return(nil, nil)
+	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name", 5).Return(nil, nil)
 	client = mockClient
 
 	cmd := newPoolsScaleCmd()
-	err := cmd.Flags().Set("replicas", "1")
+	err := cmd.Flags().Set("replicas", "5")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = newPoolsScaleCmd().RunE(cmd, []string{"pool-name", "1"})
+	err = cmd.RunE(cmd, []string{"pool-name"})
 	assert.Nil(t, err)
 }
 
@@ -85,11 +107,11 @@ func TestPoolsScaleCommand_Failure(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mocks.NewMockfireactionsClient(ctrl)
-	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name").Return(nil, errors.New("error"))
+	mockClient.EXPECT().ScalePool(gomock.Any(), "pool-name", 3).Return(nil, errors.New("error"))
 	client = mockClient
 
 	cmd := newPoolsScaleCmd()
-	err := cmd.Flags().Set("replicas", "1")
+	err := cmd.Flags().Set("replicas", "3")
 	if err != nil {
 		t.Fatal(err)
 	}

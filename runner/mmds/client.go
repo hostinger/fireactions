@@ -73,7 +73,9 @@ func (c *Client) GetMetadata(ctx context.Context, path string) (map[string]inter
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	var metadata map[string]interface{}
 	switch status := resp.StatusCode; {
@@ -104,7 +106,9 @@ func (c *Client) refreshToken(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %s %s: %d", req.Method, req.URL, resp.StatusCode)

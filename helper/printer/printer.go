@@ -47,7 +47,7 @@ func PrintText(item Printable, out io.Writer, includeCols []string) {
 
 	for _, c := range includeCols {
 		if _, ok := item.ColsMap()[c]; !ok {
-			fmt.Fprintf(out, "Column doesn't exist: %s. Available columns: %v\n", c, strings.Join(item.Cols(), ", "))
+			_, _ = fmt.Fprintf(out, "Column doesn't exist: %s. Available columns: %v\n", c, strings.Join(item.Cols(), ", "))
 			return
 		}
 	}

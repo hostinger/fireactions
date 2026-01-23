@@ -78,17 +78,11 @@ pools:
   #
 - name: fireactions-2vcpu-2gb
   #
-  # The maximum number of GitHub runners that can be created in the pool.
+  # The number of replicas for the GitHub runners in the pool.
   #
   # Required: true
   #
-  max_runners: 20
-  #
-  # The minimum number of GitHub runners that should be running in the pool.
-  #
-  # Required: true
-  #
-  min_runners: 10
+  replicas: 5
   #
   # GitHub runner configuration.
   #

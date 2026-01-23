@@ -4,7 +4,6 @@ Fireactions provides a CLI for interacting with the server.
 
 ```bash
 $ fireactions --help
-
 BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines.
 
 Usage:
@@ -13,16 +12,11 @@ Usage:
 Main application commands:
   runner      Starts the virtual machine runner. This command should be run inside the virtual machine.
   server      Start the server
-
-Pool management commands:
-  resume      Resume a paused pool, enabling it to scale up again
-  pause       Pause a pool, preventing it from scaling up
-  scale       Scale a pool to specified number of replicas
-  show        Retrieve a specific pool by name
-  list        List all pools
+  pools       Manage pools
 
 MicroVM management commands:
-  microvm     Manage MicroVMs within a pool
+  ps          List all running VMs across all pools
+  login       SSH into a running VM as root user
 
 Additional Commands:
   reload      Reload the server with the latest configuration (no downtime)
@@ -39,48 +33,140 @@ Use "fireactions [command] --help" for more information about a command.
 
 ## Authentication
 
-If the Fireactions server is configured with basic authentication, user must include the username and password using the `--username` and `--password` flags.
+If the Fireactions server is configured with basic authentication, you must include the username and password using the `--username` and `--password` flags.
+
+```bash
+fireactions --username admin --password secret pools list
+```
 
 ## Commands
 
-### `runner`
+### Main Application Commands
 
-Starts the virtual machine runner. This command should be run inside the virtual machine.
+#### `server`
 
-### `server`
+Starts the Fireactions server.
 
-Starts the server.
+```bash
+fireactions server
+```
 
-### `resume <NAME>`
+#### `runner`
+
+Starts the virtual machine runner. This command should be run inside the virtual machine and is automatically executed by the VM image.
+
+```bash
+fireactions runner
+```
+
+### Pool Management Commands
+
+#### `pools list` (alias: `pools ls`)
+
+List all configured pools with their current status.
+
+```bash
+fireactions pools list
+```
+
+#### `pools show <NAME>`
+
+Display detailed information about a specific pool.
+
+```bash
+fireactions pools show default
+```
+
+#### `pools pause <NAME>`
+
+Pause a pool, preventing it from scaling up. Running VMs continue to operate, but no new VMs will be started.
+
+```bash
+fireactions pools pause default
+```
+
+#### `pools resume <NAME>`
 
 Resume a paused pool, enabling it to scale up again.
 
-### `pause <NAME>`
+```bash
+fireactions pools resume default
+```
 
-Pause a pool, preventing it from scaling up.
+#### `pools scale <NAME> --replicas=<N>`
 
-### `scale <NAME> [--replicas=<REPLICAS>]`
+Scale a pool to the specified number of replicas. The pool will scale up or down to match the desired number.
 
-Scale a pool to specified number of replicas.
+```bash
+# Scale to 5 replicas
+fireactions pools scale default --replicas=5
 
-### `show <NAME>`
+# Scale down to 0 (stop all VMs)
+fireactions pools scale default --replicas=0
+```
 
-Retrieve a specific pool by name.
+**Note**: You can scale down to 0 to stop all VMs in a pool.
 
-### `list`
+### MicroVM Management Commands
 
-List all pools.
+#### `ps` (alias: `ls`)
 
-### `reload`
+List all running VMs across all pools.
 
-Reload the server with the latest configuration (no downtime).
+```bash
+fireactions ps
+```
 
-## `microvm`
+#### `login <VMID>`
 
-### `list <POOL-NAME>`
+SSH into a running VM as the root user. This is useful for debugging or inspecting VM state.
 
-List all MicroVMs in the specified pool.
+```bash
+fireactions login default-abc123
+```
 
-### `login <VM-ID>`
+The command will automatically:
+- Look up the VM's IP address
+- Establish an SSH connection with appropriate options
+- Drop you into a root shell
 
-Display a command to SSH into a MicroVM (along with its details) by specified VM ID.
+**Requirements**: SSH must be installed and accessible in your PATH.
+
+### Additional Commands
+
+#### `reload`
+
+Reload the server configuration without downtime. This allows you to update pool configurations without restarting the server or interrupting running VMs.
+
+```bash
+fireactions reload
+```
+
+**Note**: The server must be running for this command to work.
+
+## Examples
+
+### Basic Workflow
+
+```bash
+# List all pools
+fireactions pools list
+
+# Scale up a pool
+fireactions pools scale production --replicas=10
+
+# Check VM status
+fireactions ps
+
+# SSH into a VM for debugging
+fireactions login production-abc123
+
+# Scale down when done
+fireactions pools scale production --replicas=0
+```
+
+### Using Authentication
+
+```bash
+fireactions -e https://fireactions.example.com -u admin -p secret pools list
+```

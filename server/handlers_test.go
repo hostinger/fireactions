@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 
-	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/mock/gomock"
 )
@@ -106,12 +107,19 @@ func TestGetPoolHandler(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		m := newMockPoolManager(mockCtrl)
 		m.EXPECT().GetPool(gomock.Any(), "test").Return(&Pool{
-			machines: make(map[string]*firecracker.Machine),
+			machines:   make(map[string]*machineMetadata),
+			machinesMu: &sync.Mutex{},
 			config: &PoolConfig{
-				Name:       "test",
-				MaxRunners: 0,
-				MinRunners: 0,
+				Name:     "test",
+				Replicas: 0,
+				Runner: &RunnerConfig{
+					Organization: "",
+					GroupID:      0,
+					Labels:       []string{},
+					Image:        "",
+				},
 			},
+			l:        &sync.Mutex{},
 			isActive: false,
 		}, nil)
 
@@ -131,7 +139,7 @@ func TestGetPoolHandler(t *testing.T) {
 			t.Errorf("Expected status code %d, but got %d", http.StatusOK, rec.Code)
 		}
 
-		expectedBody := `{"pool":{"name":"test","max_runners":0,"min_runners":0,"cur_runners":0,"status":{"state":"Paused","message":"Pool is paused"}}}`
+		expectedBody := `{"pool":{"name":"test","replicas":0,"current_replicas":0,"desired_replicas":0,"organization":"","group_id":0,"labels":[],"image":"","status":{"state":"Paused","message":"Pool is paused"}}}`
 		if rec.Body.String() != expectedBody {
 			t.Errorf("Expected response body %s, but got %s", expectedBody, rec.Body.String())
 		}
@@ -170,10 +178,12 @@ func TestScalePoolHandler(t *testing.T) {
 		router := gin.New()
 		router.POST("/api/v1/pools/:id/scale", scalePoolHandler(m))
 
-		req, err := http.NewRequest("POST", "/api/v1/pools/test/scale", nil)
+		body := strings.NewReader(`{"replicas":1}`)
+		req, err := http.NewRequest("POST", "/api/v1/pools/test/scale", body)
 		if err != nil {
 			t.Fatal(err)
 		}
+		req.Header.Set("Content-Type", "application/json")
 
 		rec := httptest.NewRecorder()
 
@@ -183,7 +193,7 @@ func TestScalePoolHandler(t *testing.T) {
 			t.Errorf("Expected status code %d, but got %d", http.StatusOK, rec.Code)
 		}
 
-		expectedBody := `{"message":"Pool scaled successfully"}`
+		expectedBody := `{"message":"Pool replicas updated successfully"}`
 		if rec.Body.String() != expectedBody {
 			t.Errorf("Expected response body %s, but got %s", expectedBody, rec.Body.String())
 		}
@@ -196,10 +206,12 @@ func TestScalePoolHandler(t *testing.T) {
 		router := gin.New()
 		router.POST("/api/v1/pools/:id/scale", scalePoolHandler(m))
 
-		req, err := http.NewRequest("POST", "/api/v1/pools/test/scale", nil)
+		body := strings.NewReader(`{"replicas":1}`)
+		req, err := http.NewRequest("POST", "/api/v1/pools/test/scale", body)
 		if err != nil {
 			t.Fatal(err)
 		}
+		req.Header.Set("Content-Type", "application/json")
 
 		rec := httptest.NewRecorder()
 

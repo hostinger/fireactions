@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hostinger/fireactions"
@@ -31,6 +32,11 @@ func listPoolsHandler(p PoolManager) gin.HandlerFunc {
 			return
 		}
 
+		// Sort pools by name
+		sort.Slice(pools, func(i, j int) bool {
+			return pools[i].config.Name < pools[j].config.Name
+		})
+
 		ctx.JSON(http.StatusOK, gin.H{"pools": convertPools(pools)})
 	}
 
@@ -55,12 +61,22 @@ func getPoolHandler(p PoolManager) gin.HandlerFunc {
 func scalePoolHandler(p PoolManager) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
 		id := ctx.Param("id")
-		if err := p.ScalePool(ctx, id, 1); err != nil {
+
+		var req struct {
+			Replicas *int `json:"replicas" binding:"required,min=0"`
+		}
+
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := p.ScalePool(ctx, id, *req.Replicas); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"message": "Pool scaled successfully"})
+		ctx.JSON(http.StatusOK, gin.H{"message": "Pool replicas updated successfully"})
 	}
 
 	return f
@@ -109,6 +125,7 @@ func reloadHandler(p PoolManager) gin.HandlerFunc {
 
 func listMicroVMsHandler(m MicroVMManager) gin.HandlerFunc {
 	f := func(ctx *gin.Context) {
+		// Pool ID is optional - if not provided, list all microvms
 		poolID := ctx.Param("id")
 
 		microVMs, err := m.ListMicroVMs(ctx, poolID)
@@ -120,7 +137,15 @@ func listMicroVMsHandler(m MicroVMManager) gin.HandlerFunc {
 			microVMs = []*MicroVM{}
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"micro_vms": microVMs})
+		// Sort microVMs by Pool name first, then by VMID
+		sort.Slice(microVMs, func(i, j int) bool {
+			if microVMs[i].Pool != microVMs[j].Pool {
+				return microVMs[i].Pool < microVMs[j].Pool
+			}
+			return microVMs[i].VMID < microVMs[j].VMID
+		})
+
+		ctx.JSON(http.StatusOK, gin.H{"micro_vms": convertMicroVMs(microVMs)})
 	}
 
 	return f
