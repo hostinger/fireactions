@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 // OutputType is the type of output
@@ -27,18 +29,37 @@ type Printable interface {
 
 // PrintText prints the output in text (table) format
 func PrintText(item Printable, out io.Writer, includeCols []string) {
-	tw := tablewriter.NewWriter(out)
-	tw.SetAutoWrapText(false)
-	tw.SetAutoFormatHeaders(true)
-	tw.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	tw.SetAlignment(tablewriter.ALIGN_LEFT)
-	tw.SetCenterSeparator("")
-	tw.SetColumnSeparator("")
-	tw.SetRowSeparator("")
-	tw.SetHeaderLine(false)
-	tw.SetBorder(false)
-	tw.SetTablePadding("  ")
-	tw.SetNoWhiteSpace(true)
+	// Create table with new v1.1.3 API
+	table := tablewriter.NewTable(out,
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Borders: tw.BorderNone,
+			Symbols: tw.NewSymbols(tw.StyleNone),
+			Settings: tw.Settings{
+				Separators: tw.SeparatorsNone,
+				Lines:      tw.LinesNone,
+			},
+		}),
+		tablewriter.WithHeaderAlignment(tw.AlignLeft),
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithHeaderAutoFormat(tw.On),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: "  "},
+				},
+			},
+			Row: tw.CellConfig{
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: "  "},
+				},
+			},
+			Behavior: tw.Behavior{
+				TrimSpace: tw.Off,
+			},
+		}),
+	)
 
 	cols := item.Cols()
 	if len(includeCols) > 0 && includeCols[0] != "" {
@@ -52,7 +73,12 @@ func PrintText(item Printable, out io.Writer, includeCols []string) {
 		}
 	}
 
-	tw.SetHeader(cols)
+	// Convert []string to []any for Header method
+	headerCols := make([]any, len(cols))
+	for i, col := range cols {
+		headerCols[i] = col
+	}
+	table.Header(headerCols...)
 
 	values := make([][]string, 0, len(item.KV()))
 	for _, r := range item.KV() {
@@ -81,6 +107,18 @@ func PrintText(item Printable, out io.Writer, includeCols []string) {
 		values = append(values, row)
 	}
 
-	tw.AppendBulk(values)
-	tw.Render()
+	// Convert [][]string to []any for Bulk method
+	bulkData := make([]any, len(values))
+	for i, v := range values {
+		bulkData[i] = v
+	}
+
+	if err := table.Bulk(bulkData); err != nil {
+		_, _ = fmt.Fprintf(out, "Error rendering table: %v\n", err)
+		return
+	}
+
+	if err := table.Render(); err != nil {
+		_, _ = fmt.Fprintf(out, "Error rendering table: %v\n", err)
+	}
 }
