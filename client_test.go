@@ -38,7 +38,7 @@ func TestClient_ScalePool(t *testing.T) {
 
 	client := NewClient(WithEndpoint(server.URL))
 
-	_, err := client.ScalePool(context.Background(), "test")
+	_, err := client.ScalePool(context.Background(), "test", 1)
 
 	assert.NoError(t, err)
 }

@@ -7,14 +7,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// newPoolsCmd returns the parent pools command with all subcommands
+func newPoolsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pools",
+		Short: "Manage pools",
+		Long:  "Manage fireactions pools - list, show, pause, resume, and scale pools.",
+	}
+
+	cmd.AddCommand(newPoolsListCmd())
+	cmd.AddCommand(newPoolsShowCmd())
+	cmd.AddCommand(newPoolsPauseCmd())
+	cmd.AddCommand(newPoolsResumeCmd())
+	cmd.AddCommand(newPoolsScaleCmd())
+
+	return cmd
+}
+
 func newPoolsShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "show NAME",
 		Short:   "Retrieve a specific pool by name",
 		RunE:    runPoolsShowCmd,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"g", "show"},
-		GroupID: "pools",
+		Aliases: []string{"g"},
 	}
 
 	return cmd
@@ -32,11 +48,10 @@ func runPoolsShowCmd(cmd *cobra.Command, args []string) error {
 
 func newPoolsResumeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "resume NAME",
-		Short:   "Resume a paused pool, enabling it to scale up again",
-		RunE:    runPoolsResumeCmd,
-		Args:    cobra.ExactArgs(1),
-		GroupID: "pools",
+		Use:   "resume NAME",
+		Short: "Resume a paused pool, enabling it to scale up again",
+		RunE:  runPoolsResumeCmd,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return cmd
@@ -45,46 +60,45 @@ func newPoolsResumeCmd() *cobra.Command {
 func runPoolsResumeCmd(cmd *cobra.Command, args []string) error {
 	_, err := client.ResumePool(cmd.Context(), args[0])
 	if err != nil {
-		return fmt.Errorf("pause pool \"%s\": %w", args[0], err)
+		return fmt.Errorf("resume pool \"%s\": %w", args[0], err)
 	}
 
+	fmt.Printf("Pool \"%s\" resumed\n", args[0])
 	return nil
 }
 
 func newPoolsScaleCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "scale NAME",
-		Short:   "Scale a pool to specified number of replicas",
-		RunE:    runPoolsScaleCmd,
-		Args:    cobra.ExactArgs(1),
-		GroupID: "pools",
+		Use:   "scale NAME --replicas N",
+		Short: "Scale a pool to specified number of replicas",
+		Long:  "Set the desired number of replicas for a pool. The pool will scale up or down to match the specified number.",
+		RunE:  runPoolsScaleCmd,
+		Args:  cobra.ExactArgs(1),
 	}
 
-	cmd.Flags().Int("replicas", 1, "Number of replicas to scale to")
+	cmd.Flags().Int("replicas", 0, "Desired number of replicas")
+	_ = cmd.MarkFlagRequired("replicas")
 	return cmd
 }
 
 func runPoolsScaleCmd(cmd *cobra.Command, args []string) error {
 	replicas, _ := cmd.Flags().GetInt("replicas")
-	for i := 0; i < replicas; i++ {
-		_, err := client.ScalePool(cmd.Context(), args[0])
-		if err != nil {
-			return fmt.Errorf("scale pool \"%s\": %w", args[0], err)
-		}
 
-		fmt.Printf("Pool \"%s\" scaled up by +1\n", args[0])
+	_, err := client.ScalePool(cmd.Context(), args[0], replicas)
+	if err != nil {
+		return fmt.Errorf("scale pool \"%s\": %w", args[0], err)
 	}
 
+	fmt.Printf("Pool \"%s\" replicas set to %d\n", args[0], replicas)
 	return nil
 }
 
 func newPoolsPauseCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pause NAME",
-		Short:   "Pause a pool, preventing it from scaling up",
-		RunE:    runPoolsPauseCmd,
-		Args:    cobra.ExactArgs(1),
-		GroupID: "pools",
+		Use:   "pause NAME",
+		Short: "Pause a pool, preventing it from scaling up",
+		RunE:  runPoolsPauseCmd,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return cmd
@@ -96,6 +110,7 @@ func runPoolsPauseCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("pause pool \"%s\": %w", args[0], err)
 	}
 
+	fmt.Printf("Pool \"%s\" paused\n", args[0])
 	return nil
 }
 
@@ -106,7 +121,6 @@ func newPoolsListCmd() *cobra.Command {
 		RunE:    runPoolsListCmd,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
-		GroupID: "pools",
 	}
 
 	return cmd

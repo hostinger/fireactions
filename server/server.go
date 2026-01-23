@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,8 @@ type Server struct {
 	server        *http.Server
 	metricsServer *http.Server
 	github        *github.Client
+	containerd    *containerd.Client
+	imageManager  *imageManager
 	l             *sync.Mutex
 	logger        *zerolog.Logger
 }
@@ -67,18 +70,28 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 	}
 
 	logger := zerolog.Nop()
+
+	containerdClient, err := containerd.New(config.Containerd.Address,
+		containerd.WithTimeout(5*time.Second), containerd.WithDefaultNamespace(config.Containerd.Namespace))
+	if err != nil {
+		return nil, fmt.Errorf("containerd: creating client: %w", err)
+	}
+
 	s := &Server{
-		config: config,
-		server: server,
-		pools:  make(map[string]*Pool),
-		github: github,
-		l:      &sync.Mutex{},
-		logger: &logger,
+		config:     config,
+		server:     server,
+		pools:      make(map[string]*Pool),
+		github:     github,
+		containerd: containerdClient,
+		l:          &sync.Mutex{},
+		logger:     &logger,
 	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
+
+	s.imageManager = newImageManager(s.logger, containerdClient)
 
 	if config.Metrics.Enabled {
 		metricsHandler := http.NewServeMux()
@@ -115,6 +128,7 @@ func New(config *Config, opts ...Opt) (*Server, error) {
 		v1.POST("/pools/:id/pause", pausePoolHandler(s))
 		v1.POST("/reload", reloadHandler(s))
 		v1.GET("/pools/:id/microvms", listMicroVMsHandler(s))
+		v1.GET("/microvms", listMicroVMsHandler(s)) // List all microvms across all pools
 		v1.GET("/microvms/:id", getMicroVMHandler(s))
 	}
 
@@ -132,16 +146,18 @@ func (s *Server) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
-	defer listener.Close()
+	defer func() {
+		_ = listener.Close()
+	}()
 
 	for _, poolConfig := range s.config.Pools {
-		pool, err := NewPool(s.logger, poolConfig, s.github)
+		pool, err := NewPool(s.logger, poolConfig, s.github, s.imageManager, s.containerd)
 		if err != nil {
 			return fmt.Errorf("creating pool: %w", err)
 		}
 
 		s.pools[poolConfig.Name] = pool
-		go pool.Start()
+		go pool.Run()
 		s.logger.Info().Msgf("Pool %s started", poolConfig.Name)
 	}
 
@@ -162,16 +178,12 @@ func (s *Server) Run(ctx context.Context) error {
 
 		s.logger.Info().Msg("Shutting down server")
 
-		wg := sync.WaitGroup{}
-		for _, pool := range s.pools {
-			wg.Add(1)
-			go func(pool *Pool) {
-				pool.Stop()
-				wg.Done()
-			}(pool)
+		// Stop pools sequentially to avoid lock contention and race conditions
+		for name, pool := range s.pools {
+			s.logger.Info().Msgf("Stopping pool %s", name)
+			pool.Stop()
+			s.logger.Info().Msgf("Pool %s stopped", name)
 		}
-
-		wg.Wait()
 
 		cancelCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
@@ -224,14 +236,18 @@ func (s *Server) ListPools(ctx context.Context) ([]*Pool, error) {
 
 // ScalePool scales the pool with the given ID to the desired size.
 func (s *Server) ScalePool(ctx context.Context, id string, replicas int) error {
-	metricPoolScaleRequests.WithLabelValues(id).Inc()
-
 	pool, err := s.GetPool(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	return pool.Scale(ctx, replicas)
+	metricPoolScaleRequests.WithLabelValues(id, pool.config.Runner.Organization).Inc()
+
+	// Update the pool config with the new replicas value
+	// The Run() loop will handle the actual scaling
+	pool.SetReplicas(replicas)
+
+	return nil
 }
 
 // PausePool pauses the pool with the given ID.
@@ -276,13 +292,13 @@ func (s *Server) Reload(ctx context.Context) error {
 			continue
 		}
 
-		pool, err = NewPool(s.logger, poolConfig, s.github)
+		pool, err = NewPool(s.logger, poolConfig, s.github, s.imageManager, s.containerd)
 		if err != nil {
 			return fmt.Errorf("creating pool: %w", err)
 		}
 
 		s.pools[poolConfig.Name] = pool
-		go pool.Start()
+		go pool.Run()
 		s.logger.Info().Msgf("Pool %s started", poolConfig.Name)
 	}
 
@@ -291,6 +307,29 @@ func (s *Server) Reload(ctx context.Context) error {
 
 // ListMicroVMs returns a list of MicroVMs for the given poolName.
 func (s *Server) ListMicroVMs(ctx context.Context, poolName string) ([]*MicroVM, error) {
+	if poolName == "" {
+		s.l.Lock()
+		pools := make([]*Pool, 0, len(s.pools))
+		for _, pool := range s.pools {
+			pools = append(pools, pool)
+		}
+		s.l.Unlock()
+
+		var allVMs []*MicroVM
+		for _, pool := range pools {
+			vms, err := pool.ListMicroVMs(ctx, pool.config.Name)
+			if err != nil {
+				// Log error but continue with other pools
+				s.logger.Warn().Err(err).Str("pool", pool.config.Name).Msg("Failed to list microvms for pool")
+				continue
+			}
+
+			allVMs = append(allVMs, vms...)
+		}
+
+		return allVMs, nil
+	}
+
 	pool, err := s.GetPool(ctx, poolName)
 	if err != nil {
 		return nil, err
@@ -306,28 +345,29 @@ func (s *Server) ListMicroVMs(ctx context.Context, poolName string) ([]*MicroVM,
 
 // GetMicroVM returns a MicroVM object by the given VM ID.
 func (s *Server) GetMicroVM(ctx context.Context, vmid string) (*MicroVM, error) {
-	poolName, err := ExtractPoolNameFromVMID(vmid)
-	if err != nil {
-		return nil, err
+	s.l.Lock()
+	pools := make([]*Pool, 0, len(s.pools))
+	for _, pool := range s.pools {
+		pools = append(pools, pool)
 	}
+	s.l.Unlock()
 
-	pool, ok := s.pools[poolName]
-	if !ok {
-		return nil, fmt.Errorf("pool %q not found", poolName)
-	}
+	for _, pool := range pools {
+		pool.machinesMu.Lock()
 
-	pool.machinesMu.Lock()
-	defer pool.machinesMu.Unlock()
+		for _, metadata := range pool.machines {
+			if metadata.machine.Cfg.VMID != vmid {
+				continue
+			}
 
-	for _, machine := range pool.machines {
-		if machine.Cfg.VMID == vmid {
-			ip := machine.Cfg.NetworkInterfaces[0].StaticConfiguration.IPConfiguration.IPAddr.IP.String()
-			return &MicroVM{
-				VMID:   vmid,
-				IPAddr: ip,
-			}, nil
+			ip := metadata.machine.Cfg.NetworkInterfaces[0].StaticConfiguration.IPConfiguration.IPAddr.IP.String()
+			vm := &MicroVM{VMID: vmid, Pool: pool.config.Name, IPAddr: ip, CreatedAt: metadata.createdAt}
+			pool.machinesMu.Unlock()
+			return vm, nil
 		}
+
+		pool.machinesMu.Unlock()
 	}
 
-	return nil, fmt.Errorf("machine with VMID %q not found in pool %q", vmid, poolName)
+	return nil, fmt.Errorf("machine with VMID %q not found", vmid)
 }

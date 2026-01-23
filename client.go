@@ -93,7 +93,7 @@ func NewClient(opts ...ClientOpt) *Client {
 		UserAgent: defaultUserAgent,
 		Username:  "",
 		Password:  "",
-		client:    &http.Client{Timeout: 10 * time.Second},
+		client:    &http.Client{Timeout: 60 * time.Second},
 	}
 
 	for _, opt := range opts {
@@ -130,7 +130,9 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
 
 	response := &Response{Response: rsp}
 	switch rsp.StatusCode {
@@ -275,9 +277,10 @@ func (c *Client) ResumePool(ctx context.Context, id string) (*Response, error) {
 	return c.do(req, nil)
 }
 
-// ScalePool scales a pool by ID.
-func (c *Client) ScalePool(ctx context.Context, id string) (*Response, error) {
-	req, err := c.newRequestWithContext(ctx, "POST", fmt.Sprintf("/api/v1/pools/%s/scale", id), nil)
+// ScalePool sets the desired number of replicas for a pool.
+func (c *Client) ScalePool(ctx context.Context, id string, replicas int) (*Response, error) {
+	body := map[string]int{"replicas": replicas}
+	req, err := c.newRequestWithContext(ctx, "POST", fmt.Sprintf("/api/v1/pools/%s/scale", id), body)
 	if err != nil {
 		return nil, err
 	}
@@ -295,9 +298,17 @@ func (c *Client) Reload(ctx context.Context) (*Response, error) {
 	return c.do(req, nil)
 }
 
-// ListMicroVMs returns a list of MicroVM(s) inside the specified pool.
+// ListMicroVMs returns a list of MicroVM(s). If pool is empty, returns all MicroVMs across all pools.
+// If pool is specified, returns only MicroVMs from that pool.
 func (c *Client) ListMicroVMs(ctx context.Context, pool string) (*MicroVMs, *Response, error) {
-	req, err := c.newRequestWithContext(ctx, "GET", fmt.Sprintf("/api/v1/pools/%s/microvms", pool), nil)
+	var url string
+	if pool == "" {
+		url = "/api/v1/microvms"
+	} else {
+		url = fmt.Sprintf("/api/v1/pools/%s/microvms", pool)
+	}
+
+	req, err := c.newRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, nil, err
 	}

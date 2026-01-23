@@ -11,6 +11,7 @@ import (
 // Config is the configuration for the Client.
 type Config struct {
 	BindAddress      string            `yaml:"bind_address" validate:"required,hostname_port"`
+	Containerd       *ContainerdConfig `yaml:"containerd" validate:"required"`
 	Metrics          *MetricsConfig    `yaml:"metrics"`
 	BasicAuthEnabled bool              `yaml:"basic_auth_enabled" validate:""`
 	BasicAuthUsers   map[string]string `yaml:"basic_auth_users" validate:"required_if=basic_auth_enabled true"`
@@ -20,6 +21,11 @@ type Config struct {
 	Debug            bool              `yaml:"debug" validate:""`
 
 	path string
+}
+
+type ContainerdConfig struct {
+	Address   string `yaml:"address" validate:"required"`
+	Namespace string `yaml:"namespace" validate:"required"`
 }
 
 type MetricsConfig struct {
@@ -34,7 +40,7 @@ type GitHubConfig struct {
 
 type RunnerConfig struct {
 	Name            string   `yaml:"name" validate:"required"`
-	ImagePullPolicy string   `yaml:"image_pull_policy" validate:"required,oneof=always never ifnotpresent"`
+	ImagePullPolicy string   `yaml:"image_pull_policy" validate:"required,oneof=Always Never IfNotPresent"`
 	Image           string   `yaml:"image" validate:"required"`
 	Organization    string   `yaml:"organization" validate:"required"`
 	GroupID         int64    `yaml:"group_id" validate:"required"`
@@ -58,6 +64,7 @@ type FirecrackerMachineConfig struct {
 func DefaultConfig() *Config {
 	c := &Config{
 		BindAddress:      ":8080",
+		Containerd:       &ContainerdConfig{Address: "/run/containerd/containerd.sock", Namespace: "fireactions"},
 		Metrics:          &MetricsConfig{Enabled: true, Address: ":8081"},
 		BasicAuthEnabled: false,
 		BasicAuthUsers:   map[string]string{},
@@ -95,7 +102,9 @@ func (c *Config) Load() error {
 		return fmt.Errorf("open file: %w", err)
 	}
 
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	return yaml.NewDecoder(file).Decode(c)
 }

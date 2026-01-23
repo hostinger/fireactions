@@ -19,7 +19,7 @@ type fireactionsClient interface {
 	GetPool(ctx context.Context, name string) (*fireactions.Pool, *fireactions.Response, error)
 	PausePool(ctx context.Context, name string) (*fireactions.Response, error)
 	ResumePool(ctx context.Context, name string) (*fireactions.Response, error)
-	ScalePool(ctx context.Context, name string) (*fireactions.Response, error)
+	ScalePool(ctx context.Context, name string, replicas int) (*fireactions.Response, error)
 	Reload(ctx context.Context) (*fireactions.Response, error)
 	ListMicroVMs(ctx context.Context, pool string) (*fireactions.MicroVMs, *fireactions.Response, error)
 	GetMicroVM(ctx context.Context, vmid string) (*fireactions.MicroVM, *fireactions.Response, error)
@@ -54,16 +54,11 @@ func New() *cobra.Command {
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Main application commands:"})
 	cmd.AddCommand(newServerCmd())
 	cmd.AddCommand(newRunnerCmd())
-
-	cmd.AddGroup(&cobra.Group{ID: "pools", Title: "Pool management commands:"})
-	cmd.AddCommand(newPoolsListCmd())
-	cmd.AddCommand(newPoolsShowCmd())
-	cmd.AddCommand(newPoolsResumeCmd())
-	cmd.AddCommand(newPoolsPauseCmd())
-	cmd.AddCommand(newPoolsScaleCmd())
+	cmd.AddCommand(newPoolsCmd())
 
 	cmd.AddGroup(&cobra.Group{ID: "microvm", Title: "MicroVM management commands:"})
-	cmd.AddCommand(newMicrovmsCmd())
+	cmd.AddCommand(newPsCmd())
+	cmd.AddCommand(newLoginCmd())
 
 	cmd.PersistentFlags().SortFlags = false
 	cmd.PersistentFlags().StringVarP(&endpoint, "endpoint", "e", "http://127.0.0.1:8080", "Endpoint to use for communicating with the Fireactions API.")
