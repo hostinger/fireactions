@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/hostinger/fireactions/compare/v0.4.0...v1.0.0) (2026-01-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* Multiple improvements ([#288](https://github.com/hostinger/fireactions/issues/288))
+
+### Features
+
+* Multiple improvements ([#288](https://github.com/hostinger/fireactions/issues/288)) ([d87de30](https://github.com/hostinger/fireactions/commit/d87de3061742e01ee65c289ccfd9d5df5ac46497))
+
 ## [0.4.0](https://github.com/hostinger/fireactions/compare/v0.3.1...v0.4.0) (2025-11-07)
 
 
