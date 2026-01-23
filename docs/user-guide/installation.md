@@ -10,6 +10,7 @@ Before you begin, make sure you have the following requirements:
 
 - Ansible set up on local machine
 - GitHub App ID and private key, see [Creating GitHub Apps](https://docs.github.com/en/apps/creating-github-apps)
+- GitHub App is installed on the target organization
 
 ## Step 1: Create an inventory file
 
