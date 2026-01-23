@@ -263,8 +263,7 @@ github:
 
 pools:
 - name: default
-  max_runners: 5
-  min_runners: 1
+  replicas: 1
   runner:
     name: default
     image: ghcr.io/hostinger/fireactions-images/ubuntu22.04:v0.7.0
