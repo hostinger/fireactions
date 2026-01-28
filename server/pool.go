@@ -403,6 +403,8 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 		MmdsAddress:    net.IPv4(169, 254, 169, 254),
 		MmdsVersion:    firecracker.MMDSv2,
 		ForwardSignals: []os.Signal{},
+		LogPath:        filepath.Join(p.GetDir(), fmt.Sprintf("%s.firecracker.log", runnerName)),
+		LogLevel:       "Debug",
 	}, firecracker.WithProcessRunner(machineCmd), firecracker.WithLogger(logrus.NewEntry(logger)))
 	if err != nil {
 		return fmt.Errorf("firecracker: creating machine: %w", err)
