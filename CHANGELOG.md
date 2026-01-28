@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/hostinger/fireactions/compare/v1.0.0...v1.0.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* Reuse created GitHub client per each installation ([#290](https://github.com/hostinger/fireactions/issues/290)) ([5001183](https://github.com/hostinger/fireactions/commit/5001183ff3703ed2ef0a7eff22280ccca6b75244))
+
 ## [1.0.0](https://github.com/hostinger/fireactions/compare/v0.4.0...v1.0.0) (2026-01-23)
 
 
