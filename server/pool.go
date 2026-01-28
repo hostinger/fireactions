@@ -277,7 +277,7 @@ func (p *Pool) Scale(ctx context.Context, replicas int) error {
 		}
 	}
 
-	p.logger.Debug().Msgf("Pool scaled %d -> %d (target: %d)", curSize, desSize, p.config.Replicas)
+	p.logger.Info().Msgf("Pool scaled %d -> %d (target: %d)", curSize, desSize, p.config.Replicas)
 	return nil
 }
 
@@ -443,7 +443,7 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 	// Mark machine as successfully created
 	machineCreated = true
 
-	p.logger.Debug().Msgf("Firecracker VM %s started", runnerName)
+	p.logger.Info().Msgf("Successfully created Firecracker VM %s", runnerName)
 
 	// Create machine metadata
 	md := &machineMetadata{
@@ -477,7 +477,7 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 			// Pool is stopping, proceed with cleanup anyway
 		}
 
-		p.logger.Debug().Msgf("Firecracker VM %s exited", runnerName)
+		p.logger.Info().Msgf("Successfully cleaned up exited Firecracker VM %s", runnerName)
 
 		p.machinesMu.Lock()
 		metadata, exists := p.machines[runnerName]
@@ -533,7 +533,7 @@ func (p *Pool) scaleDown(ctx context.Context) error {
 		p.logger.Warn().Err(err).Msgf("Failed to gracefully stop Firecracker VM %s during scale down", targetName)
 	}
 
-	p.logger.Debug().Msgf("Scaled down Firecracker VM %s", targetName)
+	p.logger.Info().Msgf("Successfully scaled down Firecracker VM %s", targetName)
 	return nil
 }
 
