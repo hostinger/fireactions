@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.0](https://github.com/hostinger/fireactions/compare/v1.0.1...v2.0.0) (2026-02-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* Multiple improvements
+
+### Features
+
+* Multiple improvements ([fb35e90](https://github.com/hostinger/fireactions/commit/fb35e90febcfdf391660305ba90afa3d340c2308))
+* Start collecting Firecracker logs ([2f4bd18](https://github.com/hostinger/fireactions/commit/2f4bd18a7cae230126304011fd25d48d4504a63c))
+
 ## [1.0.1](https://github.com/hostinger/fireactions/compare/v1.0.0...v1.0.1) (2026-01-28)
 
 
