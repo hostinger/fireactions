@@ -79,7 +79,7 @@ Flags:
 Use "fireactions [command] --help" for more information about a command.
 ```
 
-See the [User Guide](https://fireactions.io/user-guide/) for installation and configuration instructions.
+See the [User Guide](https://fireactions.io/latest/user-guide/) for installation and configuration instructions.
 
 ## Contributing
 
