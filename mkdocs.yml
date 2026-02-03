@@ -15,9 +15,15 @@ theme:
   palette:
     primary: violet
   include_sidebar: true
+  custom_dir: docs/overrides
 
 extra_css:
   - css/extra.css
+
+extra:
+  generator: false
+  version:
+    provider: mike
 
 nav:
   - Home:
