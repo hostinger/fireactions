@@ -1,0 +1,147 @@
+syntax = "proto3";
+package fireactions.server.v1;
+
+option go_package = "github.com/hostinger/fireactions/proto/server/v1;serverv1";
+
+import "google/protobuf/timestamp.proto";
+
+// ServerService provides the main Fireactions server API.
+service ServerService {
+  rpc ListPools(ListPoolsRequest) returns (ListPoolsResponse);
+  rpc GetPool(GetPoolRequest) returns (GetPoolResponse);
+  rpc ScalePool(ScalePoolRequest) returns (ScalePoolResponse);
+  rpc PausePool(PausePoolRequest) returns (PausePoolResponse);
+  rpc ResumePool(ResumePoolRequest) returns (ResumePoolResponse);
+  rpc ListMachines(ListMachinesRequest) returns (ListMachinesResponse);
+  rpc GetMachine(GetMachineRequest) returns (GetMachineResponse);
+  rpc GetMachineLogs(GetMachineLogsRequest) returns (stream GetMachineLogsResponse);
+  rpc ListImages(ListImagesRequest) returns (ListImagesResponse);
+  rpc RemoveImage(RemoveImageRequest) returns (RemoveImageResponse);
+  rpc GetHealth(GetHealthRequest) returns (GetHealthResponse);
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
+}
+
+enum PoolState {
+  POOL_STATE_ACTIVE = 0;
+  POOL_STATE_PAUSED = 1;
+}
+
+message Pool {
+  string name = 1;
+  string organization = 2;
+  int32 replicas = 3;
+  int32 current_replicas = 4;
+  int32 desired_replicas = 5;
+  int64 group_id = 6;
+  repeated string labels = 7;
+  string image = 8;
+  PoolState state = 9;
+}
+
+message ListPoolsRequest {}
+
+message ListPoolsResponse {
+  repeated Pool pools = 1;
+}
+
+message GetPoolRequest {
+  string name = 1;
+}
+
+message GetPoolResponse {
+  Pool pool = 1;
+}
+
+message ScalePoolRequest {
+  string name = 1;
+  int32 replicas = 2;
+}
+
+message ScalePoolResponse {
+  string message = 1;
+}
+
+message PausePoolRequest {
+  string name = 1;
+}
+
+message PausePoolResponse {
+  string message = 1;
+}
+
+message ResumePoolRequest {
+  string name = 1;
+}
+
+message ResumePoolResponse {
+  string message = 1;
+}
+
+message Machine {
+  string ID = 1;
+  string pool = 2;
+  string addr = 3;
+  google.protobuf.Timestamp created_at = 4;
+  string runner_state = 5;
+  string runner_version = 6;
+}
+
+message ListMachinesRequest {
+  string pool = 1; // Optional - if empty, list all
+}
+
+message ListMachinesResponse {
+  repeated Machine machines = 1;
+}
+
+message GetMachineRequest {
+  string ID = 1;
+}
+
+message GetMachineResponse {
+  Machine machine = 1;
+}
+
+message GetMachineLogsRequest {
+  string ID = 1;
+  bool follow = 2; // If true, stream continuously (like tail -f)
+  int32 tail_lines = 3; // Number of recent lines to send first (0 = all)
+}
+
+message GetMachineLogsResponse {
+  string line = 1; // Single log line from agent
+}
+
+message GetHealthRequest {}
+
+message GetHealthResponse {
+  string status = 1;
+}
+
+message GetVersionRequest {}
+
+message GetVersionResponse {
+  string version = 1;
+  string commit = 2;
+  string date = 3;
+}
+
+message Image {
+  string name = 1;
+  int64 size = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message ListImagesRequest {}
+
+message ListImagesResponse {
+  repeated Image images = 1;
+}
+
+message RemoveImageRequest {
+  string name = 1;
+}
+
+message RemoveImageResponse {
+  string message = 1;
+}

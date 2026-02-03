@@ -14,6 +14,7 @@ Pools are configured in the `pools` section of the configuration file, e.g.:
 pools:
 - name: example
   replicas: 5
+  shutdown_on_exit: true
   runner:
     name: example
     image: <IMAGE>:<IMAGE_TAG>

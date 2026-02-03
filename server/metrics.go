@@ -34,6 +34,12 @@ var (
 		Help:      "Desired number of runners in a pool (replicas)",
 	}, []string{"pool", "organization"})
 
+	metricPoolRunnersPending = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "pool_runners_pending",
+		Namespace: namespace,
+		Help:      "Number of pending VM create/delete operations in a pool",
+	}, []string{"pool", "organization"})
+
 	metricPoolScaleRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name:      "pool_scale_requests_total",
 		Namespace: namespace,

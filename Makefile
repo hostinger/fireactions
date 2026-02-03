@@ -24,3 +24,11 @@ fmt:
 .PHONY: test
 test:
 	@ $(GO) test -v ./...
+
+.PHONY: proto
+proto:
+	@ buf generate
+
+.PHONY: proto-lint
+proto-lint:
+	@ buf lint

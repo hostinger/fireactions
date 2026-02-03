@@ -16,29 +16,6 @@ Example configuration file with all available options:
 bind_address: 0.0.0.0:8080
 
 #
-# Enable basic authentication.
-#
-# Default: false
-#
-basic_auth_enabled: true
-
-#
-# Map of basic authentication users. The key is the username and the value is the password. Valid only when `basic_auth_enabled` is true.
-#
-# Default: {}
-#
-basic_auth_users:
-  user1: password1
-  user2: password2
-
-#
-# Enable debug mode.
-#
-# Default: false
-#
-debug: false
-
-#
 # Metrics server configuration. This is used to expose Prometheus metrics on endpoint `/metrics`.
 #
 metrics:
@@ -83,6 +60,12 @@ pools:
   # Required: true
   #
   replicas: 5
+  #
+  # Shutdown the Firecracker VM when the runner exits.
+  #
+  # Required: false, Default: true
+  #
+  shutdown_on_exit: true
   #
   # GitHub runner configuration.
   #

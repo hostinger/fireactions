@@ -42,64 +42,41 @@ Several key features:
 
 ## Quickstart
 
-Create and install a GitHub App (see [Creating a GitHub App](https://docs.github.com/en/developers/apps/creating-a-github-app)) with the following permissions:
-
-- Read access to metadata
-- Read and write access to actions and organization self hosted runners
-
-Note down the GitHub App ID and generate a private key, save it to a file on the host machine, e.g. `/root/private-key.pem`.
-
-Download and run the installation script:
-
 ```bash
-curl -sSL https://raw.githubusercontent.com/hostinger/fireactions/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh --help
-This script installs Fireactions on a Linux machine.
+$ fireactions --help
+BYOM (Bring Your Own Metal) and run self-hosted GitHub runners in ephemeral, fast and secure Firecracker based virtual machines.
 
-Usage: ./install.sh [options]
+Usage:
+  fireactions [command]
 
-Options:
-  --github-app-id                     Sepcify the ID of the GitHub App                          (required)
-  --github-app-key-file               Specify the path to the GitHub App private key file       (required)
-  --github-organization               Specify the name of the GitHub organization               (required)
-  --fireactions-version               Specify the Fireactions version to install                (default: 0.2.5)
-  --firecracker-version               Specify the Firecracker version to install                (default: 1.4.1)
-  --kernel-version                    Specify the kernel version to install                     (default: 5.10)
-  --containerd-snapshotter-device     Specify the device to use for Containerd snapshot storage (required)
-  --containerd-version                Specify the Containerd version to install                 (default: 1.7.0)
-  --cni-version                       Specify the CNI plugin version to install                 (default: 1.6.0)
-  -h, --help                          Show this help message
+Main application commands:
+  server      Starts the server
+  agent       Starts the agent and GitHub Actions runner inside the VM
+
+Pool management commands:
+  pools       Manage pools
+
+Machine management commands:
+  ps          List all running machines across all pools
+  login       SSH into a running VM as root user
+  logs        Stream logs from the fireactions-agent service inside a machine
+
+Image management commands:
+  image       Manage images
+
+Additional Commands:
+  version     Show version information
+  help        Help about any command
+  completion  Generate the autocompletion script for the specified shell
+
+Flags:
+  -h, --help      help for fireactions
+  -v, --version   version for fireactions
+
+Use "fireactions [command] --help" for more information about a command.
 ```
 
-This creates a default configuration with a single pool named `default` with a single runner. See [Configuration](./docs/user-guide/configuration.md) for more information.
-
-Test the installation by creating a new GitHub workflow in your repository:
-
-```yaml
-# .github/workflows/test.yaml
-name: test
-
-on:
-  workflow_dispatch:
-  pull_request:
-      branches:
-      - '*'
-  push:
-      branches:
-      - main
-
-jobs:
-  test:
-    name: test
-    runs-on: # The label(s) of the Fireactions pool
-    - self-hosted
-    - fireactions
-    steps:
-    - name: Example
-      run: |
-        echo "Hello, Fireactions!"
-```
+See the [User Guide](https://fireactions.io/user-guide/) for installation and configuration instructions.
 
 ## Contributing
 

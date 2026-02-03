@@ -18,7 +18,6 @@ type Config struct {
 	GitHub           *GitHubConfig     `yaml:"github" validate:"required"`
 	Pools            []*PoolConfig     `yaml:"pools" validate:"required,min=1"`
 	LogLevel         string            `yaml:"log_level" validate:"required,oneof=debug info warn error fatal panic trace"`
-	Debug            bool              `yaml:"debug" validate:""`
 
 	path string
 }
@@ -71,7 +70,6 @@ func DefaultConfig() *Config {
 		GitHub:           &GitHubConfig{AppPrivateKey: "", AppID: 0},
 		Pools:            []*PoolConfig{},
 		LogLevel:         "debug",
-		Debug:            false,
 	}
 
 	return c

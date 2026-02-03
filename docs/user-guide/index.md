@@ -23,9 +23,12 @@ Fireactions is still in the early stages of development, we are waiting for feed
 There are a few requirements to run Fireactions:
 
 - Linux machine with KVM support. We recommend using a machine with at least 2 CPU cores and 4GB of RAM.
-- GitHub organisation account with PAT or GitHub App installation token.
-- Containerd
-- Firecracker v1.4.1 or newer
+- GitHub organisation account (currently only organisation accounts are supported)
+- GitHub App with permissions to manage self-hosted runners. See the [GitHub App setup guide](github-app-setup.md) for more details.
+- [Containerd v1.7.0 or newer](https://github.com/containerd/containerd)
+- [Firecracker v1.4.1 or newer](https://github.com/firecracker-microvm/firecracker)
+- [CNI Plugins v1.6.0 or newer](https://github.com/containernetworking/plugins) (with `firewall` and `bridge` plugins)
+- [tc-redirect-tap CNI plugin](https://github.com/awslabs/tc-redirect-tap)
 
 ## Quickstart
 

@@ -13,7 +13,7 @@ var (
 	Commit = ""
 )
 
-// String returns a string representation of the Fireactions version.
-func String() string {
+// GetVersion returns a string representation of the Fireactions version.
+func GetVersion() string {
 	return fmt.Sprintf("%s (Built on %s from Git SHA %s)\n", Version, Date, Commit)
 }

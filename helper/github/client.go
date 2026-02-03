@@ -1,8 +1,10 @@
 package github
 
 import (
+	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v63/github"
@@ -19,7 +21,21 @@ type Client struct {
 
 // NewClient creates a new Client.
 func NewClient(appID int64, appPrivateKey string) (*Client, error) {
-	transport, err := ghinstallation.NewAppsTransport(http.DefaultTransport, appID, []byte(appPrivateKey))
+	baseTransport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	transport, err := ghinstallation.NewAppsTransport(baseTransport, appID, []byte(appPrivateKey))
 	if err != nil {
 		return nil, err
 	}

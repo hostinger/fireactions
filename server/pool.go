@@ -32,67 +32,79 @@ const (
 	defaultSnapshotter = "devmapper"
 )
 
-// machineMetadata holds metadata about a Firecracker machine and its associated resources.
-type machineMetadata struct {
-	machine     *firecracker.Machine
-	runnerID    int64
-	createdAt   time.Time
-	leaseCancel func(context.Context) error // containerd lease cancel function
-	logFile     *os.File
-}
-
 // Pool represents a pool of Firecracker VMs that are used to run GitHub Actions jobs.
 type Pool struct {
 	config         *PoolConfig
 	containerd     *containerd.Client
-	containerdMu   *sync.Mutex
 	github         *github.Client
 	imageManager   *imageManager
+	pendingCreates atomic.Int32
+	pendingDeletes atomic.Int32
 	machinesMu     *sync.Mutex
-	machines       map[string]*machineMetadata // map[runnerName]machineMetadata
-	installationID atomic.Int64                // GitHub App installation ID
+	machines       map[string]*Machine
+	installationID atomic.Int64
 	logger         *zerolog.Logger
-	l              *sync.Mutex
+	replicas       atomic.Int32
 	isActive       bool
-	t              *time.Ticker
+	scaleTrigger   chan struct{}
 	stopCh         chan struct{}
-	doneCh         chan struct{}  // Signals when Run() has exited
-	cleanupWg      sync.WaitGroup // Tracks cleanup goroutines
+	doneCh         chan struct{}
+	cleanupWg      sync.WaitGroup
 	ctx            context.Context
 	cancel         context.CancelFunc
+	nextCID        *atomic.Uint32
+	l              *sync.Mutex
 }
 
 // PoolConfig represents the configuration of a Pool.
 type PoolConfig struct {
-	Name        string             `yaml:"name" validate:"required"`
-	Replicas    int                `yaml:"replicas" validate:"min=0"`
-	Runner      *RunnerConfig      `yaml:"runner" validate:"required"`
-	Firecracker *FirecrackerConfig `yaml:"firecracker" validate:"required"`
+	Name           string             `yaml:"name" validate:"required"`
+	ShutdownOnExit *bool              `yaml:"shutdown_on_exit"`
+	Replicas       int                `yaml:"replicas" validate:"min=0"`
+	Runner         *RunnerConfig      `yaml:"runner" validate:"required"`
+	Firecracker    *FirecrackerConfig `yaml:"firecracker" validate:"required"`
+}
+
+// UnmarshalYAML implements custom unmarshaling to set defaults.
+func (p *PoolConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type poolConfigAlias PoolConfig
+	defaults := poolConfigAlias{
+		ShutdownOnExit: func() *bool { b := true; return &b }(),
+	}
+
+	if err := unmarshal(&defaults); err != nil {
+		return err
+	}
+
+	*p = PoolConfig(defaults)
+	return nil
 }
 
 // NewPool creates a new Pool.
-func NewPool(logger *zerolog.Logger, config *PoolConfig, github *github.Client, imageManager *imageManager, containerdClient *containerd.Client) (*Pool, error) {
+func NewPool(logger *zerolog.Logger, config *PoolConfig, github *github.Client, imageManager *imageManager, containerdClient *containerd.Client, nextCID *atomic.Uint32) (*Pool, error) {
 	l := logger.With().Str("pool", config.Name).Logger()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	p := &Pool{
 		config:       config,
+		l:            &sync.Mutex{},
 		machinesMu:   &sync.Mutex{},
-		machines:     make(map[string]*machineMetadata),
+		machines:     make(map[string]*Machine),
 		isActive:     true,
 		containerd:   containerdClient,
-		containerdMu: &sync.Mutex{},
 		github:       github,
 		imageManager: imageManager,
 		logger:       &l,
-		l:            &sync.Mutex{},
-		t:            time.NewTicker(1 * time.Second),
+		scaleTrigger: make(chan struct{}, 1),
 		stopCh:       make(chan struct{}, 1),
 		doneCh:       make(chan struct{}),
 		ctx:          ctx,
 		cancel:       cancel,
+		nextCID:      nextCID,
 	}
+
+	p.replicas.Store(int32(config.Replicas))
 
 	if _, err := os.Stat(p.GetDir()); os.IsNotExist(err) {
 		if err := os.MkdirAll(p.GetDir(), 0755); err != nil {
@@ -116,23 +128,32 @@ func NewPool(logger *zerolog.Logger, config *PoolConfig, github *github.Client, 
 
 // Run starts the pool. Starting the pool will start the scaling process.
 func (p *Pool) Run() {
-	defer p.t.Stop()
 	defer close(p.doneCh) // Signal that Run() has exited
+
+	// Trigger initial scale
+	p.TriggerScale()
+
 	for {
 		select {
+		case <-p.scaleTrigger:
+		case <-time.After(2 * time.Second):
 		case <-p.stopCh:
 			return
 		case <-p.ctx.Done():
 			return
-		case <-p.t.C:
 		}
 
 		curSize := p.GetCurrentSize()
 		desiredReplicas := p.GetReplicas()
+		pendingCreates := int(p.pendingCreates.Load())
+		pendingDeletes := int(p.pendingDeletes.Load())
+		netPending := pendingCreates - pendingDeletes
 		metricPoolRunnersCurrent.
 			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(curSize))
 		metricPoolRunnersDesired.
 			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(desiredReplicas))
+		metricPoolRunnersPending.
+			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(netPending))
 
 		if !p.isActive {
 			p.logger.Debug().Msgf("Pool %s is paused, skipping scaling", p.config.Name)
@@ -140,7 +161,7 @@ func (p *Pool) Run() {
 		}
 
 		// Scale to desired replicas
-		if err := p.Scale(p.ctx, desiredReplicas-p.GetCurrentSize()); err != nil {
+		if err := p.Scale(p.ctx, desiredReplicas); err != nil {
 			// Don't log errors if context was cancelled (pool is stopping)
 			if p.ctx.Err() == nil {
 				p.logger.Error().Err(err).Msg("Failed to scale pool")
@@ -168,24 +189,20 @@ func (p *Pool) Stop() {
 		p.logger.Warn().Msg("Timeout waiting for Run() to exit")
 	}
 
-	// Now acquire the lock to stop machines
-	p.l.Lock()
-	defer p.l.Unlock()
-
 	p.logger.Debug().Msgf("Stopping %d machines in pool %s", len(p.machines), p.config.Name)
 
 	p.machinesMu.Lock()
-	metadataList := make([]*machineMetadata, 0, len(p.machines))
-	for _, metadata := range p.machines {
-		metadataList = append(metadataList, metadata)
+	machines := make([]*Machine, 0, len(p.machines))
+	for _, machine := range p.machines {
+		machines = append(machines, machine)
 	}
 	p.machinesMu.Unlock()
 
 	// Stop all machines - cleanup goroutines will handle the rest
-	for _, metadata := range metadataList {
-		runnerName := metadata.machine.Cfg.VMID
+	for _, machine := range machines {
+		runnerName := machine.Cfg.VMID
 
-		err := metadata.machine.StopVMM()
+		err := machine.StopVMM()
 		if err != nil {
 			p.logger.Error().Err(err).Msgf("Failed to stop Firecracker VM %s", runnerName)
 		}
@@ -193,7 +210,6 @@ func (p *Pool) Stop() {
 		p.logger.Debug().Msgf("Stopped Firecracker VM %s", runnerName)
 	}
 
-	// Wait for all cleanup goroutines to finish with a timeout
 	cleanupDone := make(chan struct{})
 	go func() {
 		p.cleanupWg.Wait()
@@ -202,7 +218,7 @@ func (p *Pool) Stop() {
 
 	select {
 	case <-cleanupDone:
-	case <-time.After(10 * time.Second):
+	case <-time.After(35 * time.Second):
 		p.logger.Warn().Msg("Timeout waiting for cleanup goroutines to finish")
 	}
 
@@ -215,70 +231,101 @@ func (p *Pool) GetDir() string {
 }
 
 // Scale scales the pool to the desired size.
-func (p *Pool) Scale(ctx context.Context, replicas int) error {
-	// Check if pool is shutting down before attempting to scale
+func (p *Pool) Scale(ctx context.Context, desiredReplicas int) error {
+	p.l.Lock()
+	defer p.l.Unlock()
+
 	select {
 	case <-p.ctx.Done():
 		return p.ctx.Err()
 	default:
 	}
 
-	p.l.Lock()
-	defer p.l.Unlock()
-
 	curSize := p.GetCurrentSize()
-	desSize := curSize + replicas
+	pendingCreates := int(p.pendingCreates.Load())
+	pendingDeletes := int(p.pendingDeletes.Load())
 
-	// If no change needed, return
-	if desSize == curSize {
+	// Calculate effective size accounting for in-flight operations
+	effectiveSize := curSize + pendingCreates - pendingDeletes
+	delta := desiredReplicas - effectiveSize
+
+	if delta == 0 {
 		return nil
 	}
 
-	// Scale up
-	if replicas > 0 {
-		for i := curSize; i < desSize; i++ {
-			// Check context before each scale operation
+	if delta > 0 {
+		p.scaleUp(
+			ctx, delta, desiredReplicas, curSize, pendingCreates, pendingDeletes)
+	} else {
+		p.scaleDown(
+			ctx, -delta, desiredReplicas, curSize, pendingCreates, pendingDeletes)
+	}
+
+	return nil
+}
+
+func (p *Pool) scaleUp(ctx context.Context, count, desiredReplicas, curSize, pendingCreates, pendingRemovals int) {
+	p.logger.Debug().Msgf("Scaling up by %d VMs (target: %d, current: %d, pending creates: %d, pending removals: %d)",
+		count, desiredReplicas, curSize, pendingCreates, pendingRemovals)
+
+	for i := 0; i < count; i++ {
+		p.pendingCreates.Add(1)
+
+		go func() {
+			defer p.pendingCreates.Add(-1)
+
 			select {
 			case <-p.ctx.Done():
-				return p.ctx.Err()
+				return
 			default:
 			}
 
 			start := time.Now()
-			if err := p.scaleUp(ctx); err != nil {
+			if err := p.createMachine(ctx); err != nil {
 				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up", "failure").Inc()
-				return err
+				p.logger.Error().Err(err).Msg("Failed to create machine")
+				return
 			}
-			duration := time.Since(start).Seconds()
 
+			duration := time.Since(start).Seconds()
 			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up", "success").Inc()
 			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up").Observe(duration)
-			p.logger.Trace().Msgf("Pool scaled to %d", i+1)
-		}
+		}()
+	}
+}
+
+func (p *Pool) scaleDown(ctx context.Context, count, desiredReplicas, curSize, pendingCreates, pendingDeletes int) {
+	if count > curSize {
+		count = curSize
 	}
 
-	// Scale down
-	if replicas < 0 {
-		toRemove := -replicas
-		if toRemove > curSize {
-			toRemove = curSize
-		}
+	p.logger.Debug().Msgf("Scaling down by %d VMs (target: %d, current: %d, pending creates: %d, pending deletes: %d)",
+		count, desiredReplicas, curSize, pendingCreates, pendingDeletes)
 
-		for i := 0; i < toRemove; i++ {
-			start := time.Now()
-			if err := p.scaleDown(ctx); err != nil {
-				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down", "failure").Inc()
-				return err
+	for i := 0; i < count; i++ {
+		p.pendingDeletes.Add(1)
+
+		go func() {
+			defer p.pendingDeletes.Add(-1)
+
+			select {
+			case <-p.ctx.Done():
+				return
+			default:
 			}
-			duration := time.Since(start).Seconds()
 
+			start := time.Now()
+			if err := p.deleteMachine(ctx); err != nil {
+				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down", "failure").Inc()
+				p.logger.Error().Err(err).Msg("Failed to delete machine")
+				return
+			}
+
+			duration := time.Since(start).Seconds()
 			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down", "success").Inc()
 			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down").Observe(duration)
-		}
+		}()
 	}
-
-	p.logger.Info().Msgf("Pool scaled %d -> %d (target: %d)", curSize, desSize, p.config.Replicas)
-	return nil
 }
 
 // Pause pauses the pool. Pausing the pool will prevent the pool from scaling.
@@ -303,16 +350,21 @@ func (p *Pool) Resume() {
 
 // SetReplicas updates the desired replica count for the pool in a thread-safe manner.
 func (p *Pool) SetReplicas(replicas int) {
-	p.l.Lock()
-	defer p.l.Unlock()
-	p.config.Replicas = replicas
+	p.replicas.Store(int32(replicas))
+	p.TriggerScale()
+}
+
+// TriggerScale sends a non-blocking notification to trigger scaling.
+func (p *Pool) TriggerScale() {
+	select {
+	case p.scaleTrigger <- struct{}{}:
+	default:
+	}
 }
 
 // GetReplicas returns the desired replica count for the pool in a thread-safe manner.
 func (p *Pool) GetReplicas() int {
-	p.l.Lock()
-	defer p.l.Unlock()
-	return p.config.Replicas
+	return int(p.replicas.Load())
 }
 
 // GetCurrentSize returns the current size of the pool.
@@ -322,10 +374,31 @@ func (p *Pool) GetCurrentSize() int {
 	return len(p.machines)
 }
 
-func (p *Pool) scaleUp(ctx context.Context) error {
-	// The containerd client already has the default namespace set, no need to wrap context
+func (p *Pool) ListMachines(ctx context.Context) ([]*Machine, error) {
+	p.machinesMu.Lock()
+	defer p.machinesMu.Unlock()
 
-	// Use the shared image manager to get the image (handles deduplication and policy)
+	machines := make([]*Machine, 0, len(p.machines))
+	for _, machine := range p.machines {
+		machines = append(machines, machine)
+	}
+
+	return machines, nil
+}
+
+func (p *Pool) GetMachine(name string) (*Machine, error) {
+	p.machinesMu.Lock()
+	defer p.machinesMu.Unlock()
+
+	machine, ok := p.machines[name]
+	if !ok {
+		return nil, fmt.Errorf("machine not found: %s", name)
+	}
+
+	return machine, nil
+}
+
+func (p *Pool) createMachine(ctx context.Context) error {
 	image, err := p.imageManager.ensureImage(
 		ctx,
 		p.config.Runner.Image,
@@ -363,25 +436,23 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("creating log file: %w", err)
 	}
-	defer func() {
-		if !machineCreated {
-			// Close the file if we failed to create the machine
-			_ = machineLogFile.Close()
-		}
-	}()
+	defer machineLogFile.Close()
 
 	machineCmd := firecracker.VMCommandBuilder{}.
 		WithSocketPath(filepath.Join(p.GetDir(), fmt.Sprintf("%s.sock", runnerName))).
 		WithStderr(machineLogFile).
 		WithStdout(machineLogFile).
 		WithBin(p.config.Firecracker.BinaryPath).
-		Build(context.Background())
+		Build(ctx)
 
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 	logger.SetOutput(io.Discard)
 
-	machine, err := firecracker.NewMachine(ctx, firecracker.Config{
+	vsockPath := filepath.Join(p.GetDir(), fmt.Sprintf("%s.vsock", runnerName))
+	vsockCID := p.nextCID.Add(1)
+
+	fcMachine, err := firecracker.NewMachine(ctx, firecracker.Config{
 		VMID:            runnerName,
 		SocketPath:      filepath.Join(p.GetDir(), fmt.Sprintf("%s.sock", runnerName)),
 		KernelImagePath: p.config.Firecracker.KernelImagePath,
@@ -400,6 +471,7 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 			AllowMMDS:        true,
 			CNIConfiguration: &firecracker.CNIConfiguration{NetworkName: "fireactions", IfName: "eth0", ConfDir: "/etc/cni/net.d", BinPath: []string{"/opt/cni/bin"}},
 		}},
+		VsockDevices:   []firecracker.VsockDevice{{Path: vsockPath, CID: vsockCID}},
 		MmdsAddress:    net.IPv4(169, 254, 169, 254),
 		MmdsVersion:    firecracker.MMDSv2,
 		ForwardSignals: []os.Signal{},
@@ -410,17 +482,18 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 		return fmt.Errorf("firecracker: creating machine: %w", err)
 	}
 
-	installation, _, err := p.github.Apps.FindOrganizationInstallation(ctx, p.config.Runner.Organization)
-	if err != nil {
-		return fmt.Errorf("github: %w", err)
+	installationID := p.installationID.Load()
+	if installationID == 0 {
+		installation, _, err := p.github.Apps.FindOrganizationInstallation(ctx, p.config.Runner.Organization)
+		if err != nil {
+			return fmt.Errorf("github: %w", err)
+		}
+		installationID = installation.GetID()
+
+		p.installationID.Store(installationID)
 	}
 
-	// Store installation ID for cleanup
-	if p.installationID.Load() == 0 {
-		p.installationID.Store(installation.GetID())
-	}
-
-	client := p.github.Installation(installation.GetID())
+	client := p.github.Installation(installationID)
 	jitConfig, _, err := client.Actions.GenerateOrgJITConfig(ctx, p.config.Runner.Organization, &githubv63.GenerateJITConfigRequest{
 		Name:          runnerName,
 		RunnerGroupID: p.config.Runner.GroupID,
@@ -434,11 +507,15 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 	metadata["latest"].(map[string]interface{})["meta-data"].(map[string]interface{})["fireactions"] = map[string]interface{}{
 		"runner_id":         runnerName,
 		"runner_jit_config": jitConfig.GetEncodedJITConfig(),
+		"hostname":          runnerName,
+		"shutdown_on_exit":  *p.config.ShutdownOnExit,
 	}
 
-	machine.Handlers.FcInit = machine.Handlers.FcInit.Append(firecracker.NewSetMetadataHandler(metadata))
+	fcMachine.Handlers.FcInit = fcMachine.Handlers.FcInit.Append(firecracker.NewSetMetadataHandler(metadata))
 
-	if err := machine.Start(context.Background()); err != nil {
+	vmmCtx, vmmCancel := context.WithCancel(p.ctx)
+	if err := fcMachine.Start(vmmCtx); err != nil {
+		vmmCancel()
 		return fmt.Errorf("firecracker: starting machine: %w", err)
 	}
 
@@ -447,17 +524,21 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 
 	p.logger.Info().Msgf("Successfully created Firecracker VM %s", runnerName)
 
-	// Create machine metadata
-	md := &machineMetadata{
-		machine:     machine,
-		runnerID:    jitConfig.Runner.GetID(),
-		createdAt:   time.Now(),
+	machine := &Machine{
+		Machine:     fcMachine,
+		Name:        jitConfig.GetRunner().GetName(),
+		RunnerID:    jitConfig.GetRunner().GetID(),
+		Pool:        p.config.Name,
+		CreatedAt:   time.Now().UTC(),
+		vsockCID:    vsockCID,
+		vsockPath:   vsockPath,
 		leaseCancel: leaseCtxCancel,
-		logFile:     machineLogFile,
+		vmmCtx:      vmmCtx,
+		vmmCancel:   vmmCancel,
 	}
 
 	p.machinesMu.Lock()
-	p.machines[runnerName] = md
+	p.machines[runnerName] = machine
 	p.machinesMu.Unlock()
 
 	// Start cleanup goroutine
@@ -465,80 +546,80 @@ func (p *Pool) scaleUp(ctx context.Context) error {
 	go func() {
 		defer p.cleanupWg.Done()
 
-		// Wait for machine to exit or pool context to be cancelled
-		waitDone := make(chan struct{})
+		waitDone := make(chan error, 1)
 		go func() {
-			_ = md.machine.Wait(context.Background())
-			close(waitDone)
+			waitDone <- machine.Wait(context.Background())
 		}()
 
 		select {
 		case <-waitDone:
 			// Machine exited normally
 		case <-p.ctx.Done():
-			// Pool is stopping, proceed with cleanup anyway
+			// Pool is stopping, wait up to 30s for machine to fully exit
+			select {
+			case <-waitDone:
+			case <-time.After(30 * time.Second):
+				p.logger.Warn().Msgf("Timeout waiting for machine %s to exit during pool shutdown", runnerName)
+			}
 		}
 
-		p.logger.Info().Msgf("Successfully cleaned up exited Firecracker VM %s", runnerName)
-
 		p.machinesMu.Lock()
-		metadata, exists := p.machines[runnerName]
+		_, exists := p.machines[runnerName]
 		if exists {
 			delete(p.machines, runnerName)
 		}
 		p.machinesMu.Unlock()
 
-		// Clean up resources if metadata exists
-		if exists && metadata != nil {
-			// Delete GitHub runner
-			p.deleteGitHubRunner(runnerName, metadata.runnerID)
+		machine.vmmCancel()
 
-			// Clean up containerd lease
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			err := metadata.leaseCancel(ctx)
-			if err != nil && !errdefs.IsNotFound(err) {
-				p.logger.Error().Err(err).Msgf("Failed to remove Containerd lease for Firecracker VM %s", runnerName)
-			}
+		p.deleteGitHubRunner(runnerName, machine.RunnerID)
 
-			// Close log file
-			if metadata.logFile != nil {
-				_ = metadata.logFile.Close()
-			}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err := machine.leaseCancel(ctx)
+		if err != nil && !errdefs.IsNotFound(err) {
+			p.logger.Error().Err(err).Msgf("Failed to remove Containerd lease for Firecracker VM %s", runnerName)
 		}
+
+		p.logger.Info().Msgf("Successfully cleaned up exited Firecracker VM %s", runnerName)
 	}()
 
 	return nil
 }
 
-func (p *Pool) scaleDown(ctx context.Context) error {
+// removeMachine removes a single machine from the pool.
+func (p *Pool) deleteMachine(_ context.Context) error {
 	p.machinesMu.Lock()
 
 	// Find a machine to remove (pick the first one)
-	var targetMetadata *machineMetadata
+	var targetMachine *Machine
 	var targetName string
-	for name, metadata := range p.machines {
-		targetMetadata = metadata
+	for name, machine := range p.machines {
+		targetMachine = machine
 		targetName = name
 		break
 	}
 
-	if targetMetadata == nil {
+	if targetMachine == nil {
 		p.machinesMu.Unlock()
 		return fmt.Errorf("no machines available to scale down")
 	}
 
+	// Remove from map immediately to prevent selecting the same machine multiple times
+	delete(p.machines, targetName)
 	p.machinesMu.Unlock()
 
-	err := targetMetadata.machine.StopVMM()
+	err := targetMachine.StopVMM()
 	if err != nil {
-		p.logger.Warn().Err(err).Msgf("Failed to gracefully stop Firecracker VM %s during scale down", targetName)
+		p.logger.Warn().Err(err).Msgf("Failed to stop VM %s", targetName)
+		return err
 	}
 
-	p.logger.Info().Msgf("Successfully scaled down Firecracker VM %s", targetName)
+	p.logger.Info().Msgf("Successfully removed VM %s", targetName)
 	return nil
 }
 
+// createSnapshot creates a snapshot of the specified image.
 func (p *Pool) createSnapshot(ctx context.Context, image containerd.Image, snapshotID string) ([]mount.Mount, error) {
 	snapshotService := p.containerd.SnapshotService(defaultSnapshotter)
 	snapshotExists := true
@@ -575,6 +656,7 @@ func (p *Pool) createSnapshot(ctx context.Context, image containerd.Image, snaps
 	return mounts, nil
 }
 
+// unpackImage unpacks a containerd image if it is not already unpacked.
 func (p *Pool) unpackImage(ctx context.Context, image containerd.Image) error {
 	isUnpacked, err := image.IsUnpacked(ctx, defaultSnapshotter)
 	if err != nil {
@@ -610,7 +692,7 @@ func (p *Pool) deleteGitHubRunner(runnerName string, runnerID int64) {
 		return
 	}
 
-	p.logger.Info().Msgf("Successfully deleted GitHub runner %s (ID: %d)", runnerName, runnerID)
+	p.logger.Debug().Msgf("Successfully deleted GitHub runner %s (ID: %d)", runnerName, runnerID)
 }
 
 func init() {

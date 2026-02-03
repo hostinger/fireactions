@@ -1,0 +1,54 @@
+syntax = "proto3";
+package fireactions.agent.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hostinger/fireactions/proto/agent/v1;agentv1";
+
+// AgentService provides status reporting for the GitHub Actions agent running in a VM.
+service AgentService {
+  // GetRunnerState retrieves the current state of the GitHub Actions runner.
+  rpc GetRunnerState(GetRunnerStateRequest) returns (GetRunnerStateResponse);
+
+  // GetRunnerVersion retrieves the agent version.
+  rpc GetRunnerVersion(GetRunnerVersionRequest) returns (GetRunnerVersionResponse);
+
+  // GetLogs streams logs from the agent service (server-side streaming).
+  rpc GetLogs(GetLogsRequest) returns (stream GetLogsResponse);
+}
+
+// GetRunnerStateRequest is the request for GetRunnerState.
+message GetRunnerStateRequest {}
+
+// GetRunnerStateResponse is the response for GetRunnerState.
+message GetRunnerStateResponse {
+  string state = 1;
+}
+
+// GetLogsRequest is the request for GetLogs.
+message GetLogsRequest {
+  bool follow = 1; // If true, stream continuously
+  int32 tail_lines = 2; // Number of recent lines to send first (0 = all)
+}
+
+// GetLogsResponse is the response for GetLogs.
+message GetLogsResponse {
+  string line = 1;
+}
+
+// GetRunnerVersionRequest is the request for GetRunnerVersion.
+message GetRunnerVersionRequest {}
+
+// GetRunnerVersionResponse is the response for GetRunnerVersion.
+message GetRunnerVersionResponse {
+  string version = 1;
+}
+
+// AgentStatus represents the current state of the agent.
+enum AgentStatus {
+  AGENT_STATUS_UNKNOWN = 0;
+  AGENT_STATUS_STARTING = 1;
+  AGENT_STATUS_IDLE = 2;
+  AGENT_STATUS_RUNNING = 3;
+  AGENT_STATUS_COMPLETED = 4;
+}
