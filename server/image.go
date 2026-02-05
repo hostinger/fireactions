@@ -10,6 +10,7 @@ import (
 	"github.com/containerd/nerdctl/pkg/imgutil/dockerconfigresolver"
 	"github.com/distribution/reference"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/singleflight"
 )
 
 // imageManager manages container images.
@@ -17,6 +18,7 @@ import (
 type imageManager struct {
 	containerd *containerd.Client
 	logger     *zerolog.Logger
+	pullGroup  singleflight.Group
 }
 
 // newImageManager creates a new imageManager.
@@ -66,35 +68,45 @@ func (im *imageManager) pullImage(ctx context.Context, ref string, isAlways bool
 		}
 	}
 
-	start := time.Now()
-	if isAlways {
-		im.logger.Info().Str("image", ref).Msg("Pulling image (policy: always)")
-	} else {
-		im.logger.Info().Str("image", ref).Msg("Pulling image")
-	}
+	// Use singleflight to ensure only one goroutine pulls a given image
+	// All other concurrent requests for the same image will wait and share the result
+	result, err, _ := im.pullGroup.Do(ref, func() (interface{}, error) {
+		start := time.Now()
+		if isAlways {
+			im.logger.Info().Str("image", ref).Msg("Pulling image (policy: always)")
+		} else {
+			im.logger.Info().Str("image", ref).Msg("Pulling image")
+		}
 
-	dockerRef, err := reference.ParseDockerRef(ref)
-	if err != nil {
-		return nil, fmt.Errorf("parsing image ref: %w", err)
-	}
+		dockerRef, err := reference.ParseDockerRef(ref)
+		if err != nil {
+			return nil, fmt.Errorf("parsing image ref: %w", err)
+		}
 
-	refDomain := reference.Domain(dockerRef)
-	resolver, err := dockerconfigresolver.New(ctx, refDomain)
-	if err != nil {
-		return nil, fmt.Errorf("creating docker config resolver: %w", err)
-	}
+		refDomain := reference.Domain(dockerRef)
+		resolver, err := dockerconfigresolver.New(ctx, refDomain)
+		if err != nil {
+			return nil, fmt.Errorf("creating docker config resolver: %w", err)
+		}
 
-	image, err := im.containerd.Pull(ctx, ref,
-		containerd.WithPullUnpack,
-		containerd.WithResolver(resolver),
-		containerd.WithPullSnapshotter(defaultSnapshotter))
+		image, err := im.containerd.Pull(ctx, ref,
+			containerd.WithPullUnpack,
+			containerd.WithResolver(resolver),
+			containerd.WithPullSnapshotter(defaultSnapshotter))
+		if err != nil {
+			im.logger.Error().Err(err).Str("image", ref).Msg("Failed to pull image")
+			return nil, err
+		}
+
+		im.logger.Info().Str("image", ref).Dur("duration", time.Since(start)).Msg("Image pulled successfully")
+		return image, nil
+	})
+
 	if err != nil {
-		im.logger.Error().Err(err).Str("image", ref).Msg("Failed to pull image")
 		return nil, err
 	}
 
-	im.logger.Info().Str("image", ref).Dur("duration", time.Since(start)).Msg("Image pulled successfully")
-	return image, nil
+	return result.(containerd.Image), nil
 }
 
 // listImages returns all images in containerd.
