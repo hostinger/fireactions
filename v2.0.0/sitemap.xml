@@ -2,70 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://hostinger.github.io/fireactions/v2.0.0/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/faq/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/help/faq/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/cli/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/help/troubleshooting/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/examples/custom-image/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/reference/cli/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/examples/debugging-workflows/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/reference/configuration/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/examples/docker-registry-mirror/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/tutorials/custom-image/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/tutorials/debugging-workflows/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/tutorials/docker-registry-mirror/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
          <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/concepts/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/configuration/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/first-build/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
          <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/images/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
          <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/installation/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
          <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/kernels/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/monitoring/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/metrics/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/running-the-first-build/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/overview/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
     <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/support-matrix/</loc>
-         <lastmod>2026-02-03</lastmod>
-    </url>
-    <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/troubleshooting/</loc>
-         <lastmod>2026-02-03</lastmod>
-    </url>
-    <url>
-         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/upgrading/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <loc>https://hostinger.github.io/fireactions/v2.0.0/user-guide/upgrade-guide/</loc>
+         <lastmod>2026-02-05</lastmod>
     </url>
 </urlset>
