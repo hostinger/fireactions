@@ -143,6 +143,15 @@ func (p *Pool) Run() {
 			return
 		}
 
+		// Check if we should stop before scaling (non-blocking check)
+		select {
+		case <-p.ctx.Done():
+			return
+		case <-p.stopCh:
+			return
+		default:
+		}
+
 		curSize := p.GetCurrentSize()
 		desiredReplicas := p.GetReplicas()
 		pendingCreates := int(p.pendingCreates.Load())
@@ -633,10 +642,6 @@ func (p *Pool) createSnapshot(ctx context.Context, image containerd.Image, snaps
 	}
 
 	if !snapshotExists {
-		if err := p.unpackImage(ctx, image); err != nil {
-			return nil, fmt.Errorf("unpack: %w", err)
-		}
-
 		imageContent, err := image.RootFS(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("image: rootfs: %w", err)
@@ -654,20 +659,6 @@ func (p *Pool) createSnapshot(ctx context.Context, image containerd.Image, snaps
 	}
 
 	return mounts, nil
-}
-
-// unpackImage unpacks a containerd image if it is not already unpacked.
-func (p *Pool) unpackImage(ctx context.Context, image containerd.Image) error {
-	isUnpacked, err := image.IsUnpacked(ctx, defaultSnapshotter)
-	if err != nil {
-		return err
-	}
-
-	if isUnpacked {
-		return nil
-	}
-
-	return image.Unpack(ctx, defaultSnapshotter)
 }
 
 // deleteGitHubRunner removes a runner from GitHub Actions
