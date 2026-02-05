@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/hostinger/fireactions/compare/v2.0.0...v2.0.1) (2026-02-05)
+
+
+### Bug Fixes
+
+* Ensure only one Goroutine pulls a given image ([e9e299e](https://github.com/hostinger/fireactions/commit/e9e299e732585ec07943bfe0f95e989b633bdc0c))
+* Make sure pool isn't stopping before attempting to scale ([f4c7f91](https://github.com/hostinger/fireactions/commit/f4c7f91da6d4abdf7eedcedde89108c2ac11314f))
+
 ## [2.0.0](https://github.com/hostinger/fireactions/compare/v1.0.1...v2.0.0) (2026-02-03)
 
 
