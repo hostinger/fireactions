@@ -1,7 +1,3 @@
-# Intro
-
-Putting it simply, Fireactions is an orchestrator for GitHub runners.
-
 ## Why Fireactions?
 
 Essentially, we needed a reliable and fast way to run self-hosted GitHub runners on our own infrastructure. We wanted to have the same level of control and security as with GitHub hosted runners, but without the limitations of the hosted runners (e.g. long startup times, limited resources, etc.).
@@ -24,7 +20,7 @@ There are a few requirements to run Fireactions:
 
 - Linux machine with KVM support. We recommend using a machine with at least 2 CPU cores and 4GB of RAM.
 - GitHub organisation account (currently only organisation accounts are supported)
-- GitHub App with permissions to manage self-hosted runners. See the [GitHub App setup guide](github-app-setup.md) for more details.
+- GitHub App with permissions to manage self-hosted runners. See the [installation guide](installation.md) for setup details.
 - [Containerd v1.7.0 or newer](https://github.com/containerd/containerd)
 - [Firecracker v1.4.1 or newer](https://github.com/firecracker-microvm/firecracker)
 - [CNI Plugins v1.6.0 or newer](https://github.com/containernetworking/plugins) (with `firewall` and `bridge` plugins)

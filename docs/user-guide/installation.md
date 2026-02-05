@@ -1,4 +1,4 @@
-# Installation
+# Manual Installation
 
 This guide will walk you through manually installing and configuring Fireactions on a Linux machine.
 
@@ -435,7 +435,7 @@ pools:
 log_level: info
 ```
 
-For all configuration options, see the [configuration guide](configuration.md).
+For all configuration options, see the [configuration guide](../reference/configuration.md).
 
 ### Create Fireactions Systemd Service
 
@@ -499,4 +499,4 @@ Expected output:
         CPU: 2.134s
 ```
 
-Refer to [Troubleshooting Guide](troubleshooting.md) in case of issues.
+Refer to [Troubleshooting Guide](../help/troubleshooting.md) in case of issues.

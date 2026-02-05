@@ -8,10 +8,11 @@ theme:
   name: material
   logo: img/banner_white.png
   features:
-    - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.instant
     - navigation.sections
+    - navigation.path
+    - navigation.expand
+    - navigation.indexes
   palette:
     primary: violet
   include_sidebar: true
@@ -29,26 +30,25 @@ extra:
       link: https://github.com/hostinger/fireactions
 
 nav:
-  - Home:
-      - Overview: "index.md"
   - User Guide:
-      - Intro: "user-guide/index.md"
-      - Configuration: "user-guide/configuration.md"
-      - Concepts: "user-guide/concepts.md"
-      - Installation: "user-guide/installation.md"
-      - Running the first build: "user-guide/running-the-first-build.md"
-      - Images: "user-guide/images.md"
-      - Kernels: "user-guide/kernels.md"
-      - Monitoring: "user-guide/monitoring.md"
-      - Troubleshooting: "user-guide/troubleshooting.md"
-      - Upgrading: "user-guide/upgrading.md"
-      - Support Matrix: "user-guide/support-matrix.md"
-  - CLI Reference: "cli/index.md"
-  - Examples:
-      - Creating custom image for Firecracker VMs: "examples/custom-image.md"
-      - Setting up a Docker registry mirror: "examples/docker-registry-mirror.md"
-      - Debugging workflows: "examples/debugging-workflows.md"
-  - FAQ: "faq.md"
+      - Overview: user-guide/overview.md
+      - Core Concepts: user-guide/concepts.md
+      - Installation: user-guide/installation.md
+      - Running First Build: user-guide/first-build.md
+      - Images: user-guide/images.md
+      - Kernels: user-guide/kernels.md
+      - Metrics: user-guide/metrics.md
+      - Upgrade Guide: user-guide/upgrade-guide.md
+  - Reference:
+      - Configuration: reference/configuration.md
+      - CLI: reference/cli.md
+  - Tutorials:
+      - Custom images: tutorials/custom-image.md
+      - Docker registry mirror: tutorials/docker-registry-mirror.md
+      - Debugging: tutorials/debugging-workflows.md
+  - Help:
+      - Troubleshooting: help/troubleshooting.md
+      - FAQ: help/faq.md
 
 markdown_extensions:
   - pymdownx.highlight:
