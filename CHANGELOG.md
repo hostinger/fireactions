@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/hostinger/fireactions/compare/v2.0.2...v2.0.3) (2026-02-06)
+
+
+### Bug Fixes
+
+* **agent:** Don't wait for shutdown command to execute ([f95b16e](https://github.com/hostinger/fireactions/commit/f95b16e5cf17d434dab86cb59c9d01f6373e4fd7))
+* **server:** Increase timeouts and properly handle context for RPC calls ([0abdf45](https://github.com/hostinger/fireactions/commit/0abdf4525e90ed41f161958ab98757710c9e03f4))
+
 ## [2.0.2](https://github.com/hostinger/fireactions/compare/v2.0.1...v2.0.2) (2026-02-06)
 
 
