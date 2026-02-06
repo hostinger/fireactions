@@ -9,6 +9,7 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/go-github/v63 v63.0.0
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/rs/zerolog v1.34.0
 	github.com/sirupsen/logrus v1.9.4
@@ -76,6 +77,7 @@ require (
 	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 var (
@@ -39,8 +41,15 @@ func WithHTTPClient(client *http.Client) Opt {
 
 // NewClient creates a new Client.
 func NewClient(opts ...Opt) *Client {
+	// Create retryable HTTP client with sensible defaults for MMDS
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 10
+	retryClient.RetryWaitMin = 500 * time.Millisecond
+	retryClient.RetryWaitMax = 5 * time.Second
+	retryClient.Logger = nil // Disable logging
+
 	c := &Client{
-		client: &http.Client{Timeout: 5 * time.Second},
+		client: retryClient.StandardClient(),
 	}
 
 	for _, opt := range opts {
