@@ -11,7 +11,7 @@ import (
 )
 
 // convertPoolToProto converts a Pool to its protobuf representation.
-func convertPoolToProto(pool *Pool) *serverv1.Pool {
+func convertPoolToProto(ctx context.Context, pool *Pool) *serverv1.Pool {
 	state := serverv1.PoolState_POOL_STATE_ACTIVE
 	if !pool.isActive {
 		state = serverv1.PoolState_POOL_STATE_PAUSED
@@ -30,7 +30,7 @@ func convertPoolToProto(pool *Pool) *serverv1.Pool {
 	}
 }
 
-func convertMachineToProto(machine *Machine) *serverv1.Machine {
+func convertMachineToProto(ctx context.Context, machine *Machine) *serverv1.Machine {
 	m := &serverv1.Machine{
 		ID:        machine.Name,
 		Pool:      machine.Pool,
@@ -38,7 +38,7 @@ func convertMachineToProto(machine *Machine) *serverv1.Machine {
 		CreatedAt: timestamppb.New(machine.CreatedAt),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	conn, client, err := machine.ConnectToGuestAgent(ctx)
@@ -49,14 +49,16 @@ func convertMachineToProto(machine *Machine) *serverv1.Machine {
 	}
 	defer conn.Close()
 
-	runnerStateResp, err := client.GetRunnerState(ctx, &agentv1.GetRunnerStateRequest{})
+	runnerStateResp, err := client.GetRunnerState(
+		ctx, &agentv1.GetRunnerStateRequest{})
 	if err != nil {
 		m.RunnerState = "Unknown"
 	} else {
 		m.RunnerState = runnerStateResp.GetState()
 	}
 
-	runnerVersionResp, err := client.GetRunnerVersion(ctx, &agentv1.GetRunnerVersionRequest{})
+	runnerVersionResp, err := client.GetRunnerVersion(
+		ctx, &agentv1.GetRunnerVersionRequest{})
 	if err != nil {
 		m.RunnerVersion = "Unknown"
 	} else {
@@ -67,9 +69,7 @@ func convertMachineToProto(machine *Machine) *serverv1.Machine {
 }
 
 // convertImageToProto converts a containerd Image to its protobuf representation.
-func convertImageToProto(img containerd.Image) *serverv1.Image {
-	ctx := context.Background()
-
+func convertImageToProto(ctx context.Context, img containerd.Image) *serverv1.Image {
 	size, _ := img.Size(ctx)
 	createdAt := img.Metadata().CreatedAt
 

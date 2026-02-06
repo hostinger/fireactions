@@ -18,7 +18,7 @@ func (s *Server) GetPool(ctx context.Context, req *serverv1.GetPoolRequest) (*se
 		return nil, status.Errorf(codes.NotFound, "pool not found: %v", err)
 	}
 
-	return &serverv1.GetPoolResponse{Pool: convertPoolToProto(pool)}, nil
+	return &serverv1.GetPoolResponse{Pool: convertPoolToProto(ctx, pool)}, nil
 }
 
 // ListPools implements ServerService.ListPools.
@@ -38,7 +38,7 @@ func (s *Server) ListPools(ctx context.Context, req *serverv1.ListPoolsRequest) 
 	// Convert to proto messages
 	protoPools := make([]*serverv1.Pool, len(pools))
 	for i, pool := range pools {
-		protoPools[i] = convertPoolToProto(pool)
+		protoPools[i] = convertPoolToProto(ctx, pool)
 	}
 
 	return &serverv1.ListPoolsResponse{Pools: protoPools}, nil
@@ -145,7 +145,7 @@ func (s *Server) ListMachines(ctx context.Context, req *serverv1.ListMachinesReq
 
 	for i, machine := range machines {
 		go func(idx int, m *Machine) {
-			results <- result{index: idx, proto: convertMachineToProto(m)}
+			results <- result{index: idx, proto: convertMachineToProto(ctx, m)}
 		}(i, machine)
 	}
 
@@ -165,7 +165,7 @@ func (s *Server) GetMachine(ctx context.Context, req *serverv1.GetMachineRequest
 		return nil, status.Errorf(codes.NotFound, "machine not found: %v", err)
 	}
 
-	return &serverv1.GetMachineResponse{Machine: convertMachineToProto(machine)}, nil
+	return &serverv1.GetMachineResponse{Machine: convertMachineToProto(ctx, machine)}, nil
 }
 
 // GetHealth implements ServerService.GetHealth.
@@ -227,7 +227,7 @@ func (s *Server) ListImages(ctx context.Context, req *serverv1.ListImagesRequest
 
 	protoImages := make([]*serverv1.Image, len(images))
 	for i, img := range images {
-		protoImages[i] = convertImageToProto(img)
+		protoImages[i] = convertImageToProto(ctx, img)
 	}
 
 	return &serverv1.ListImagesResponse{Images: protoImages}, nil
