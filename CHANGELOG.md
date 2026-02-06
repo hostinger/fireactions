@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/hostinger/fireactions/compare/v2.0.1...v2.0.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* Use retryable HTTP client ([880eb53](https://github.com/hostinger/fireactions/commit/880eb53954998a29e97ca69a4b20413057b03cfc))
+
 ## [2.0.1](https://github.com/hostinger/fireactions/compare/v2.0.0...v2.0.1) (2026-02-05)
 
 
