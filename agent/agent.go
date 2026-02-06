@@ -153,12 +153,11 @@ func (a *Agent) runGitHubRunner(ctx context.Context) {
 }
 
 func (a *Agent) shutdown() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "systemctl", "reboot")
-	if err := cmd.Run(); err != nil {
+	// We don't need to wait for it to complete since the VM will shut down anyway
+	cmd := exec.Command("systemctl", "reboot")
+	if err := cmd.Start(); err != nil {
 		a.logger.Error().Err(err).Msg("Failed to initiate VM shutdown")
+		return
 	}
 
 	a.logger.Info().Msg("Shutdown command executed")
