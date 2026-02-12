@@ -132,7 +132,7 @@ Ensure all build dependencies are installed. The kernel build system will report
 ```
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/x86_64 6.1.0 Kernel Configuration
+# Linux/x86 6.1.0 Kernel Configuration
 #
 CONFIG_CC_VERSION_TEXT="gcc (Debian 12.2.0-14+deb12u1) 12.2.0"
 CONFIG_CC_IS_GCC=y
@@ -445,7 +445,7 @@ CONFIG_CC_HAS_SANE_STACKPROTECTOR=y
 CONFIG_SMP=y
 CONFIG_X86_FEATURE_NAMES=y
 CONFIG_X86_X2APIC=y
-# CONFIG_X86_MPPARSE is not set
+CONFIG_X86_MPPARSE=y
 # CONFIG_GOLDFISH is not set
 # CONFIG_X86_CPU_RESCTRL is not set
 # CONFIG_X86_EXTENDED_PLATFORM is not set
