@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.4](https://github.com/hostinger/fireactions/compare/v2.0.3...v2.0.4) (2026-04-03)
+
+
+### Dependencies
+
+* Bump github.com/docker/cli from 29.1.5+incompatible to 29.2.0+incompatible ([#298](https://github.com/hostinger/fireactions/issues/298)) ([18fd188](https://github.com/hostinger/fireactions/commit/18fd188afd4d0c7517935b76c267d57e7a1654f5))
+* Bump github.com/olekukonko/tablewriter from 1.1.3 to 1.1.4 ([#304](https://github.com/hostinger/fireactions/issues/304)) ([053cae7](https://github.com/hostinger/fireactions/commit/053cae75871fd75b3cac5321fdcdc6773417d629))
+* Bump github.com/rs/zerolog from 1.34.0 to 1.35.0 ([#306](https://github.com/hostinger/fireactions/issues/306)) ([d89a82e](https://github.com/hostinger/fireactions/commit/d89a82e5df475abef5e4975a7834a760a8866c68))
+* Bump golang.org/x/sync from 0.19.0 to 0.20.0 ([#302](https://github.com/hostinger/fireactions/issues/302)) ([a59c44b](https://github.com/hostinger/fireactions/commit/a59c44bfa3714d485863fab8177ff459bcbab03d))
+* Bump golang.org/x/sys from 0.40.0 to 0.42.0 ([#301](https://github.com/hostinger/fireactions/issues/301)) ([49c5fb8](https://github.com/hostinger/fireactions/commit/49c5fb8d92a3d3c7b27b1e687018035338633ff7))
+* Bump google.golang.org/grpc from 1.78.0 to 1.79.3 ([#305](https://github.com/hostinger/fireactions/issues/305)) ([8cb4445](https://github.com/hostinger/fireactions/commit/8cb4445d2d3e947763b766da9c497a6ab81b6d47))
+
 ## [2.0.3](https://github.com/hostinger/fireactions/compare/v2.0.2...v2.0.3) (2026-02-06)
 
 
