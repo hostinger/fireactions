@@ -124,7 +124,7 @@ require (
 
 require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
-	github.com/containerd/containerd v1.7.30
+	github.com/containerd/containerd v1.7.31
 	github.com/containerd/nerdctl v1.7.7
 	github.com/firecracker-microvm/firecracker-go-sdk v1.0.0
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
