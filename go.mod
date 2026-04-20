@@ -11,7 +11,7 @@ require (
 	github.com/google/go-github/v63 v63.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/rs/zerolog v1.35.0
+	github.com/rs/zerolog v1.35.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.79.3
