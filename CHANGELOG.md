@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.5](https://github.com/hostinger/fireactions/compare/v2.0.4...v2.0.5) (2026-05-28)
+
+
+### Dependencies
+
+* Update dependencies ([9cb5737](https://github.com/hostinger/fireactions/commit/9cb5737d9abc2beeb3e972018eaaab618ba71f9a))
+
 ## [2.0.4](https://github.com/hostinger/fireactions/compare/v2.0.3...v2.0.4) (2026-04-03)
 
 
