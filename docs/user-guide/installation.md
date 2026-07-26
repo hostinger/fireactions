@@ -413,9 +413,15 @@ pools:
     image: ghcr.io/hostinger/fireactions-images/ubuntu22.04:latest
     image_pull_policy: IfNotPresent  # or Always to pull on every run
     group_id: 1  # Runner group ID in GitHub (1 = default)
-    # Register runners with an organization...
+    # Set EXACTLY ONE of `organization` or `repository`. Setting both is
+    # rejected at startup; to switch scope, delete the line you're not using.
+    #
+    # Organization scoped - runners are shared by the whole organization:
     organization: YOUR_GITHUB_ORGANIZATION
-    # ...or with a single repository, the only option for personal accounts:
+    #
+    # Repository scoped - the only option for personal accounts. To use this,
+    # delete the `organization` line above and uncomment the line below
+    # (`group_id` is optional here and defaults to 1):
     # repository: YOUR_GITHUB_USERNAME/YOUR_REPOSITORY
     labels:
     - self-hosted

@@ -43,17 +43,20 @@ type Pool struct {
 	machinesMu     *sync.Mutex
 	machines       map[string]*Machine
 	installationID atomic.Int64
-	logger         *zerolog.Logger
-	replicas       atomic.Int32
-	isActive       bool
-	scaleTrigger   chan struct{}
-	stopCh         chan struct{}
-	doneCh         chan struct{}
-	cleanupWg      sync.WaitGroup
-	ctx            context.Context
-	cancel         context.CancelFunc
-	nextCID        *atomic.Uint32
-	l              *sync.Mutex
+	// installationIDMu serialises the installation lookup so that concurrent
+	// createMachine goroutines issue a single GitHub API call, not one each.
+	installationIDMu sync.Mutex
+	logger           *zerolog.Logger
+	replicas         atomic.Int32
+	isActive         bool
+	scaleTrigger     chan struct{}
+	stopCh           chan struct{}
+	doneCh           chan struct{}
+	cleanupWg        sync.WaitGroup
+	ctx              context.Context
+	cancel           context.CancelFunc
+	nextCID          *atomic.Uint32
+	l                *sync.Mutex
 }
 
 // PoolConfig represents the configuration of a Pool.
@@ -417,6 +420,15 @@ func (p *Pool) getInstallationID(ctx context.Context) (int64, error) {
 
 	if installationID := p.config.Runner.InstallationID; installationID != 0 {
 		p.installationID.Store(installationID)
+		return installationID, nil
+	}
+
+	p.installationIDMu.Lock()
+	defer p.installationIDMu.Unlock()
+
+	// Another goroutine may have completed the lookup while we waited for the
+	// lock, so re-check before spending another API call on it.
+	if installationID := p.installationID.Load(); installationID != 0 {
 		return installationID, nil
 	}
 

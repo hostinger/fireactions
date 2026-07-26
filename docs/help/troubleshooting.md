@@ -91,9 +91,12 @@ command that can remove all runners that are currently offline.
 Requirements:
 
 - The tools `jq`, `xargs` and the GitHub CLI
-- The GitHub CLI is authenticated as Organization Administrator for the affected Fireactions Pool.
+- The GitHub CLI is authenticated with admin access to wherever the affected pool registers its runners:
+    - **Organization scoped pools** (`runner.organization`): as an Organization Administrator of that organization.
+    - **Repository scoped pools** (`runner.repository`): as a user with admin access to that repository. Organization
+      Administrator access doesn't apply here, and isn't available at all for repositories owned by a personal account.
 
-⚠️ **Warning**: This command will permanently delete runners. Ensure your organization depends on fireactions and that
+⚠️ **Warning**: This command will permanently delete runners. Ensure the account depends on fireactions and that
 you have tested this in a non-production environment first. To preview which runners will be deleted without actually
 deleting them please omit the `xargs` step in the shell commands.
 
@@ -109,7 +112,7 @@ To do the same with fish shell, execute the following:
 
 ```fish
 set -x GH_PAGER
-set -x ORG <ORG>
+set -x ORG "<ORG>"
 gh api --paginate /orgs/$ORG/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /orgs/$ORG/actions/runners/{}
 ```
 
@@ -128,6 +131,8 @@ With fish shell:
 
 ```fish
 set -x GH_PAGER
-set -x REPO <OWNER>/<REPOSITORY>
+set -x REPO "<OWNER>/<REPOSITORY>"
 gh api --paginate /repos/$REPO/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /repos/$REPO/actions/runners/{}
 ```
+
+Please replace `<OWNER>/<REPOSITORY>` with the repository the pool registers its runners with.

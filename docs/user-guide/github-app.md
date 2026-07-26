@@ -107,10 +107,29 @@ You can find the ID in the URL of the installation's settings page:
 - Personal account: **Settings** → **Applications** → **Configure**, the URL ends in
   `/settings/installations/<INSTALLATION_ID>`
 
-Or via the API, authenticating with the App's JWT:
+Or via the API. This endpoint only accepts a JWT signed with the App's private key — a normal `gh auth login`
+token won't work, so mint the JWT first and pass it explicitly:
 
 ```bash
-gh api /repos/<OWNER>/<REPOSITORY>/installation --jq .id
+APP_ID=<APP_ID>
+KEY=<PATH_TO_PRIVATE_KEY.pem>
+
+header=$(printf '{"alg":"RS256","typ":"JWT"}' | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+now=$(date +%s)
+payload=$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$APP_ID" \
+  | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+sig=$(printf '%s.%s' "$header" "$payload" \
+  | openssl dgst -sha256 -sign "$KEY" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+JWT="$header.$payload.$sig"
+
+curl -sS -H "Authorization: Bearer $JWT" -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/<OWNER>/<REPOSITORY>/installation | jq .id
+```
+
+The same JWT works with `gh` if you'd rather use it, since `-H` overrides the token it would otherwise send:
+
+```bash
+gh api /repos/<OWNER>/<REPOSITORY>/installation -H "Authorization: Bearer $JWT" --jq .id
 ```
 
 ## API calls Fireactions makes
