@@ -115,9 +115,9 @@ func NewPool(logger *zerolog.Logger, config *PoolConfig, github *github.Client, 
 	}
 
 	metricPoolRunnersCurrent.
-		WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(p.GetCurrentSize()))
+		WithLabelValues(p.config.Name, p.config.Runner.Owner()).Set(float64(p.GetCurrentSize()))
 	metricPoolRunnersDesired.
-		WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(p.config.Replicas))
+		WithLabelValues(p.config.Name, p.config.Runner.Owner()).Set(float64(p.config.Replicas))
 	metricPoolStatus.
 		WithLabelValues(p.config.Name).Set(1)
 
@@ -158,11 +158,11 @@ func (p *Pool) Run() {
 		pendingDeletes := int(p.pendingDeletes.Load())
 		netPending := pendingCreates - pendingDeletes
 		metricPoolRunnersCurrent.
-			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(curSize))
+			WithLabelValues(p.config.Name, p.config.Runner.Owner()).Set(float64(curSize))
 		metricPoolRunnersDesired.
-			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(desiredReplicas))
+			WithLabelValues(p.config.Name, p.config.Runner.Owner()).Set(float64(desiredReplicas))
 		metricPoolRunnersPending.
-			WithLabelValues(p.config.Name, p.config.Runner.Organization).Set(float64(netPending))
+			WithLabelValues(p.config.Name, p.config.Runner.Owner()).Set(float64(netPending))
 
 		if !p.isActive {
 			p.logger.Debug().Msgf("Pool %s is paused, skipping scaling", p.config.Name)
@@ -291,14 +291,14 @@ func (p *Pool) scaleUp(ctx context.Context, count, desiredReplicas, curSize, pen
 
 			start := time.Now()
 			if err := p.createMachine(ctx); err != nil {
-				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up", "failure").Inc()
+				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "up", "failure").Inc()
 				p.logger.Error().Err(err).Msg("Failed to create machine")
 				return
 			}
 
 			duration := time.Since(start).Seconds()
-			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up", "success").Inc()
-			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Organization, "up").Observe(duration)
+			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "up", "success").Inc()
+			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "up").Observe(duration)
 		}()
 	}
 }
@@ -325,14 +325,14 @@ func (p *Pool) scaleDown(ctx context.Context, count, desiredReplicas, curSize, p
 
 			start := time.Now()
 			if err := p.deleteMachine(ctx); err != nil {
-				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down", "failure").Inc()
+				metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "down", "failure").Inc()
 				p.logger.Error().Err(err).Msg("Failed to delete machine")
 				return
 			}
 
 			duration := time.Since(start).Seconds()
-			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down", "success").Inc()
-			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Organization, "down").Observe(duration)
+			metricScaleOperations.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "down", "success").Inc()
+			metricScaleDuration.WithLabelValues(p.config.Name, p.config.Runner.Owner(), "down").Observe(duration)
 		}()
 	}
 }
@@ -405,6 +405,35 @@ func (p *Pool) GetMachine(name string) (*Machine, error) {
 	}
 
 	return machine, nil
+}
+
+// getInstallationID returns the ID of the GitHub App installation the pool's
+// runners are registered through. The ID is looked up once and cached for the
+// lifetime of the pool, unless it's configured explicitly.
+func (p *Pool) getInstallationID(ctx context.Context) (int64, error) {
+	if installationID := p.installationID.Load(); installationID != 0 {
+		return installationID, nil
+	}
+
+	if installationID := p.config.Runner.InstallationID; installationID != 0 {
+		p.installationID.Store(installationID)
+		return installationID, nil
+	}
+
+	var installation *githubv63.Installation
+	var err error
+	if p.config.Runner.IsRepositoryScoped() {
+		owner, repo := p.config.Runner.RepositoryOwnerAndName()
+		installation, _, err = p.github.Apps.FindRepositoryInstallation(ctx, owner, repo)
+	} else {
+		installation, _, err = p.github.Apps.FindOrganizationInstallation(ctx, p.config.Runner.Organization)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("github: finding installation for %s: %w", p.config.Runner.Scope(), err)
+	}
+
+	p.installationID.Store(installation.GetID())
+	return installation.GetID(), nil
 }
 
 func (p *Pool) createMachine(ctx context.Context) error {
@@ -491,23 +520,25 @@ func (p *Pool) createMachine(ctx context.Context) error {
 		return fmt.Errorf("firecracker: creating machine: %w", err)
 	}
 
-	installationID := p.installationID.Load()
-	if installationID == 0 {
-		installation, _, err := p.github.Apps.FindOrganizationInstallation(ctx, p.config.Runner.Organization)
-		if err != nil {
-			return fmt.Errorf("github: %w", err)
-		}
-		installationID = installation.GetID()
-
-		p.installationID.Store(installationID)
+	installationID, err := p.getInstallationID(ctx)
+	if err != nil {
+		return err
 	}
 
 	client := p.github.Installation(installationID)
-	jitConfig, _, err := client.Actions.GenerateOrgJITConfig(ctx, p.config.Runner.Organization, &githubv63.GenerateJITConfigRequest{
+	jitConfigRequest := &githubv63.GenerateJITConfigRequest{
 		Name:          runnerName,
-		RunnerGroupID: p.config.Runner.GroupID,
+		RunnerGroupID: p.config.Runner.RunnerGroupID(),
 		Labels:        p.config.Runner.Labels,
-	})
+	}
+
+	var jitConfig *githubv63.JITRunnerConfig
+	if p.config.Runner.IsRepositoryScoped() {
+		owner, repo := p.config.Runner.RepositoryOwnerAndName()
+		jitConfig, _, err = client.Actions.GenerateRepoJITConfig(ctx, owner, repo, jitConfigRequest)
+	} else {
+		jitConfig, _, err = client.Actions.GenerateOrgJITConfig(ctx, p.config.Runner.Organization, jitConfigRequest)
+	}
 	if err != nil {
 		return fmt.Errorf("github: %w", err)
 	}
@@ -677,7 +708,13 @@ func (p *Pool) deleteGitHubRunner(runnerName string, runnerID int64) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := client.Actions.RemoveOrganizationRunner(ctx, p.config.Runner.Organization, runnerID)
+	var err error
+	if p.config.Runner.IsRepositoryScoped() {
+		owner, repo := p.config.Runner.RepositoryOwnerAndName()
+		_, err = client.Actions.RemoveRunner(ctx, owner, repo, runnerID)
+	} else {
+		_, err = client.Actions.RemoveOrganizationRunner(ctx, p.config.Runner.Organization, runnerID)
+	}
 	if err != nil {
 		p.logger.Error().Err(err).Msgf("Failed to delete GitHub runner %s (ID: %d)", runnerName, runnerID)
 		return

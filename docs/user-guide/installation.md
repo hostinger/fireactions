@@ -23,9 +23,10 @@ Before you begin, ensure you have:
 - **KVM virtualization support** - Firecracker requires hardware virtualization
 - **GitHub App credentials**:
     - App ID
-    - App must be installed on your target organization
     - Private key (PEM format)
-    - See [Creating GitHub Apps](https://docs.github.com/en/apps/creating-github-apps) for setup instructions
+    - App must be installed on your target organization or personal account
+    - App needs the organization `Self-hosted runners: Read and write` permission for organization scoped pools, or the repository `Administration: Read and write` permission for repository scoped pools
+    - See the [GitHub App](github-app.md) guide for setup instructions
 - **Dedicated block device** for Containerd storage (e.g., `/dev/nvme1n1`, `/dev/sdb`)
     - This will be used exclusively for container image storage via LVM
     - Minimum 50GB recommended, though this depends on your image sizes
@@ -412,7 +413,10 @@ pools:
     image: ghcr.io/hostinger/fireactions-images/ubuntu22.04:latest
     image_pull_policy: IfNotPresent  # or Always to pull on every run
     group_id: 1  # Runner group ID in GitHub (1 = default)
-    organization: YOUR_GITHUB_ORGANIZATION  # or use 'repository: owner/repo'
+    # Register runners with an organization...
+    organization: YOUR_GITHUB_ORGANIZATION
+    # ...or with a single repository, the only option for personal accounts:
+    # repository: YOUR_GITHUB_USERNAME/YOUR_REPOSITORY
     labels:
     - self-hosted
     - fireactions

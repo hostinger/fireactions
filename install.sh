@@ -18,7 +18,9 @@ usage()
   echo "Options:"
   echo "  --github-app-id                     Sepcify the ID of the GitHub App                          (required)"
   echo "  --github-app-key-file               Specify the path to the GitHub App private key file       (required)"
-  echo "  --github-organization               Specify the name of the GitHub organization               (required)"
+  echo "  --github-organization               Specify the name of the GitHub organization               (required, unless --github-repository)"
+  echo "  --github-repository                 Specify the GitHub repository, in <owner>/<repository>    (required, unless --github-organization)"
+  echo "                                      format. Use this for personal (user) accounts."
   echo "  --fireactions-version               Specify the Fireactions version to install                (default: $FIREACTIONS_VERSION)"
   echo "  --firecracker-version               Specify the Firecracker version to install                (default: $FIRECRACKER_VERSION)"
   echo "  --kernel-version                    Specify the kernel version to install                     (default: $KERNEL_VERSION)"
@@ -269,7 +271,7 @@ pools:
     image: ghcr.io/hostinger/fireactions-images/ubuntu22.04:v0.7.0
     image_pull_policy: IfNotPresent
     group_id: 1
-    organization: $GITHUB_ORGANIZATION
+    $GITHUB_RUNNER_SCOPE
     labels:
     - self-hosted
     - fireactions
@@ -332,6 +334,9 @@ main()
     exit 1
   fi
 
+  # GITHUB_REPOSITORY is also set by GitHub Actions, only take it from --github-repository.
+  GITHUB_REPOSITORY=""
+
   while [ "$1" != "" ]; do
     case $1 in
       --github-app-id )
@@ -354,6 +359,13 @@ main()
         ;;
       --github-organization=* )
         GITHUB_ORGANIZATION="${1#*=}"
+        ;;
+      --github-repository )
+        shift
+        GITHUB_REPOSITORY=$1
+        ;;
+      --github-repository=* )
+        GITHUB_REPOSITORY="${1#*=}"
         ;;
       --fireactions-version )
         shift
@@ -426,10 +438,34 @@ main()
     export GITHUB_APP_PRIVATE_KEY=$(cat $GITHUB_APP_PRIVATE_KEY_FILE | sed '1!s/^/    /')
   fi
 
-  if [ -z "$GITHUB_ORGANIZATION" ]; then
-    print_error "Option --github-organization is required"
+  if [ -z "$GITHUB_ORGANIZATION" ] && [ -z "$GITHUB_REPOSITORY" ]; then
+    print_error "Option --github-organization or --github-repository is required"
     usage
     exit 1
+  fi
+
+  if [ -n "$GITHUB_ORGANIZATION" ] && [ -n "$GITHUB_REPOSITORY" ]; then
+    print_error "Options --github-organization and --github-repository are mutually exclusive"
+    usage
+    exit 1
+  fi
+
+  if [ -n "$GITHUB_REPOSITORY" ]; then
+    case "$GITHUB_REPOSITORY" in
+      */*/* | /* | */)
+        print_error "Option --github-repository must be in <owner>/<repository> format"
+        exit 1
+        ;;
+      */*)
+        ;;
+      *)
+        print_error "Option --github-repository must be in <owner>/<repository> format"
+        exit 1
+        ;;
+    esac
+    export GITHUB_RUNNER_SCOPE="repository: $GITHUB_REPOSITORY"
+  else
+    export GITHUB_RUNNER_SCOPE="organization: $GITHUB_ORGANIZATION"
   fi
 
   if [ -z "$CONTAINERD_SNAPSHOTTER_DEVICE" ]; then

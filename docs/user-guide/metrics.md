@@ -20,6 +20,8 @@ The following metrics are available, excluding the default Prometheus metrics:
 | `fireactions_scale_duration_seconds`         | Histogram | Time taken to complete a scale operation                  | `pool`, `organization`, `direction`              |
 
 
+The `organization` label holds the GitHub account that owns the pool's runners: the organization name for organization scoped pools, or the repository owner (which may be a personal account) for repository scoped pools.
+
 Example Grafana dashboard for vizualisation of Fireactions metrics:
 
 ![Grafana Dashboard](../img/grafana-dashboard.png)

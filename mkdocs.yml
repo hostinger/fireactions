@@ -33,6 +33,7 @@ nav:
   - User Guide:
       - Overview: user-guide/overview.md
       - Core Concepts: user-guide/concepts.md
+      - GitHub App: user-guide/github-app.md
       - Installation: user-guide/installation.md
       - Running First Build: user-guide/first-build.md
       - Images: user-guide/images.md

@@ -30,7 +30,8 @@ metrics:
   address: 127.0.0.1:8081
 
 #
-# GitHub configuration.
+# GitHub configuration. See the GitHub App guide for the permissions the App
+# needs: ../user-guide/github-app.md
 #
 github:
   #
@@ -89,14 +90,34 @@ pools:
     #
     # GitHub runner group ID. 1 is the default group.
     #
-    # Required: true
+    # Required: true when `organization` is set. Runner groups don't exist for
+    # personal accounts, so this is optional (and defaults to 1) when
+    # `repository` is set.
     group_id: 1
     #
-    # Organization name.
+    # Organization name. Runners are registered with the organization and are
+    # available to all of its repositories.
     #
-    # Required: true
+    # Exactly one of `organization` or `repository` is required.
     #
     organization: hostinger
+    #
+    # Repository, in <owner>/<repository> format. Runners are registered with
+    # this single repository. This is the only option for personal (user)
+    # accounts, which can't have organization runners.
+    #
+    # Exactly one of `organization` or `repository` is required.
+    #
+    # repository: octocat/hello-world
+    #
+    # GitHub App installation ID. By default Fireactions looks the installation
+    # up from the configured organization or repository, which requires no
+    # extra configuration. Set this to skip the lookup, e.g. when the App can't
+    # read the installation itself.
+    #
+    # Required: false, Default: 0 (look up automatically)
+    #
+    # installation_id: 12345678
     #
     # Labels to apply to the GitHub runner.
     #

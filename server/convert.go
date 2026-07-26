@@ -20,10 +20,11 @@ func convertPoolToProto(ctx context.Context, pool *Pool) *serverv1.Pool {
 	return &serverv1.Pool{
 		Name:            pool.config.Name,
 		Organization:    pool.config.Runner.Organization,
+		Repository:      pool.config.Runner.Repository,
 		Replicas:        int32(pool.GetReplicas()),
 		CurrentReplicas: int32(pool.GetCurrentSize()),
 		DesiredReplicas: int32(pool.GetReplicas()),
-		GroupId:         pool.config.Runner.GroupID,
+		GroupId:         pool.config.Runner.RunnerGroupID(),
 		Labels:          pool.config.Runner.Labels,
 		Image:           pool.config.Runner.Image,
 		State:           state,

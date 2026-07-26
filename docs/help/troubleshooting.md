@@ -114,3 +114,20 @@ gh api --paginate /orgs/$ORG/actions/runners | jq '.runners[] | select(.status==
 ```
 
 Please replace `<ORG>` with the name of your GitHub Account or Organization.
+
+For repository scoped pools (including pools of personal accounts), the runners live on the repository instead, so use
+the repository endpoint. With bash:
+
+```bash
+export GH_PAGER=
+export REPO="<OWNER>/<REPOSITORY>"
+gh api --paginate /repos/$REPO/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /repos/$REPO/actions/runners/{}
+```
+
+With fish shell:
+
+```fish
+set -x GH_PAGER
+set -x REPO <OWNER>/<REPOSITORY>
+gh api --paginate /repos/$REPO/actions/runners | jq '.runners[] | select(.status=="offline") | .id' | xargs -I {} gh api --method DELETE /repos/$REPO/actions/runners/{}
+```

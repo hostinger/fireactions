@@ -14,7 +14,7 @@ type printablePool struct {
 }
 
 func (p *printablePool) Cols() []string {
-	return []string{"Name", "Current", "Desired", "Organization", "Group ID", "Labels", "Image", "State"}
+	return []string{"Name", "Current", "Desired", "Organization", "Repository", "Group ID", "Labels", "Image", "State"}
 }
 
 func (p *printablePool) ColsMap() map[string]string {
@@ -23,6 +23,7 @@ func (p *printablePool) ColsMap() map[string]string {
 		"Current":      "Current",
 		"Desired":      "Desired",
 		"Organization": "Organization",
+		"Repository":   "Repository",
 		"Group ID":     "Group ID",
 		"Labels":       "Labels",
 		"Image":        "Image",
@@ -42,6 +43,7 @@ func (p *printablePool) KV() []map[string]interface{} {
 			"Current":      pool.CurrentReplicas,
 			"Desired":      pool.DesiredReplicas,
 			"Organization": pool.Organization,
+			"Repository":   pool.Repository,
 			"Group ID":     pool.GroupId,
 			"Labels":       strings.Join(pool.Labels, ", "),
 			"Image":        pool.Image,
