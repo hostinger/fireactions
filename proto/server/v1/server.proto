@@ -36,6 +36,7 @@ message Pool {
   repeated string labels = 7;
   string image = 8;
   PoolState state = 9;
+  string repository = 10;
 }
 
 message ListPoolsRequest {}

@@ -4,9 +4,9 @@ After installing and configuring Fireactions, verify your setup by running a tes
 
 ## Verify Runners Are Registered
 
-Check your GitHub organization's Actions settings to confirm runners are registered:
+Check your GitHub Actions settings to confirm runners are registered:
 
-1. Navigate to your GitHub organization settings
+1. Navigate to your GitHub organization settings, or, for repository scoped pools, to your repository settings
 2. Go to **Actions** → **Runners**
 3. Verify that runners are listed as **Idle** and ready to receive jobs
 
