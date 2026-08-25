@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.0.6](https://github.com/hostinger/fireactions/compare/v2.0.5...v2.0.6) (2026-08-25)
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.32 to 1.7.33 ([#319](https://github.com/hostinger/fireactions/issues/319)) ([ae53050](https://github.com/hostinger/fireactions/commit/ae530509e4563150765058717f369dd75c34b8b6))
+* Bump github.com/containerd/containerd from 1.7.33 to 1.7.34 ([#322](https://github.com/hostinger/fireactions/issues/322)) ([770b2e5](https://github.com/hostinger/fireactions/commit/770b2e52f6f47d6e8fbc13415876fe71d2f68b39))
+* Bump github.com/go-playground/validator/v10 from 10.30.2 to 10.30.3 ([#316](https://github.com/hostinger/fireactions/issues/316)) ([6022baa](https://github.com/hostinger/fireactions/commit/6022baa0f2157b9a9b24014286e35baa680bfad2))
+* Bump github.com/prometheus/client_golang from 1.23.2 to 1.24.1 ([#325](https://github.com/hostinger/fireactions/issues/325)) ([b00b3e2](https://github.com/hostinger/fireactions/commit/b00b3e2d1dcef9f847b7f1645d08d55043f24d5d))
+* Bump golang.org/x/sync from 0.20.0 to 0.21.0 ([#318](https://github.com/hostinger/fireactions/issues/318)) ([c4f41e4](https://github.com/hostinger/fireactions/commit/c4f41e46b5bf859b2bab267fa51532ccdfb2ad51))
+* Bump golang.org/x/sync from 0.21.0 to 0.22.0 ([#323](https://github.com/hostinger/fireactions/issues/323)) ([e0df16a](https://github.com/hostinger/fireactions/commit/e0df16a97726db19fe70607f193a917d24927473))
+* Bump golang.org/x/sys from 0.45.0 to 0.46.0 ([#317](https://github.com/hostinger/fireactions/issues/317)) ([6b2e19a](https://github.com/hostinger/fireactions/commit/6b2e19ab743fc1f8a1a00d2a0d3b7607d7871bdf))
+* Bump golang.org/x/sys from 0.46.0 to 0.47.0 ([#321](https://github.com/hostinger/fireactions/issues/321)) ([d16bdbe](https://github.com/hostinger/fireactions/commit/d16bdbe2328181352d1965da265ec7e1de20d294))
+* Bump google.golang.org/grpc from 1.81.1 to 1.82.1 ([#324](https://github.com/hostinger/fireactions/issues/324)) ([c268b7a](https://github.com/hostinger/fireactions/commit/c268b7a975babea5258f22292eaa163fd99f5a01))
+
 ## [2.0.5](https://github.com/hostinger/fireactions/compare/v2.0.4...v2.0.5) (2026-05-28)
 
 
