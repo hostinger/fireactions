@@ -137,7 +137,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.22.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.11
