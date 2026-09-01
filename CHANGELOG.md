@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.7](https://github.com/hostinger/fireactions/compare/v2.0.6...v2.0.7) (2026-09-01)
+
+
+### Dependencies
+
+* Bump github.com/sirupsen/logrus from 1.9.4 to 1.10.2 ([#332](https://github.com/hostinger/fireactions/issues/332)) ([81e61f2](https://github.com/hostinger/fireactions/commit/81e61f2f295fbe7e6a738b70c7e43de4e95157f0))
+* Bump github.com/stretchr/testify from 1.11.1 to 1.12.1 ([#329](https://github.com/hostinger/fireactions/issues/329)) ([9d762a3](https://github.com/hostinger/fireactions/commit/9d762a32e194074a92c339881d677702cd2650fb))
+* Bump google.golang.org/grpc from 1.82.1 to 1.83.2 ([#333](https://github.com/hostinger/fireactions/issues/333)) ([6fe63ce](https://github.com/hostinger/fireactions/commit/6fe63ced6a8604473ddaf6ec8ef64be9dae118cc))
+* Bump google.golang.org/protobuf from 1.36.11 to 1.36.12 ([#330](https://github.com/hostinger/fireactions/issues/330)) ([5ad7ea6](https://github.com/hostinger/fireactions/commit/5ad7ea6d8a9b190ce416f2631f1cac77b3294420))
+
 ## [2.0.6](https://github.com/hostinger/fireactions/compare/v2.0.5...v2.0.6) (2026-08-25)
 
 
