@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.8](https://github.com/hostinger/fireactions/compare/v2.0.7...v2.0.8) (2026-09-15)
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.34 to 1.7.35 ([#335](https://github.com/hostinger/fireactions/issues/335)) ([e001f76](https://github.com/hostinger/fireactions/commit/e001f76f519366126873890990cc1abab187c089))
+* Bump github.com/containerd/log from 0.1.0 to 0.2.0 ([#337](https://github.com/hostinger/fireactions/issues/337)) ([654af5c](https://github.com/hostinger/fireactions/commit/654af5cc1f2bb5cd8eb40c36a8a600bce4eb79b9))
+* Bump github.com/go-playground/validator/v10 from 10.30.3 to 10.30.4 ([#336](https://github.com/hostinger/fireactions/issues/336)) ([8001698](https://github.com/hostinger/fireactions/commit/80016981f117430585badbd8053049dab1faa9ea))
+* Bump golang.org/x/sync from 0.22.0 to 0.23.0 ([#339](https://github.com/hostinger/fireactions/issues/339)) ([d1b0d57](https://github.com/hostinger/fireactions/commit/d1b0d57205721e3ddd60409453d7166ebb08cbac))
+* Bump golang.org/x/sys from 0.47.0 to 0.48.0 ([#338](https://github.com/hostinger/fireactions/issues/338)) ([7e689c0](https://github.com/hostinger/fireactions/commit/7e689c0deb0b4c57148d00c6051a57f65416898a))
+
 ## [2.0.7](https://github.com/hostinger/fireactions/compare/v2.0.6...v2.0.7) (2026-09-01)
 
 
