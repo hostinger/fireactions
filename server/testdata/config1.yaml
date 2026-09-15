@@ -37,6 +37,19 @@ pools:
     machine_config:
       mem_size_mib: 2048
       vcpu_count: 2
+    network_interface:
+      in_rate_limiter:
+        bandwidth:
+          size: 131072000
+          refill_time: 1000
+          one_time_burst: 262144000
+        ops:
+          size: 10000
+          refill_time: 1000
+      out_rate_limiter:
+        bandwidth:
+          size: 26214400
+          refill_time: 1000
     metadata:
       example1: value1
 - name: fireactions-2vcpu-4gb

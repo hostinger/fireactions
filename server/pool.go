@@ -461,6 +461,16 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	vsockPath := filepath.Join(p.GetDir(), fmt.Sprintf("%s.vsock", runnerName))
 	vsockCID := p.nextCID.Add(1)
 
+	networkInterface := firecracker.NetworkInterface{
+		AllowMMDS:        true,
+		CNIConfiguration: &firecracker.CNIConfiguration{NetworkName: "fireactions", IfName: "eth0", ConfDir: "/etc/cni/net.d", BinPath: []string{"/opt/cni/bin"}},
+	}
+
+	if networkInterfaceConfig := p.config.Firecracker.NetworkInterface; networkInterfaceConfig != nil {
+		networkInterface.InRateLimiter = networkInterfaceConfig.InRateLimiter.toSDK()
+		networkInterface.OutRateLimiter = networkInterfaceConfig.OutRateLimiter.toSDK()
+	}
+
 	fcMachine, err := firecracker.NewMachine(ctx, firecracker.Config{
 		VMID:            runnerName,
 		SocketPath:      filepath.Join(p.GetDir(), fmt.Sprintf("%s.sock", runnerName)),
@@ -476,16 +486,13 @@ func (p *Pool) createMachine(ctx context.Context) error {
 			IsRootDevice: firecracker.Bool(true),
 			IsReadOnly:   firecracker.Bool(false),
 		}},
-		NetworkInterfaces: []firecracker.NetworkInterface{{
-			AllowMMDS:        true,
-			CNIConfiguration: &firecracker.CNIConfiguration{NetworkName: "fireactions", IfName: "eth0", ConfDir: "/etc/cni/net.d", BinPath: []string{"/opt/cni/bin"}},
-		}},
-		VsockDevices:   []firecracker.VsockDevice{{Path: vsockPath, CID: vsockCID}},
-		MmdsAddress:    net.IPv4(169, 254, 169, 254),
-		MmdsVersion:    firecracker.MMDSv2,
-		ForwardSignals: []os.Signal{},
-		LogPath:        filepath.Join(p.GetDir(), fmt.Sprintf("%s.firecracker.log", runnerName)),
-		LogLevel:       "Debug",
+		NetworkInterfaces: []firecracker.NetworkInterface{networkInterface},
+		VsockDevices:      []firecracker.VsockDevice{{Path: vsockPath, CID: vsockCID}},
+		MmdsAddress:       net.IPv4(169, 254, 169, 254),
+		MmdsVersion:       firecracker.MMDSv2,
+		ForwardSignals:    []os.Signal{},
+		LogPath:           filepath.Join(p.GetDir(), fmt.Sprintf("%s.firecracker.log", runnerName)),
+		LogLevel:          "Debug",
 	}, firecracker.WithProcessRunner(machineCmd), firecracker.WithLogger(logrus.NewEntry(logger)))
 	if err != nil {
 		return fmt.Errorf("firecracker: creating machine: %w", err)
