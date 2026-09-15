@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/firecracker-microvm/firecracker-go-sdk"
+	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 )
@@ -16,7 +18,7 @@ type Config struct {
 	BasicAuthEnabled bool              `yaml:"basic_auth_enabled" validate:""`
 	BasicAuthUsers   map[string]string `yaml:"basic_auth_users" validate:"required_if=basic_auth_enabled true"`
 	GitHub           *GitHubConfig     `yaml:"github" validate:"required"`
-	Pools            []*PoolConfig     `yaml:"pools" validate:"required,min=1"`
+	Pools            []*PoolConfig     `yaml:"pools" validate:"required,min=1,dive,required"`
 	LogLevel         string            `yaml:"log_level" validate:"required,oneof=debug info warn error fatal panic trace"`
 
 	path string
@@ -47,16 +49,65 @@ type RunnerConfig struct {
 }
 
 type FirecrackerConfig struct {
-	BinaryPath      string                   `yaml:"binary_path" `
-	KernelImagePath string                   `yaml:"kernel_image_path"`
-	KernelArgs      string                   `yaml:"kernel_args"`
-	MachineConfig   FirecrackerMachineConfig `yaml:"machine_config"`
-	Metadata        map[string]interface{}   `yaml:"metadata"`
+	BinaryPath       string                             `yaml:"binary_path" `
+	KernelImagePath  string                             `yaml:"kernel_image_path"`
+	KernelArgs       string                             `yaml:"kernel_args"`
+	MachineConfig    FirecrackerMachineConfig           `yaml:"machine_config"`
+	NetworkInterface *FirecrackerNetworkInterfaceConfig `yaml:"network_interface"`
+	Metadata         map[string]interface{}             `yaml:"metadata"`
 }
 
 type FirecrackerMachineConfig struct {
 	VcpuCount  int64 `yaml:"vcpu_count"`
 	MemSizeMib int64 `yaml:"mem_size_mib"`
+}
+
+// FirecrackerNetworkInterfaceConfig configures the MicroVM's network interface.
+// Rate limiters are optional, a nil limiter leaves that direction unlimited.
+type FirecrackerNetworkInterfaceConfig struct {
+	InRateLimiter  *FirecrackerRateLimiterConfig `yaml:"in_rate_limiter"`
+	OutRateLimiter *FirecrackerRateLimiterConfig `yaml:"out_rate_limiter"`
+}
+
+// FirecrackerRateLimiterConfig defines an IO rate limiter with independent
+// bytes/s and ops/s limits. A nil token bucket leaves that limit unlimited.
+type FirecrackerRateLimiterConfig struct {
+	Bandwidth *FirecrackerTokenBucketConfig `yaml:"bandwidth"`
+	Ops       *FirecrackerTokenBucketConfig `yaml:"ops"`
+}
+
+// FirecrackerTokenBucketConfig defines a token bucket with a maximum capacity
+// (Size), an optional initial burst size (OneTimeBurst) and the interval in
+// milliseconds it takes to refill the bucket (RefillTime). The resulting rate
+// is Size / RefillTime.
+type FirecrackerTokenBucketConfig struct {
+	Size         int64  `yaml:"size" validate:"required,gt=0"`
+	OneTimeBurst *int64 `yaml:"one_time_burst" validate:"omitempty,gte=0"`
+	RefillTime   int64  `yaml:"refill_time" validate:"required,gt=0"`
+}
+
+// toSDK converts the rate limiter configuration into its Firecracker SDK
+// representation. Returns nil if the rate limiter isn't configured.
+func (c *FirecrackerRateLimiterConfig) toSDK() *models.RateLimiter {
+	if c == nil {
+		return nil
+	}
+
+	return &models.RateLimiter{Bandwidth: c.Bandwidth.toSDK(), Ops: c.Ops.toSDK()}
+}
+
+// toSDK converts the token bucket configuration into its Firecracker SDK
+// representation. Returns nil if the token bucket isn't configured.
+func (c *FirecrackerTokenBucketConfig) toSDK() *models.TokenBucket {
+	if c == nil {
+		return nil
+	}
+
+	return &models.TokenBucket{
+		Size:         firecracker.Int64(c.Size),
+		RefillTime:   firecracker.Int64(c.RefillTime),
+		OneTimeBurst: c.OneTimeBurst,
+	}
 }
 
 // DefaultConfig creates a new Config with default values.

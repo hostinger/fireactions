@@ -147,6 +147,67 @@ pools:
       #
       vcpu_count: 2
     #
+    # Firecracker network interface configuration.
+    #
+    # Default: {} (no rate limiting)
+    #
+    network_interface:
+      #
+      # Rate limiter for incoming (ingress) traffic. Maps to the Firecracker
+      # network interface `rx_rate_limiter`. Both the `bandwidth` and `ops`
+      # token buckets are optional, an omitted bucket means unlimited.
+      #
+      # The resulting rate is `size` / `refill_time`.
+      #
+      # Default: {} (unlimited)
+      #
+      in_rate_limiter:
+        #
+        # Token bucket with bytes as tokens.
+        #
+        # Default: {} (unlimited)
+        #
+        bandwidth:
+          #
+          # The total number of tokens (bytes) the bucket can hold.
+          #
+          # Required: true
+          #
+          size: 131072000
+          #
+          # The amount of milliseconds it takes for the bucket to refill.
+          # 131072000 bytes per 1000 ms is ~125 MiB/s.
+          #
+          # Required: true
+          #
+          refill_time: 1000
+          #
+          # The initial burst size (bytes). Consumed before the refill process
+          # starts happening.
+          #
+          # Default: 0
+          #
+          one_time_burst: 262144000
+        #
+        # Token bucket with operations (packets) as tokens.
+        #
+        # Default: {} (unlimited)
+        #
+        ops:
+          size: 10000
+          refill_time: 1000
+      #
+      # Rate limiter for outgoing (egress) traffic. Maps to the Firecracker
+      # network interface `tx_rate_limiter`. Same structure as
+      # `in_rate_limiter`.
+      #
+      # Default: {} (unlimited)
+      #
+      out_rate_limiter:
+        bandwidth:
+          size: 26214400
+          refill_time: 1000
+    #
     # Metadata to pass to the Firecracker VM via MMDS.
     #
     # Default: {}
