@@ -1,0 +1,32 @@
+---
+bind_address: 0.0.0.0:8080
+
+github:
+  app_private_key: |
+    -----BEGIN RSA PRIVATE KEY-----
+  app_id: 12345
+
+pools:
+- name: fireactions-2vcpu-2gb
+  replicas: 1
+  runner:
+    name: fireactions-2vcpu-2gb
+    image: ghcr.io/hostinger/fireactions/runner:ubuntu-20.04-x64-2.310.2
+    image_pull_policy: IfNotPresent
+    group_id: 1
+    organization: hostinger
+    labels:
+    - self-hosted
+  firecracker:
+    binary_path: firecracker
+    kernel_image_path: /var/lib/fireactions/vmlinux
+    kernel_args: "console=ttyS0 noapic reboot=k panic=1 pci=off nomodules rw"
+    machine_config:
+      mem_size_mib: 2048
+      vcpu_count: 2
+    rootfs:
+      rate_limiter:
+        ops:
+          size: 2000
+
+log_level: debug

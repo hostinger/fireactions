@@ -208,6 +208,39 @@ pools:
           size: 26214400
           refill_time: 1000
     #
+    # Firecracker root block device configuration.
+    #
+    # Default: {} (no rate limiting)
+    #
+    rootfs:
+      #
+      # Rate limiter for the root block device. Maps to the Firecracker drive
+      # `rate_limiter`. Both the `bandwidth` and `ops` token buckets are
+      # optional, an omitted bucket means unlimited.
+      #
+      # The resulting rate is `size` / `refill_time`.
+      #
+      # Default: {} (unlimited)
+      #
+      rate_limiter:
+        #
+        # Token bucket with bytes as tokens. 52428800 bytes per 1000 ms is
+        # ~50 MiB/s of disk throughput.
+        #
+        # Default: {} (unlimited)
+        #
+        bandwidth:
+          size: 52428800
+          refill_time: 1000
+        #
+        # Token bucket with operations (IOPS) as tokens.
+        #
+        # Default: {} (unlimited)
+        #
+        ops:
+          size: 2000
+          refill_time: 1000
+    #
     # Metadata to pass to the Firecracker VM via MMDS.
     #
     # Default: {}

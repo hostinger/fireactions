@@ -54,6 +54,7 @@ type FirecrackerConfig struct {
 	KernelArgs       string                             `yaml:"kernel_args"`
 	MachineConfig    FirecrackerMachineConfig           `yaml:"machine_config"`
 	NetworkInterface *FirecrackerNetworkInterfaceConfig `yaml:"network_interface"`
+	Rootfs           *FirecrackerRootfsConfig           `yaml:"rootfs"`
 	Metadata         map[string]interface{}             `yaml:"metadata"`
 }
 
@@ -67,6 +68,12 @@ type FirecrackerMachineConfig struct {
 type FirecrackerNetworkInterfaceConfig struct {
 	InRateLimiter  *FirecrackerRateLimiterConfig `yaml:"in_rate_limiter"`
 	OutRateLimiter *FirecrackerRateLimiterConfig `yaml:"out_rate_limiter"`
+}
+
+// FirecrackerRootfsConfig configures the MicroVM's root block device. The rate
+// limiter is optional, a nil limiter leaves the device unlimited.
+type FirecrackerRootfsConfig struct {
+	RateLimiter *FirecrackerRateLimiterConfig `yaml:"rate_limiter"`
 }
 
 // FirecrackerRateLimiterConfig defines an IO rate limiter with independent
