@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/hostinger/fireactions/compare/v2.0.8...v2.1.0) (2026-09-16)
+
+
+### Features
+
+* **server:** Add configurable network rate limiting for MicroVMs ([#341](https://github.com/hostinger/fireactions/issues/341)) ([a49ec4d](https://github.com/hostinger/fireactions/commit/a49ec4dd8f8bdf05f0a6731beb426fe0937f0967))
+* **server:** Add configurable rootfs rate limiting for MicroVMs ([#343](https://github.com/hostinger/fireactions/issues/343)) ([6e26808](https://github.com/hostinger/fireactions/commit/6e268081b0dd02d9d335b3ff81314297dcec60da))
+
 ## [2.0.8](https://github.com/hostinger/fireactions/compare/v2.0.7...v2.0.8) (2026-09-15)
 
 
