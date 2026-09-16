@@ -49,6 +49,34 @@ func TestNewConfigNetworkInterfaceInvalid(t *testing.T) {
 	assert.ErrorContains(t, err, "Config.Pools[0].Firecracker.NetworkInterface.InRateLimiter.Bandwidth.Size")
 }
 
+func TestNewConfigRootfs(t *testing.T) {
+	config, err := NewConfig("testdata/config1.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	rootfs := config.Pools[0].Firecracker.Rootfs
+	if rootfs == nil {
+		t.Fatal("expected rootfs configuration to be set")
+	}
+
+	assert.Equal(t, &FirecrackerTokenBucketConfig{
+		Size: 52428800, RefillTime: 1000,
+	}, rootfs.RateLimiter.Bandwidth)
+	assert.Equal(t, &FirecrackerTokenBucketConfig{
+		Size: 2000, RefillTime: 1000,
+	}, rootfs.RateLimiter.Ops)
+
+	// A pool without a rootfs block leaves the block device unlimited.
+	assert.Nil(t, config.Pools[1].Firecracker.Rootfs)
+}
+
+func TestNewConfigRootfsInvalid(t *testing.T) {
+	// A token bucket without a refill time is rejected.
+	_, err := NewConfig("testdata/config3.yaml")
+	assert.ErrorContains(t, err, "Config.Pools[0].Firecracker.Rootfs.RateLimiter.Ops.RefillTime")
+}
+
 func TestFirecrackerRateLimiterConfigToSDK(t *testing.T) {
 	var nilRateLimiter *FirecrackerRateLimiterConfig
 	assert.Nil(t, nilRateLimiter.toSDK())

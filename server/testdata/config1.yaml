@@ -50,6 +50,14 @@ pools:
         bandwidth:
           size: 26214400
           refill_time: 1000
+    rootfs:
+      rate_limiter:
+        bandwidth:
+          size: 52428800
+          refill_time: 1000
+        ops:
+          size: 2000
+          refill_time: 1000
     metadata:
       example1: value1
 - name: fireactions-2vcpu-4gb

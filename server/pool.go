@@ -461,6 +461,17 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	vsockPath := filepath.Join(p.GetDir(), fmt.Sprintf("%s.vsock", runnerName))
 	vsockCID := p.nextCID.Add(1)
 
+	rootfsDrive := models.Drive{
+		DriveID:      firecracker.String("rootfs"),
+		PathOnHost:   &snapshotMounts[0].Source,
+		IsRootDevice: firecracker.Bool(true),
+		IsReadOnly:   firecracker.Bool(false),
+	}
+
+	if rootfsConfig := p.config.Firecracker.Rootfs; rootfsConfig != nil {
+		rootfsDrive.RateLimiter = rootfsConfig.RateLimiter.toSDK()
+	}
+
 	networkInterface := firecracker.NetworkInterface{
 		AllowMMDS:        true,
 		CNIConfiguration: &firecracker.CNIConfiguration{NetworkName: "fireactions", IfName: "eth0", ConfDir: "/etc/cni/net.d", BinPath: []string{"/opt/cni/bin"}},
@@ -480,12 +491,7 @@ func (p *Pool) createMachine(ctx context.Context) error {
 			VcpuCount:  &p.config.Firecracker.MachineConfig.VcpuCount,
 			MemSizeMib: &p.config.Firecracker.MachineConfig.MemSizeMib,
 		},
-		Drives: []models.Drive{{
-			DriveID:      firecracker.String("rootfs"),
-			PathOnHost:   &snapshotMounts[0].Source,
-			IsRootDevice: firecracker.Bool(true),
-			IsReadOnly:   firecracker.Bool(false),
-		}},
+		Drives:            []models.Drive{rootfsDrive},
 		NetworkInterfaces: []firecracker.NetworkInterface{networkInterface},
 		VsockDevices:      []firecracker.VsockDevice{{Path: vsockPath, CID: vsockCID}},
 		MmdsAddress:       net.IPv4(169, 254, 169, 254),
