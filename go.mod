@@ -14,7 +14,7 @@ require (
 	github.com/rs/zerolog v1.35.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
-	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc v1.84.0
 )
 
 require (
@@ -44,7 +44,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.9.7 // indirect
 	github.com/docker/go-events v0.0.0-20260522192827-649f5caa5440 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.25.1 // indirect
@@ -115,7 +115,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	google.golang.org/genproto v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
 )
 
 require (
