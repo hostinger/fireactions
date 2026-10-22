@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://github.com/hostinger/fireactions/compare/v2.0.8...v2.1.0) (2026-10-22)
+
+
+### Features
+
+* **server:** Add configurable network rate limiting for MicroVMs ([#341](https://github.com/hostinger/fireactions/issues/341)) ([a49ec4d](https://github.com/hostinger/fireactions/commit/a49ec4dd8f8bdf05f0a6731beb426fe0937f0967))
+* **server:** Add configurable rootfs rate limiting for MicroVMs ([#343](https://github.com/hostinger/fireactions/issues/343)) ([6e26808](https://github.com/hostinger/fireactions/commit/6e268081b0dd02d9d335b3ff81314297dcec60da))
+
+
+### Dependencies
+
+* Bump github.com/containerd/containerd from 1.7.35 to 1.7.36 ([#346](https://github.com/hostinger/fireactions/issues/346)) ([9378411](https://github.com/hostinger/fireactions/commit/93784113c873f21608b17b2b9333b4d13be1b6a2))
+* Bump github.com/go-playground/validator/v10 from 10.30.4 to 10.30.5 ([#349](https://github.com/hostinger/fireactions/issues/349)) ([423db08](https://github.com/hostinger/fireactions/commit/423db088ff4305d7f2dc25c0d9cfe5bd51227076))
+* Bump github.com/moby/sys/user from 0.4.0 to 0.4.1 ([#351](https://github.com/hostinger/fireactions/issues/351)) ([3a100a4](https://github.com/hostinger/fireactions/commit/3a100a4dfab24b05776853f010436a83c2b49343))
+* Bump github.com/olekukonko/tablewriter from 1.1.4 to 1.1.5 ([#345](https://github.com/hostinger/fireactions/issues/345)) ([ad8623d](https://github.com/hostinger/fireactions/commit/ad8623d052336bc0f6aa93b04276d8ac6abc1a48))
+* Bump golang.org/x/sync from 0.23.0 to 0.24.0 ([#350](https://github.com/hostinger/fireactions/issues/350)) ([fdead4b](https://github.com/hostinger/fireactions/commit/fdead4b5b31a5c26aa19ca4aede1bacc719dbf8e))
+* Bump google.golang.org/grpc from 1.83.2 to 1.84.0 ([#344](https://github.com/hostinger/fireactions/issues/344)) ([bb4634d](https://github.com/hostinger/fireactions/commit/bb4634dba2e3b7baa6649f69484fa30b3f3e9554))
+
 ## [2.0.8](https://github.com/hostinger/fireactions/compare/v2.0.7...v2.0.8) (2026-09-15)
 
 
