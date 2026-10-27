@@ -26,7 +26,6 @@ jobs:
           fireactions
         permission-contents: write
         permission-pull-requests: write
-        permission-issues: write
 
     - name: Run release-please
       uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
