@@ -2,6 +2,7 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
 	"github.com/firecracker-microvm/firecracker-go-sdk/client/models"
@@ -92,4 +93,24 @@ func TestFirecrackerRateLimiterConfigToSDK(t *testing.T) {
 			OneTimeBurst: firecracker.Int64(262144000),
 		},
 	}, rateLimiter.toSDK())
+}
+
+func TestNewConfigPoolLimits(t *testing.T) {
+	config, err := NewConfig("testdata/config4.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assert.Equal(t, 24*time.Hour, config.Pools[0].MaxLifetime)
+	assert.Equal(t, int64(64), config.Pools[0].MaxLogSizeMib)
+
+	// A pool without limits leaves the VM lifetime and console log unbounded.
+	assert.Equal(t, time.Duration(0), config.Pools[1].MaxLifetime)
+	assert.Equal(t, int64(0), config.Pools[1].MaxLogSizeMib)
+}
+
+func TestNewConfigPoolLimitsInvalid(t *testing.T) {
+	// A negative lifetime is rejected.
+	_, err := NewConfig("testdata/config5.yaml")
+	assert.ErrorContains(t, err, "Config.Pools[0].MaxLifetime")
 }

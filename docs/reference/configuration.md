@@ -67,6 +67,18 @@ pools:
   #
   shutdown_on_exit: true
   #
+  # Maximum lifetime of a Firecracker VM. The VM is stopped when it is reached, even if a job is still running. 0 disables the limit.
+  #
+  # Required: false, Default: 0
+  #
+  max_lifetime: 24h
+  #
+  # Maximum size in MiB of the VM console log (<pool directory>/<runner>.log). Output beyond the limit is discarded. 0 disables the limit.
+  #
+  # Required: false, Default: 0
+  #
+  max_log_size_mib: 64
+  #
   # GitHub runner configuration.
   #
   runner:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/firecracker-microvm/firecracker-go-sdk"
@@ -24,6 +25,7 @@ type Machine struct {
 
 	vsockCID    uint32
 	vsockPath   string
+	logFile     *os.File
 	leaseCancel func(context.Context) error // containerd lease cancel function
 	vmmCtx      context.Context
 	vmmCancel   context.CancelFunc
