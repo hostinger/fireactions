@@ -120,7 +120,7 @@ func (c *FirecrackerTokenBucketConfig) toSDK() *models.TokenBucket {
 // DefaultConfig creates a new Config with default values.
 func DefaultConfig() *Config {
 	c := &Config{
-		BindAddress:      ":8080",
+		BindAddress:      "127.0.0.1:8080",
 		Containerd:       &ContainerdConfig{Address: "/run/containerd/containerd.sock", Namespace: "fireactions"},
 		Metrics:          &MetricsConfig{Enabled: true, Address: ":8081"},
 		BasicAuthEnabled: false,

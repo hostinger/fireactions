@@ -104,3 +104,13 @@ curl http://127.0.0.1:8081/metrics
 ### Test with a Workflow
 
 Trigger a test GitHub workflow to verify runners are being created and jobs execute successfully.
+
+## Version-specific notes
+
+### Default bind address
+
+When `bind_address` is not set, the server listens on `127.0.0.1:8080`. Earlier releases listened on all interfaces (`:8080`). To keep accepting remote connections, including through a published container port, set it explicitly:
+
+```yaml
+bind_address: 0.0.0.0:8080
+```

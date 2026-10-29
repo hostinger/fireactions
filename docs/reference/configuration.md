@@ -11,9 +11,9 @@ Example configuration file with all available options:
 #
 # The address to listen on for HTTP requests.
 #
-# Default: :8080
+# Default: 127.0.0.1:8080
 #
-bind_address: 0.0.0.0:8080
+bind_address: 127.0.0.1:8080
 
 #
 # Metrics server configuration. This is used to expose Prometheus metrics on endpoint `/metrics`.
