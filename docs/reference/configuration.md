@@ -74,6 +74,7 @@ pools:
   max_lifetime: 24h
   #
   # Maximum size in MiB of the VM console log (<pool directory>/<runner>.log). Output beyond the limit is discarded. 0 disables the limit.
+  # The limit does not apply to <runner>.firecracker.log, which Firecracker writes itself.
   #
   # Required: false, Default: 0
   #

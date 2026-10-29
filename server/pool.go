@@ -450,7 +450,7 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	defer func() {
 		if !machineCreated {
 			machineLogFile.Close()
-			p.removeMachineFiles(runnerName)
+			p.removeMachineFiles(runnerName, ".sock", ".vsock")
 		}
 	}()
 
@@ -625,7 +625,7 @@ func (p *Pool) createMachine(ctx context.Context) error {
 
 		machine.vmmCancel()
 		machine.logFile.Close()
-		p.removeMachineFiles(runnerName)
+		p.removeMachineFiles(runnerName, ".log", ".firecracker.log", ".sock", ".vsock")
 
 		p.deleteGitHubRunner(runnerName, machine.RunnerID)
 
@@ -642,9 +642,9 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	return nil
 }
 
-// removeMachineFiles removes the per-VM files from the pool directory.
-func (p *Pool) removeMachineFiles(runnerName string) {
-	for _, suffix := range []string{".log", ".firecracker.log", ".sock", ".vsock"} {
+// removeMachineFiles removes the per-VM files with the given suffixes from the pool directory.
+func (p *Pool) removeMachineFiles(runnerName string, suffixes ...string) {
+	for _, suffix := range suffixes {
 		err := os.Remove(filepath.Join(p.GetDir(), runnerName+suffix))
 		if err != nil && !os.IsNotExist(err) {
 			p.logger.Warn().Err(err).Msgf("Failed to remove %s%s", runnerName, suffix)
