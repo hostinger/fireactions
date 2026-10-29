@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.2.0](https://github.com/hostinger/fireactions/compare/v2.1.0...v2.2.0) (2026-10-29)
+
+
+### Features
+
+* Update CODEOWNERS ([#358](https://github.com/hostinger/fireactions/issues/358)) ([73fad9c](https://github.com/hostinger/fireactions/commit/73fad9c2218c2c1733b3b6d61ef6858dd57b1e4c))
+
+
+### Bug Fixes
+
+* **cli:** escape control characters in command output ([#369](https://github.com/hostinger/fireactions/issues/369)) ([0646b23](https://github.com/hostinger/fireactions/commit/0646b234a07fd6d566a74b4b49cdc796109000fe))
+* replace pull_request_target with pull_request in lint-pr workflow ([#356](https://github.com/hostinger/fireactions/issues/356)) ([141599d](https://github.com/hostinger/fireactions/commit/141599d00a95016d4f25e3746cf84b2580752186))
+* **server:** bound VM lifetime and console log size ([#368](https://github.com/hostinger/fireactions/issues/368)) ([414bf0d](https://github.com/hostinger/fireactions/commit/414bf0db5fde6877c572574c83061139c50d4ff3))
+* **server:** default bind_address to loopback ([#367](https://github.com/hostinger/fireactions/issues/367)) ([c2055e7](https://github.com/hostinger/fireactions/commit/c2055e7f6ac7b2d240ae19d27e0b6dfa8bb834e1))
+
+
+### Dependencies
+
+* bump amannn/action-semantic-pull-request from 5 to 6 ([#362](https://github.com/hostinger/fireactions/issues/362)) ([a303245](https://github.com/hostinger/fireactions/commit/a303245fb1d7a5763b0f24ae738fda056e7fd94e))
+* Bump github.com/prometheus/client_golang from 1.24.1 to 1.25.0 ([#355](https://github.com/hostinger/fireactions/issues/355)) ([c806cca](https://github.com/hostinger/fireactions/commit/c806ccafce55cea158de6f3f12ec0c65cdd51f41))
+* Bump golang.org/x/sys from 0.48.0 to 0.49.0 ([#354](https://github.com/hostinger/fireactions/issues/354)) ([58ede72](https://github.com/hostinger/fireactions/commit/58ede72a7c14b3d301ad7ad69479f4f8f55a246d))
+
 ## [2.1.0](https://github.com/hostinger/fireactions/compare/v2.0.8...v2.1.0) (2026-10-22)
 
 
