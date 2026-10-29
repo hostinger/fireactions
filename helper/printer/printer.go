@@ -101,7 +101,7 @@ func PrintText(item Printable, out io.Writer, includeCols []string) {
 				format = "%s"
 			}
 
-			row = append(row, fmt.Sprintf(format, v))
+			row = append(row, Sanitize(fmt.Sprintf(format, v)))
 		}
 
 		values = append(values, row)
