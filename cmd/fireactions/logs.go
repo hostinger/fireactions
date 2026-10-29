@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hostinger/fireactions/helper/printer"
 	serverv1 "github.com/hostinger/fireactions/proto/server/v1"
 	"github.com/spf13/cobra"
 )
@@ -76,7 +77,7 @@ func runLogsCmd(cmd *cobra.Command, vmid string, follow bool, tail int) error {
 		}
 
 		// Write log line to output (already includes newline)
-		if _, err = cmd.OutOrStdout().Write([]byte(resp.Line)); err != nil {
+		if _, err = cmd.OutOrStdout().Write([]byte(printer.Sanitize(resp.Line, '\n', '\t'))); err != nil {
 			return fmt.Errorf("failed to write log: %w", err)
 		}
 	}
