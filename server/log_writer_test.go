@@ -3,7 +3,9 @@ package server
 import (
 	"bytes"
 	"errors"
+	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -44,4 +46,25 @@ func TestCappedWriterSwallowsErrors(t *testing.T) {
 	n, err = w.Write([]byte("def"))
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n)
+}
+
+func TestCappedWriterDrainsProcessOutput(t *testing.T) {
+	var buf bytes.Buffer
+	w := newCappedWriter(&buf, 4096)
+
+	cmd := exec.Command("sh", "-c", "head -c 20000000 /dev/zero")
+	cmd.Stdout = w
+	cmd.Stderr = w
+
+	done := make(chan error, 1)
+	go func() { done <- cmd.Run() }()
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(30 * time.Second):
+		t.Fatal("process blocked on output")
+	}
+
+	assert.Equal(t, 4096, buf.Len())
 }
