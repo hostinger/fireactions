@@ -61,6 +61,8 @@ type PoolConfig struct {
 	Name           string             `yaml:"name" validate:"required"`
 	ShutdownOnExit *bool              `yaml:"shutdown_on_exit"`
 	Replicas       int                `yaml:"replicas" validate:"min=0"`
+	MaxLifetime    time.Duration      `yaml:"max_lifetime" validate:"min=0"`
+	MaxLogSizeMib  int64              `yaml:"max_log_size_mib" validate:"min=0"`
 	Runner         *RunnerConfig      `yaml:"runner" validate:"required"`
 	Firecracker    *FirecrackerConfig `yaml:"firecracker" validate:"required"`
 }
@@ -445,12 +447,22 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("creating log file: %w", err)
 	}
-	defer machineLogFile.Close()
+	defer func() {
+		if !machineCreated {
+			machineLogFile.Close()
+			p.removeMachineFiles(runnerName, ".sock", ".vsock")
+		}
+	}()
+
+	var machineLog io.Writer = machineLogFile
+	if p.config.MaxLogSizeMib > 0 {
+		machineLog = newCappedWriter(machineLogFile, p.config.MaxLogSizeMib*1024*1024)
+	}
 
 	machineCmd := firecracker.VMCommandBuilder{}.
 		WithSocketPath(filepath.Join(p.GetDir(), fmt.Sprintf("%s.sock", runnerName))).
-		WithStderr(machineLogFile).
-		WithStdout(machineLogFile).
+		WithStderr(machineLog).
+		WithStdout(machineLog).
 		WithBin(p.config.Firecracker.BinaryPath).
 		Build(ctx)
 
@@ -554,6 +566,7 @@ func (p *Pool) createMachine(ctx context.Context) error {
 		CreatedAt:   time.Now().UTC(),
 		vsockCID:    vsockCID,
 		vsockPath:   vsockPath,
+		logFile:     machineLogFile,
 		leaseCancel: leaseCtxCancel,
 		vmmCtx:      vmmCtx,
 		vmmCancel:   vmmCancel,
@@ -573,9 +586,27 @@ func (p *Pool) createMachine(ctx context.Context) error {
 			waitDone <- machine.Wait(context.Background())
 		}()
 
+		var lifetimeExpired <-chan time.Time
+		if p.config.MaxLifetime > 0 {
+			lifetimeTimer := time.NewTimer(p.config.MaxLifetime)
+			defer lifetimeTimer.Stop()
+			lifetimeExpired = lifetimeTimer.C
+		}
+
 		select {
 		case <-waitDone:
 			// Machine exited normally
+		case <-lifetimeExpired:
+			p.logger.Warn().Msgf("Firecracker VM %s reached max lifetime %s, stopping", runnerName, p.config.MaxLifetime)
+			if err := machine.StopVMM(); err != nil {
+				p.logger.Warn().Err(err).Msgf("Failed to stop Firecracker VM %s", runnerName)
+			}
+
+			select {
+			case <-waitDone:
+			case <-time.After(30 * time.Second):
+				p.logger.Warn().Msgf("Timeout waiting for machine %s to exit after max lifetime", runnerName)
+			}
 		case <-p.ctx.Done():
 			// Pool is stopping, wait up to 30s for machine to fully exit
 			select {
@@ -593,6 +624,8 @@ func (p *Pool) createMachine(ctx context.Context) error {
 		p.machinesMu.Unlock()
 
 		machine.vmmCancel()
+		machine.logFile.Close()
+		p.removeMachineFiles(runnerName, ".log", ".firecracker.log", ".sock", ".vsock")
 
 		p.deleteGitHubRunner(runnerName, machine.RunnerID)
 
@@ -607,6 +640,16 @@ func (p *Pool) createMachine(ctx context.Context) error {
 	}()
 
 	return nil
+}
+
+// removeMachineFiles removes the per-VM files with the given suffixes from the pool directory.
+func (p *Pool) removeMachineFiles(runnerName string, suffixes ...string) {
+	for _, suffix := range suffixes {
+		err := os.Remove(filepath.Join(p.GetDir(), runnerName+suffix))
+		if err != nil && !os.IsNotExist(err) {
+			p.logger.Warn().Err(err).Msgf("Failed to remove %s%s", runnerName, suffix)
+		}
+	}
 }
 
 // removeMachine removes a single machine from the pool.
