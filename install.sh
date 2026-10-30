@@ -4,6 +4,7 @@ set -e
 
 export CONTAINERD_VERSION=1.7.0
 export CNI_VERSION=1.6.0
+export TC_REDIRECT_TAP_VERSION=0.0.1
 export DEBIAN_FRONTEND=noninteractive
 export FIREACTIONS_VERSION=0.2.5
 export FIRECRACKER_VERSION=1.4.1
@@ -188,9 +189,14 @@ install_cni()
   mkdir -p /opt/cni/bin
   tar -zxf "$TEMP_DIR/cni-plugins-linux-$ARCH-v$CNI_VERSION.tgz" -C /opt/cni/bin
 
-  curl -sL -o /opt/cni/bin/tc-redirect-tap \
-    "https://github.com/hostinger/tc-redirect-tap/releases/download/v0.0.1/tc-redirect-tap-$ARCH"
-  chmod +x /opt/cni/bin/tc-redirect-tap
+  case $ARCH in
+    amd64) TC_REDIRECT_TAP_SHA256=acf91949dcd23f2986ed0b36de04afd3e64293c44a2990558be4425b67c7b2ff ;;
+    arm64) TC_REDIRECT_TAP_SHA256=0c97adc85646354c2cf86bc1ef5d96e56b50402d83c937fdad1f0a2b6360af3f ;;
+  esac
+  curl -sL -o "$TEMP_DIR/tc-redirect-tap" \
+    "https://github.com/hostinger/tc-redirect-tap/releases/download/v$TC_REDIRECT_TAP_VERSION/tc-redirect-tap-$ARCH"
+  echo "$TC_REDIRECT_TAP_SHA256  $TEMP_DIR/tc-redirect-tap" | sha256sum -c --quiet -
+  install -m 0755 "$TEMP_DIR/tc-redirect-tap" /opt/cni/bin/tc-redirect-tap
 
   mkdir -p /etc/cni/net.d
   cat <<EOF > /etc/cni/net.d/10-fireactions.conflist

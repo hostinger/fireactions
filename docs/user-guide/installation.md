@@ -273,9 +273,19 @@ This installs `bridge`, `host-local`, and `firewall` plugins, which are essentia
 The [tc-redirect-tap](https://github.com/awslabs/tc-redirect-tap) plugin uses Traffic Control (tc) to redirect packets between the VM's tap device and the host, providing better performance than traditional bridging.
 
 ```bash
-curl -fsSL -o /opt/cni/bin/tc-redirect-tap \
-  "https://github.com/hostinger/tc-redirect-tap/releases/download/v0.0.1/tc-redirect-tap-${ARCH}"
-chmod +x /opt/cni/bin/tc-redirect-tap
+export TC_REDIRECT_TAP_VERSION=0.0.1
+export TC_REDIRECT_TAP_SHA256=$(case $ARCH in
+  amd64) echo "acf91949dcd23f2986ed0b36de04afd3e64293c44a2990558be4425b67c7b2ff" ;;
+  arm64) echo "0c97adc85646354c2cf86bc1ef5d96e56b50402d83c937fdad1f0a2b6360af3f" ;;
+esac)
+
+curl -fsSL -o tc-redirect-tap \
+  "https://github.com/hostinger/tc-redirect-tap/releases/download/v${TC_REDIRECT_TAP_VERSION}/tc-redirect-tap-${ARCH}"
+
+# Reject a tampered download before it reaches /opt/cni/bin
+echo "${TC_REDIRECT_TAP_SHA256}  tc-redirect-tap" | sha256sum -c -
+install -m 0755 tc-redirect-tap /opt/cni/bin/tc-redirect-tap
+rm tc-redirect-tap
 
 # Verify
 /opt/cni/bin/tc-redirect-tap --version
