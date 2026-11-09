@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.1](https://github.com/hostinger/fireactions/compare/v2.2.0...v2.2.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* loopback metrics default, escaped CLI errors, Firecracker log level Warning ([#375](https://github.com/hostinger/fireactions/issues/375)) ([322a619](https://github.com/hostinger/fireactions/commit/322a619a26a57ed1aaaa490d4b47d49143a6cd86))
+
+
+### Dependencies
+
+* bump github.com/go-playground/validator/v10 from 10.30.5 to 10.30.6 ([#373](https://github.com/hostinger/fireactions/issues/373)) ([ad88315](https://github.com/hostinger/fireactions/commit/ad883159943222ba0f0d1199180dfc6606c567c4))
+* bump google.golang.org/grpc from 1.84.0 to 1.85.0 ([#372](https://github.com/hostinger/fireactions/issues/372)) ([8a96c6f](https://github.com/hostinger/fireactions/commit/8a96c6fd550ad65926c78778ee67b55bda37cf52))
+
 ## [2.2.0](https://github.com/hostinger/fireactions/compare/v2.1.0...v2.2.0) (2026-10-29)
 
 
