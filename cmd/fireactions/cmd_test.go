@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/hostinger/fireactions"
@@ -22,4 +23,16 @@ func TestNewRootCommand(t *testing.T) {
 
 	assert.NotNil(t, cmd.Commands())
 	assert.Len(t, cmd.Commands(), 9)
+}
+
+func TestRootCommandFlagError(t *testing.T) {
+	cmd := NewRootCommand()
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetErr(buf)
+	cmd.SetArgs([]string{"version", "--unknown"})
+
+	err := cmd.Execute()
+	assert.ErrorContains(t, err, "unknown flag: --unknown")
+	assert.Contains(t, buf.String(), "Usage:")
 }

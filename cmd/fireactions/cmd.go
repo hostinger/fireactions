@@ -37,9 +37,8 @@ func NewRootCommand() *cobra.Command {
 	cmd.PersistentFlags().SortFlags = false
 	cmd.Flags().SortFlags = false
 	cmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
-		cmd.Println(err)
 		cmd.Println(cmd.UsageString())
-		return nil
+		return err
 	})
 
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Main application commands:"})

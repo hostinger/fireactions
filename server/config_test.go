@@ -9,6 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDefaultConfig(t *testing.T) {
+	config := DefaultConfig()
+
+	assert.Equal(t, "127.0.0.1:8080", config.BindAddress)
+	assert.Equal(t, "127.0.0.1:8081", config.Metrics.Address)
+}
+
 func TestNewConfig(t *testing.T) {
 	config, err := NewConfig("testdata/config1.yaml")
 	if err != nil {

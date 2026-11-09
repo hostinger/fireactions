@@ -122,7 +122,7 @@ func DefaultConfig() *Config {
 	c := &Config{
 		BindAddress:      "127.0.0.1:8080",
 		Containerd:       &ContainerdConfig{Address: "/run/containerd/containerd.sock", Namespace: "fireactions"},
-		Metrics:          &MetricsConfig{Enabled: true, Address: ":8081"},
+		Metrics:          &MetricsConfig{Enabled: true, Address: "127.0.0.1:8081"},
 		BasicAuthEnabled: false,
 		BasicAuthUsers:   map[string]string{},
 		GitHub:           &GitHubConfig{AppPrivateKey: "", AppID: 0},

@@ -510,7 +510,7 @@ func (p *Pool) createMachine(ctx context.Context) error {
 		MmdsVersion:       firecracker.MMDSv2,
 		ForwardSignals:    []os.Signal{},
 		LogPath:           filepath.Join(p.GetDir(), fmt.Sprintf("%s.firecracker.log", runnerName)),
-		LogLevel:          "Debug",
+		LogLevel:          "Warning",
 	}, firecracker.WithProcessRunner(machineCmd), firecracker.WithLogger(logrus.NewEntry(logger)))
 	if err != nil {
 		return fmt.Errorf("firecracker: creating machine: %w", err)
