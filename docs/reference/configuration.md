@@ -27,6 +27,8 @@ metrics:
   #
   # The address to listen on for HTTP requests.
   #
+  # Default: 127.0.0.1:8081
+  #
   address: 127.0.0.1:8081
 
 #
