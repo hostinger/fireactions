@@ -114,3 +114,13 @@ When `bind_address` is not set, the server listens on `127.0.0.1:8080`. Earlier 
 ```yaml
 bind_address: 0.0.0.0:8080
 ```
+
+### Default metrics address
+
+When `metrics.address` is not set, the metrics server listens on `127.0.0.1:8081`. Earlier releases listened on all interfaces (`:8081`). To keep serving metrics to a remote Prometheus, set it explicitly:
+
+```yaml
+metrics:
+  enabled: true
+  address: 0.0.0.0:8081
+```
