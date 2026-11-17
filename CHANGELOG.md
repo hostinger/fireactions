@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.2](https://github.com/hostinger/fireactions/compare/v2.2.1...v2.2.2) (2026-11-17)
+
+
+### Dependencies
+
+* bump go.opentelemetry.io/otel/trace from 1.45.0 to 1.47.0 ([#379](https://github.com/hostinger/fireactions/issues/379)) ([c67232d](https://github.com/hostinger/fireactions/commit/c67232da84842ffac4388e54d91f64c6b3e21af8))
+* bump golang.org/x/sync from 0.24.0 to 0.25.0 ([#378](https://github.com/hostinger/fireactions/issues/378)) ([4302368](https://github.com/hostinger/fireactions/commit/4302368a1c5a84eac0f602d47962a299be29dcb5))
+* bump golang.org/x/sys from 0.49.0 to 0.50.0 ([#377](https://github.com/hostinger/fireactions/issues/377)) ([96e7d7f](https://github.com/hostinger/fireactions/commit/96e7d7fdbc537f832fe2e2f8fc21019e20247f41))
+
 ## [2.2.1](https://github.com/hostinger/fireactions/compare/v2.2.0...v2.2.1) (2026-11-09)
 
 
